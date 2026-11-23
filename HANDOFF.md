@@ -1,0 +1,108 @@
+# Handoff
+
+State on 2026-11-23, written at the end of the local session that built this. Read it first; it replaces that conversation.
+
+## What this is
+
+**Starship Thingy Mabobs and Such**: the user's personal KSP 1.12.5 mod, add-ons for Kari's Starship Expansion Project (SEP). One installed folder, `GameData/StarshipThingyMabobsAndSuch`, built from two halves:
+
+- `v3/`: cargo winch for SEP's V3 cargo bay and an expendable config for the V3 body (formerly "SEP Extras").
+- `its/`: the 2016 Interplanetary Transport System, rebuilt from scratch (started as a fork of Thrimm's 2016 mod, none of its assets used).
+
+Everything is modelled procedurally in Blender Python and textured with numpy. Generated configs, models and textures are never edited by hand.
+
+**Status:** every part is built, textured, configured and installed on the user's PC. The final build has **not been tested in game**. An earlier phase-1 build was loaded once (rings compiled, no errors from our parts, some lag).
+
+## The user
+
+- New to coding; plays KSP on a Linux PC (the "Sol" install). Explain plainly and lead with the result.
+- Wants photos at key milestones (they're in `docs/photos`).
+- Approves useful subagents. Wants to be asked before anything public; pushing to this private repo was approved.
+- They judge looks in game. Show a render, ship it, then wait for the verdict before rolling a new look out everywhere.
+
+Choices they made: SEP scale (real x 0.625, 7.5 m body); booster engines as ring parts only; cargo ship with side doors and a crane; placeholder IVA; the mod's name.
+
+What they asked for, in order: upgrade the ITS mod to BDB / HabTech2 / Benjee10 Orion quality, research real ITS structure and TPS materials, use SEP's engines, more model detail, a cargo variant; photos at milestones; finish the grid fins; gyros on the ship strong enough to beat aerodynamic forces for a flip and burn; aeroshielding on the legs; a sane polygon count and less lag; fix things floating over the surface; merge with SEP Extras; put it on GitHub for personal use; this name.
+
+## Hard rules
+
+1. **Keep the repository and releases private.** SEP's art is All Rights Reserved; the expendable V3 masks (`*_MASK_BARE.dds`, release only) derive from it, and the engine rings show SEP's models. Public release needs Kari's permission.
+2. **Never commit SEP's or Thrimm's files.** SEP's Raptor is only referenced by path in ModuleManager copies (`its/scripts/make_rings.py`).
+3. **Part names must not change.** The `default` save has ITS parts in flight, and craft use `SEP.CW.*`.
+4. Leave `GameData/SpaceX_ITS` (Thrimm's old mod) on the PC alone; an old craft uses it.
+5. No SpaceX endorsement claim. Credit Thrimm and SEP. Our assets are CC BY-NC-SA 4.0, scripts MIT.
+
+## Working in the cloud
+
+```
+./tools/cloud_setup.sh          # Blender 3.6.23, io_object_mu + our exporter fix, numpy/Pillow, ImageMagick
+source tools/env.sh
+./build_all.sh                  # about 2.5 min; ITS_HULL=1024 makes the textures quick for a test
+its/p.sh name --view 25,0,60,0,0,87 --sky studio "Ships/VAB/ITS Crew.craft"     # render -> its/build/photos/name.png
+```
+
+Run craft renders as `its/p.sh name ... "../Ships/VAB/ITS Crew.craft"` (the script works from `its/`). Setup and the build were tested from a clean clone on the PC with no KSP or SEP visible: models came out vertex-identical, textures equal to rounding. They have not been run on an actual cloud machine; the apt step in particular is untested, and setup needs download.blender.org and github.com to be reachable. If Blender can't be downloaded, config, patch and script edits are still possible, and `make_cfg.py` needs built models (the release zip has them).
+
+What can't be done in the cloud: run KSP, deploy, read KSP.log, bake the V3 masks, `check_rings.py`, the engine part of `check_fit.py`, and engines in photos (all need SEP). So: **edit, build and check here, push a branch, and the user pulls on the PC** and runs `./build_all.sh && ./deploy.sh` there with KSP closed. A cloud build has no masks and `deploy.sh` refuses it.
+
+`BLENDER`, `IO_OBJECT_MU` and `KSP_DIR` override the PC's paths.
+
+## Layout
+
+| Path | What |
+|---|---|
+| `build_all.sh`, `deploy.sh` | Build both halves; install on the PC (copies and verifies before removing anything) |
+| `tools/` | Cloud setup and the required io_object_mu patch (one submesh per material) |
+| `its/scripts/hull.py` | Ship's outer mould line, skirt, paint edge (`paint_d`), texture mapping. Pure numpy, everything uses it |
+| `its/scripts/layout.py` | Every shared number: engines, rings, legs, fans, bay, crane, booster, atlas zones |
+| `its/scripts/sl.py`, `common.py`, `shell.py`, `fwd.py`, `crane.py` | Geometry library and helpers |
+| `its/scripts/build_*.py` | One per part (`./b.sh leg` from `its/`) |
+| `its/scripts/tex_*.py`, `tl.py`, `bdb_look.py` | Textures. `bdb_look` is only used to write DDS mips; its look pass is not used |
+| `its/scripts/make_cfg.py` | All ITS part configs; node positions come from the built models |
+| `its/scripts/make_rings.py` | Engine rings, vacuum Raptor, lite plume (MM patches) |
+| `its/scripts/make_craft.py` | `Ships/VAB/*.craft` |
+| `its/scripts/photo.py` | Renders a .craft; `--pose ITS_Leg:legDeploy`, `--only`, `--sky day/space/studio`, `--lit` for windows |
+| `its/scripts/check_fit.py`, `check_float.py`, `check_balance.py`, `check_rings.py`, `lint.py` | Clearances; pieces touching nothing; TWR and delta-v; engine overlap; cfg/model/texture checks |
+| `its/extras/ITS_PBR.cfg.txt` | Opt-in PBR material swap, untested |
+| `v3/` | Winch and expendable V3: `build.sh`, `cfg/`, `patches/`, `scripts/` |
+
+## Conventions and traps
+
+- Blender +Z becomes Unity +Y; Unity = (bx, bz, by). Azimuth 0 is Blender -Y, leeward; 180 is windward. Real metres in `hull.py`/`layout.py`, KSP metres = real x 0.625. Ship z = 0 at the vacuum engines' exit, 49.5 at the nose; booster z = 0 at its engines' exit, 77.5 at the top.
+- One material per mesh object. Convex colliders of 255 triangles or fewer, marked `separate`. The exporter ignores `matrix_parent_inverse`. KSP culls backfaces, so `facing.py` runs at export.
+- `P.empty(name, frame, parent)`: without a parent the empty falls outside the model and is lost. Pass `P.model`.
+- **Anything laid on the hull must go through `stick()` or `stick_cyl()`**, which bend it to the curve and sink it 8 mm (the hull is faceted). Flat plates float by up to 11 cm. Run `check_float.py`.
+- RCS transforms: local +Z (Unity +Y) is the exhaust. One per cluster of ports, to keep plume counts down.
+- Piston servos: KSP overwrites the servo transform's position, so the bone sits at local zero inside an armature object that carries the rest position. Skinned meshes get a zero-area triangle at the far end of travel so Unity doesn't cull them.
+- Landing leg follows stock LT-2's layout: leg > wheelCollider, pistonbase > piston > foot, deployTgt.
+- The half-hull sheets are mirrored left to right, so no text on them. The booster sheet repeats every 120 degrees; lettering and flag are separate meshes hidden by a B9 switch.
+- Texture style (measured from HabTech2 and Orion): calm colour, detail in the gloss channel (1.5-2.8% variation), 85-96% flat normals, clean not weathered, stock `KSP/Bumped Specular`.
+- Don't use `pgrep -f KSP...` to test whether KSP runs: it matches its own shell.
+
+## Numbers
+
+- **Balance:** SEP's thrust and Isp (613 kN sea level, 674 kN vacuum per engine), propellant 0.20 of real, dry 0.25. Booster 1,340 t propellant, ~69 t dry with engines. Ship 390 t; dry 37 t crew, 32 t cargo, 22.6 t tanker (500 t propellant). Liftoff TWR ~1.4. LqdMethane:Oxidizer 3:1, B9 tank type `ITSLMOX`.
+- **Flip gyros:** ShipAft has an 8,000 kN m reaction wheel (2,500 roll) and 12 EC/s. Estimated aero moment at 3 g entry ~4,400 kN m. Joints are 30,000 so the torque doesn't break the stack. May be twitchy in vacuum: authority limiter.
+- **Polygons:** booster 61k triangles (SEP's 229k), aft 37k, crew 29k, cargo 41k, tanker 27k, leg 6k, fan 12k, grid fin 4k. Full cargo stack's own meshes 198k.
+- **Lag fix:** the 42 booster Raptors went from 862k triangles / 539 renderers / 126 colliders to 390k / 210 / 15 (`ModuleB9DisableTransform`, `ITS_Ring*Base` colliders). The plume is set to 5 effects per engine instead of 18 (`ITS_Raptor3Lite`).
+- **Real vehicle:** carbon-fibre prepreg structure; PICA 3.0 heat shield in large Dragon-style blocks; ship 49.5 x 12 m, 17 m max, 3 SL + 6 vac Raptors; booster 77.5 m, rings 21/14/7, only the center 7 gimbal; stack 122 m (ship's skirt overlaps a cut-away interstage by 5 m). Sources: SpaceX's 2016 slides, its CC0 renders on Wikimedia Commons, Musk's AMA. The cargo ship, array size, thruster sizes and crane are our design.
+
+## Open
+
+**Needs the user, in game:**
+1. All three rings fire, with plumes and throttle; center 7 gimbals; booster separates. (Multi-MODEL rings were checked only by reading B9's and Waterfall's code, and that the parts compile.)
+2. `ITS_Raptor3Lite` works: in `GameData/ModuleManager.ConfigCache` that template should have exactly 5 `EFFECT` blocks (M1, M3, M4, M5-1, MFO_SL). It had not been through a KSP launch.
+3. Lag on the pad, better or not.
+4. Legs hold the landed ship (suspension numbers are scaled guesses); foot pitch.
+5. The flip against the airstream.
+6. Fan arrays deploy and track; crane pistons; side-by-side docking (`dockA`/`dockB`, nodeType ITSTransfer).
+7. The save with ITS parts still loads after the merge. `ITS.ShipAft` gained docking and reaction wheel modules and its solar/leg nodes since that craft flew.
+8. Whether to turn on PBR. Unknowns: which channel of `_MetalMap` Resurfaced/Standard reads, and whether the hull keeps its painted gloss without one.
+
+**Not built:** bare-carbon livery (planned), a real crew interior (uses `MK3_CrewCab_Int`; FreeIva logs hatch errors for it), RealFuels volumes, a custom category icon.
+
+**Known and left alone:** `check_float.py` still lists joint rings, bolts and hinge brackets hidden inside the hull, the lettering (7 mm proud) and the leg shells (they rest on the ship, not on the leg). Fan packages show slightly under the skirt rim when stowed. SEP's own `ModuleSEPRaptor` throws an exception on the SL_C engine in the editor; not ours. `lint.py` warns about `ModuleDeployableAero` (Kerbal Reusability Expansion's DLL isn't scanned).
+
+## Good first steps in a new session
+
+Ask for the user's in-game results and KSP.log excerpts, fix what they report, then offer the bare-carbon livery or the crew interior.

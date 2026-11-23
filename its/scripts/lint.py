@@ -71,10 +71,12 @@ for c in glob.glob(os.path.join(root, '**', '*.cfg'), recursive=True):
         key = m_
         if key in mu_info:
             allnames |= mu_info[key][0]; allanims |= mu_info[key][1]
+        elif not os.path.isdir(gd):
+            warns.append(f'{os.path.basename(c)}: {m_} not checked, no KSP install here')
         elif not os.path.exists(os.path.join(gd, key + '.mu')) and not os.path.exists(os.path.join(os.path.dirname(root), key + '.mu')):
             errs.append(f'{os.path.basename(c)}: model not found {m_}')
     for n in re.findall(r'MODULE\s*\{\s*name\s*=\s*(\S+)', s):
-        if not known_module(n):
+        if STOCK and not known_module(n):
             warns.append(f'{os.path.basename(c)}: module {n} not found in scanned assemblies')
     if models and all(m_ in mu_info for m_ in models):
         for k, v in re.findall(r'^\s*(\w+)\s*=\s*([^\n]+)$', s, re.M):
