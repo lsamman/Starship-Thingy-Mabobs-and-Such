@@ -95,6 +95,15 @@ def livery(id_, desc, subs):
                *[block('SUBTYPE', f'name = {n}', f'title = {t}', f'primaryColor = {c}', *[f'transform = {x}' for x in tr]) for n, t, c, tr in subs])
 
 
+def paint(sheet):
+    """Hull livery: White (as built, the default) or Bare carbon, which swaps the diffuse of the hull sheet and of the
+    details atlas (white trim) for their _carbon versions; normals are shared. Appended last so module indices in saves stay put."""
+    tex = lambda t: block('TEXTURE', f'texture = StarshipThingyMabobsAndSuch/ITS/Parts/{t}_carbon_diff', f'currentTexture = {t}_diff')
+    return mod('ModuleB9PartSwitch', 'moduleID = ITS_Livery', 'switcherDescription = Livery', 'affectDragCubes = false', 'affectFARVoxels = false',
+               block('SUBTYPE', 'name = White', 'title = White', 'primaryColor = #e8e8e8'),
+               block('SUBTYPE', 'name = Carbon', 'title = Bare carbon', 'primaryColor = #1a1b1d', tex(sheet), tex('its_det')))
+
+
 os.makedirs(OUT, exist_ok=True)
 for f in os.listdir(OUT):
     os.remove(os.path.join(OUT, f))
@@ -106,14 +115,14 @@ part('ITS_Booster', 'ITS Booster', 'Seventy-seven and a half metres of carbon fi
      modules=[command(0, True), sas(), res('ElectricCharge', 3000), wheel(100, 2.5), antenna(500000), tank(1340), rcs(150),
               mod('ModuleDecouple', 'ejectionForce = 350', 'explosiveNodeID = top'),
               mod('ModuleToggleCrossfeed', 'crossfeedStatus = false', 'toggleEditor = true', 'toggleFlight = true'),
-              livery('ITS_Markings', 'Markings', [('Full', 'Lettering and flag', 'black', ['lettering', 'flag']), ('Flag', 'Flag only', 'gray', ['flag']), ('None', 'Plain', 'white', [])])])
+              livery('ITS_Markings', 'Markings', [('Full', 'Lettering and flag', 'black', ['lettering', 'flag']), ('Flag', 'Flag only', 'gray', ['flag']), ('None', 'Plain', 'white', [])]), paint('its_booster')])
 part('ITS_ShipAft', 'ITS Ship Aft Section', 'Tanks, leg fairings, swept skirt and engine bay: the half of the ship all three variants share. Three sea-level and six vacuum Raptors hang off the thrust cone. Carries flip gyros strong enough to swing the whole ship against the airstream for a landing burn. The black side goes into the wind, which is the one instruction in the manual printed in red.',
      'ship tank aft engine mount methalox heat shield PICA', 5.5, 48000, 'FuelTank', 'experimentalRocketry',
      extra=['fuelCrossFeed = True', RCS_FX],
      modules=[tank(390), rcs(90), res('ElectricCharge', 4000),
               mod('ModuleReactionWheel', 'PitchTorque = 8000', 'YawTorque = 8000', 'RollTorque = 2500', 'actuatorModeCycle = 0', block('RESOURCE', 'name = ElectricCharge', 'rate = 12')), mod('ModuleToggleCrossfeed', 'crossfeedStatus = true', 'toggleEditor = true', 'toggleFlight = true')] +
              [mod('ModuleDockingNode', f'nodeTransformName = dock{x}', f'controlTransformName = dock{x}', 'nodeType = ITSTransfer', 'acquireRange = 0.8', 'acquireForce = 4', 'acquireTorque = 4', 'captureRange = 0.12', 'undockEjectionForce = 6',
-                  'stagingEnabled = False') for x in 'AB'],
+                  'stagingEnabled = False') for x in 'AB'] + [paint('its_aft')],
      stackSym=2)
 part('ITS_FwdCrew', 'ITS Crew Section', 'Cabins, common areas, a solar storm shelter, and a window large enough to see the whole problem coming. Fits on the aft section. The restaurant mentioned at the conference is represented by a snack drawer.',
      'ship crew cabin window habitat nose command', 16.3, 88000, 'Pods', 'experimentalRocketry',
@@ -124,7 +133,7 @@ part('ITS_FwdCrew', 'ITS Crew Section', 'Cabins, common areas, a solar storm she
               mod('ModuleKerbNetAccess', 'MinimumFoV = 5', 'MaximumFoV = 50', 'enhancedSituationMask = 7', 'requiresAnimation = False', block('DISPLAY_MODES', 'Mode = Terrain', 'Mode = Biome')),
               mod('ModuleColorChanger', 'shaderProperty = _EmissiveColor', 'animRate = 0.8', 'animState = false', 'useRate = true', 'toggleInEditor = true', 'toggleInFlight = true',
                   'toggleAction = true', 'unfocusedRange = 5', 'toggleName = Toggle Cabin Lights', 'eventOnName = Cabin Lights: On', 'eventOffName = Cabin Lights: Off', 'defaultActionGroup = Light',
-                  block('redCurve', 'key = 0 0 0 3', 'key = 1 1 0 0'), block('greenCurve', 'key = 0 0 0 1', 'key = 1 1 1 0'), block('blueCurve', 'key = 0 0 0 0', 'key = 1 0.9 1.5 0'), block('alphaCurve', 'key = 0 1'))],
+                  block('redCurve', 'key = 0 0 0 3', 'key = 1 1 0 0'), block('greenCurve', 'key = 0 0 0 1', 'key = 1 1 1 0'), block('blueCurve', 'key = 0 0 0 0', 'key = 1 0.9 1.5 0'), block('alphaCurve', 'key = 0 1')), paint('its_fwd')],
      tmax=1700)
 open(os.path.join(OUT, 'ITS_TankType.cfg'), 'w').write('\n'.join(block('B9_TANK_TYPE', 'name = ITSLMOX', 'tankMass = 0', 'tankCost = 0',
      block('RESOURCE', 'name = LqdMethane', 'unitsPerVolume = 1.875'), block('RESOURCE', 'name = Oxidizer', 'unitsPerVolume = 0.625'))) + '\n')
@@ -169,10 +178,10 @@ if have('ITS_FwdCargo'):
          'ship cargo bay hold payload doors crane probe nose', 9.5, 62000, 'Payload', 'experimentalRocketry', extra=['vesselType = Ship', RCS_FX],
          modules=[mod('ModuleAnimateGeneric', 'animationName = bayDoors', 'actionGUIName = Toggle Doors', 'startEventGUIName = Open Doors', 'endEventGUIName = Close Doors', 'allowDeployLimit = true', 'evaDistance = 8'),
                   mod('ModuleCargoBay', 'DeployModuleIndex = 0', 'closedPosition = 0', 'lookupRadius = 4.2', 'lookupCenter = 0, -1.0, 0')] + PROBE(4000) +
-                 [mod('ModuleLight', 'lightName = bayLight', 'useAnimationDim = true', 'lightBrightenSpeed = 2.5', 'lightDimSpeed = 2.5', 'resourceAmount = 0.1', 'useResources = true')])
+                 [mod('ModuleLight', 'lightName = bayLight', 'useAnimationDim = true', 'lightBrightenSpeed = 2.5', 'lightDimSpeed = 2.5', 'resourceAmount = 0.1', 'useResources = true'), paint('its_fwd')])
 if have('ITS_FwdTanker'):
     part('ITS_FwdTanker', 'ITS Tanker Section', 'No windows, no cabins, no doors: more propellant where the people would have been. It launches, delivers, comes home, and does not ask what any of it is for.',
-         'ship tanker propellant tank refuel nose probe', 2.0, 46000, 'FuelTank', 'experimentalRocketry', extra=['vesselType = Ship', 'fuelCrossFeed = True', RCS_FX], modules=[tank(110)] + PROBE(2500))
+         'ship tanker propellant tank refuel nose probe', 2.0, 46000, 'FuelTank', 'experimentalRocketry', extra=['vesselType = Ship', 'fuelCrossFeed = True', RCS_FX], modules=[tank(110)] + PROBE(2500) + [paint('its_fwd')])
 piston = lambda anchor, servo, node, lim, v, vmax, axis: mod('ModuleRoboticServoPiston', f'servoTransformName = {servo}', f'baseTransformName = {anchor}', f'servoAttachNodes = {node}', f'servoSrfMeshNames = {servo}',
     f'traverseVelocityLimits = 0.05, {vmax}', f'traverseVelocity = {v}', f'hardMinMaxLimits = -{lim},0', f'softMinMaxExtension = -{lim},0', f'mainAxis = {axis}', 'servoMass = 0.05', 'maxMotorOutput = 1500', 'positionSpringMutliplier = 600',
     'positionDampingMutliplier = 20', 'motorizedMassPerKN = 0.00005', 'motorizedCostPerDriveUnit = 1', 'efficiency = 0.75', 'baseResourceConsumptionRate = 0.01', 'referenceConsumptionVelocity = 1', block('RESOURCE', 'name = ElectricCharge', 'rate = 0.6'))

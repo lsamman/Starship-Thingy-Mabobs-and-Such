@@ -4,22 +4,18 @@ State on 2026-11-23, 6 pm ET, written at the end of the cloud session for the us
 
 ## Start here on the PC
 
-Nothing from the cloud session has been in KSP yet. Three branches, all pushed; `main` is unchanged:
+Nothing from the cloud session has been in KSP yet. On `main` (the user merged PRs #1 and #2): the pre-flight config fixes (Ring7 deletes both SEP `SEP_NODE_Switch` B9 modules; CTT patch `:LAST`; fan `isBreakable`; docking `allowRotation` dropped; cargo platform no surface attach), the cloud setup fixes, `tools/usage_plan.py`, and two SEP Block 3 crew nosecones with the ITS big lattice window: `STMS_B3_NoseCrew` (3 rows of small windows, 12 crew) and `STMS_B3_NoseCrewCargo` (1 row, 4 crew; `NOSE_SMALL_COUNT` in `v3/scripts/layout.py` for 2).
 
-| Branch | What | Status |
-|---|---|---|
-| `claude/tonight` | Pre-flight config fixes (Ring7 deletes both SEP `SEP_NODE_Switch` B9 modules; CTT patch `:LAST`; fan `isBreakable`; docking `allowRotation` dropped; cargo platform no surface attach), cloud setup fixes, `tools/usage_plan.py` | test first |
-| `claude/b3-crew-nose` | `claude/tonight` + two SEP Block 3 crew nosecones with the ITS big lattice window: `STMS_B3_NoseCrew` (3 rows of small windows, 12 crew), `STMS_B3_NoseCrewCargo` (1 row, 4 crew; `NOSE_SMALL_COUNT` in `v3/scripts/layout.py` for 2) | built and checked in the cloud; needs KSP |
-| `claude/carbon-livery` | `claude/tonight` + optional B9 "Livery: White / Bare carbon" on booster, aft and the three forward sections; +54 MB | waiting for the user's verdict |
+Open: PR #3, `claude/carbon-livery`: `main` + an optional B9 "Livery: White / Bare carbon" on booster, aft and the three forward sections (+54 MB), waiting for the user's verdict in game.
 
 With KSP closed:
 
 ```
-git fetch origin && git checkout claude/b3-crew-nose     # has everything except the livery
+git fetch origin && git checkout claude/carbon-livery    # main + the livery; or `git checkout main` without it
 ./build_all.sh && ./deploy.sh
 ```
 
-Then work through **Open** below with the user, ask for KSP.log lines mentioning `ITS`, `SEP_CW`, `STMS` or `StarshipThingy`, and fix what breaks. Once the livery is approved, merge `claude/carbon-livery` and `claude/b3-crew-nose` into one branch (both edit `its/scripts/photo.py` and `lint.py`; resolve by keeping both features), rebuild, retest the switch, then offer a PR to `main`. Merge only when the user says so.
+Then work through **Open** below with the user, ask for KSP.log lines mentioning `ITS`, `SEP_CW`, `STMS` or `StarshipThingy`, and fix what breaks. Merge PR #3 only when the user says so.
 
 Usage: the user's weekly Claude limit resets Tue 2026-11-24 at 11 pm ET and was about 60 % used at 4 pm Monday; one full 5-hour window costs roughly 13 % of it. Have them run `/usage`, then `python3 tools/usage_plan.py --five <5h %> --week <weekly %> --five-reset HH:MM --week-reset "+1 23:00" --work "HH:MM-23:00"` for a pace.
 

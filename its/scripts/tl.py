@@ -229,7 +229,8 @@ class Canvas:
         l = np.sqrt(nx * nx + ny * ny + 1)
         return nx / l, ny / l
 
-    def save(self, name, nstrength=1.0, cavity=0.0, target_p90=None):
+    def save(self, name, nstrength=1.0, cavity=0.0, target_p90=None, nrm=True):
+        """nrm=False writes the diffuse only (a livery that shares another sheet's normal map)."""
         os.makedirs(PNG, exist_ok=True)
         if cavity:
             self.cavity_from_height(cavity)
@@ -242,6 +243,9 @@ class Canvas:
             rgb = bdb_pass(name, rgb, nx, ny)
         diff = np.dstack([rgb, np.clip(self.gloss, 0, 1)])
         write_dds((diff * 255 + .5).astype(np.uint8), f'{name}_diff')
+        if not nrm:
+            print(f'{name}: p50 {np.percentile(rgb.mean(-1), 50):.2f} p90 {np.percentile(rgb.mean(-1), 90):.2f} gloss {self.gloss.mean():.2f}')
+            return
         n = np.empty((self.h, self.w, 4), np.float32)
         n[..., 0] = 1; n[..., 1] = ny * .5 + .5; n[..., 2] = n[..., 1]; n[..., 3] = nx * .5 + .5
         write_dds((n * 255 + .5).astype(np.uint8), f'{name}_nrm')
@@ -287,6 +291,7 @@ def write_dds(arr, name, transparent=None):
     import bdb_look
     cover = None
     key = name.rsplit('_', 1)[0] if name.endswith(('_diff', '_nrm')) else name
+    key = key[:-len('_carbon')] if key.endswith('_carbon') else key     # liveries share their sheet's UV islands
     if os.path.exists(UVDUMP) and arr.shape[0] == arr.shape[1]:
         cover = bdb_look.coverage_mask(UVDUMP, key, arr.shape[0])
     bdb_look.write_dds(arr, os.path.join(OUT, name + '.dds'), cover)

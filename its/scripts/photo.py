@@ -1,6 +1,7 @@
 """Milestone photos: loads a craft file (or single .mu files) with real textures, SEP's engines included, and renders it.
 usage: blender -b -P photo.py -- out.png [--res WxH] [--view az,el,dist,tx,ty,tz] [--sun az,el] [--lens mm] [--sky day|space|studio]
-       [--only part,part] [--hide name] [--pose part:clip] [--mirror] x.craft | part.mu[@x,y,z,yaw] ...
+       [--only part,part] [--hide name] [--pose part:clip] [--mirror] [--livery Carbon] x.craft | part.mu[@x,y,z,yaw] ...
+--livery: the B9 subtype whose TEXTURE swaps to show, read from each part's build/cfg/<part>.cfg (as B9 applies them).
 A .mu path outside build/mu (SEP's nosecone, a v3 kit) is shown as it is, with --hide applied to it."""
 import bpy, sys, os, math, re, addon_utils
 import numpy as np
@@ -9,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import layout as L
 addon_utils.enable('io_object_mu', default_set=True)
 a = sys.argv[sys.argv.index('--') + 1:]
-out = a.pop(0); opt = dict(res='1400x1000', view='25,8,60,0,0,0', sun='60,35', lens='60', sky='studio', only='', hide='', pose='', samples='48', ortho='')
+out = a.pop(0); opt = dict(res='1400x1000', view='25,8,60,0,0,0', sun='60,35', lens='60', sky='studio', only='', hide='', pose='', samples='48', ortho='', livery='')
 files = []
 while a:
     x = a.pop(0)
@@ -47,7 +48,25 @@ def nimage(im):
     return new
 
 
-def setup(m, dirn):
+def swaps(part):
+    """{currentTexture: texture} for the --livery subtype in the part's generated cfg."""
+    p = os.path.join(HERE, 'build/cfg', part + '.cfg')
+    if not opt['livery'] or not os.path.exists(p): return {}
+    ls = [l.strip() for l in open(p)]; out = {}; depth = 0; sub = None; t = {}
+    for i, l in enumerate(ls):
+        if l == '{': depth += 1; continue
+        if l == '}':
+            if depth == sub: sub = None
+            depth -= 1; continue
+        if l == 'SUBTYPE' and i + 2 < len(ls) and ls[i + 2] == 'name = ' + opt['livery']: sub = depth + 1
+        if sub is not None:
+            k, _, v = l.partition(' = ')
+            if k in ('texture', 'currentTexture'): t[k] = v
+            if len(t) == 2: out[t['currentTexture']] = t['texture'].rsplit('/', 1)[-1]; t = {}
+    return out
+
+
+def setup(m, dirn, swap={}):
     if m is None or m.get('_d'): return
     m['_d'] = 1; mp = m.mumatprop
     tx = {t.name: t.tex for t in mp.texture.properties}; cols = {t.name: t.value for t in mp.color.properties}
@@ -61,7 +80,8 @@ def setup(m, dirn):
         return n.outputs[0]
     def img(key, f=lambda i: i):
         if key not in tx: return None
-        im, ext = load_tex(dirn, tx[key])
+        b_ = tx[key].rsplit('.', 1)[0]
+        im, ext = load_tex(dirn, swap.get(b_, b_) if key == '_MainTex' else tx[key])
         if not im: return None
         it = nt.nodes.new('ShaderNodeTexImage'); it.image = f(im); nt.links.new(coord(ext), it.inputs[0]); return it
     it = img('_MainTex')
@@ -111,14 +131,14 @@ def model(path, skip=(), clip=None):
             o = o.parent
         return False
     c = bpy.data.collections.new(os.path.basename(path)); colls[key] = c
-    d = os.path.dirname(path)
+    d = os.path.dirname(path); sw = swaps(os.path.basename(path)[:-3])
     for o in new:
         if o.type in ('CAMERA', 'LIGHT'): bpy.data.objects.remove(o); continue
         for cc in list(o.users_collection): cc.objects.unlink(o)
         if o.type != 'MESH' or o.muproperties.collider != 'MU_COL_NONE' or 'COLLIDER' in o.name or under(o):
             if o.type == 'MESH': o.hide_render = True
         else:
-            for s in o.material_slots: setup(s.material, d)
+            for s in o.material_slots: setup(s.material, d, sw)
         c.objects.link(o)
     return c
 
