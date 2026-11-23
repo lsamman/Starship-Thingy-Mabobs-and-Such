@@ -162,7 +162,9 @@ def place(part, M):
             t = math.radians(az)
             put(SEP, M @ Matrix.Translation((rr * math.sin(t), -rr * math.cos(t), -L.R3_TOP)) @ Matrix.Rotation(math.radians(az + 180), 4, 'Z'), CEN if part == 'ITS_Ring7' else BST)
     elif part == 'ITS_RVac': put(SEP, M @ Matrix.Scale(L.RV_SCALE, 4), VAC)
-    elif part.startswith('SEP_26'): put(SEP, M, CEN)
+    elif part == 'SEP_26_R3_VAC': put(SEP, M, VAC)
+    elif part.startswith('SEP_26_R3'): put(SEP, M, CEN)
+    elif part.startswith('SEP_26'): put(SEP.replace('SEP_26_RAPTOR_3', part), M, hide)
     else: put(os.path.join(HERE, 'build/mu', part + '.mu'), M, hide, poses.get(part))
 
 

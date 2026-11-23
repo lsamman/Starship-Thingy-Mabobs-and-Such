@@ -196,3 +196,6 @@ if have('ITS_CargoBoom'):
     part('ITS_CargoPlatform', 'ITS Cargo Crane Platform', f'A {LL.CR_DECK_W} by {LL.CR_DECK_D} m deck, open at both ends so a rover can drive off. Fix cargo to the deck node or surface attach it, and use Release Deck Cargo on the ground.', 'cargo crane platform elevator', mass=.8, cost=1300,
          extra=['fx_gasBurst_white = 0.0, 0.02, 0.0, 0.0, 1.0, 0.0, decouple', 'sound_decoupler_fire = decouple'],
          modules=[mod('ModuleDecouple', 'ejectionForce = 1', 'explosiveNodeID = cargo', 'stagingEnabled = False', 'menuName = Release Deck Cargo')], node_attach=None, **kw)
+
+import hls_cfg
+hls_cfg.write(globals())

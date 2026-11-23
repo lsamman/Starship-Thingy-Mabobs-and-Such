@@ -134,3 +134,12 @@ if __name__ == '__main__':
             continue
         f, a = ship(fwd); booster(a)
         write(nm, f, 'Stage 1: all three booster rings. Stage 2: separation. Stage 3: ship engines.', 3)
+    if os.path.exists(os.path.join(MU, 'STMS_HLS_Core.json')):
+        import hls_layout as HL
+        f = P('STMS_HLS_Crew'); a = P('STMS_HLS_Core'); f.put(a, 'bottom', 'top')
+        sl = [a.put(P('SEP_26_R3_SL_C'), f'sl{i}', 'top') for i in (1, 2, 3)]; sym(sl)
+        vac = [a.put(P('SEP_26_R3_VAC'), f'vac{i}', 'top') for i in (1, 2, 3)]; sym(vac)
+        for i, e in enumerate(sl + vac): stage(e, 0, i)
+        sym([a.put(P('STMS_HLS_Leg'), f'leg{i + 1}', 'mount', yaw(-az)) for i, az in enumerate(HL.LEG_AZ)])
+        f.put(P('STMS_HLS_Lift'), 'lift', 'mount')
+        write('Starship HLS', f, 'Starship HLS with SEP Raptors. Lands on the ring of thrusters on the core: shut the Raptors down and activate them. SEP Block 3 booster fits underneath.', 1)

@@ -19,6 +19,14 @@ Then work through **Open** below with the user, ask for KSP.log lines mentioning
 
 Usage: the user's weekly Claude limit resets Tue 2026-11-24 at 11 pm ET and was about 60 % used at 4 pm Monday; one full 5-hour window costs roughly 13 % of it. Have them run `/usage`, then `python3 tools/usage_plan.py --five <5h %> --week <weekly %> --five-reset HH:MM --week-reset "+1 23:00" --work "HH:MM-23:00"` for a pace.
 
+## Starship HLS (2026-11-23 evening, branch `claude/hls`, not pushed, not deployed, not run in KSP)
+
+Built in `~/Projects/STMS-HLS`, a fresh clone, because the `.git` in `~/Projects/StarshipThingyMabobsAndSuch` is damaged (0-byte index and objects, probably a crash); the damaged repo was left as it was. Every working file there that differs from `main` matches a version already on GitHub.
+
+Parts: `STMS_HLS_Core`, `_Crew`, `_Leg`, `_Lift`, built by the ITS pipeline (`its/scripts/hls_layout.py` numbers, `hls_common.py`, `build_hls*.py`, `tex_hls.py`, `hls_cfg.py`, `check_hls.py`; patch `its/patches/STMS_HLS.cfg`). See `docs/HLS.md`. `check_hls.py` passes, lint passes.
+
+To test in game: landing ring thrust direction and plume (the ring pushes up, 18 plumes point down and out); legs hold it and the pads sit level; RCS directions; elevator piston (anchor/servo names, a kerbal riding the deck, ladder); airlock EVA with the door open; nose port docks with Orion; arrays track; both light switches; SEP Raptors and booster snap on.
+
 ## What this is
 
 **Starship Thingy Mabobs and Such**: the user's personal KSP 1.12.5 mod, add-ons for Kari's Starship Expansion Project (SEP). One installed folder, `GameData/StarshipThingyMabobsAndSuch`, built from two halves:

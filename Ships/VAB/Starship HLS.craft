@@ -1,0 +1,542 @@
+ship = Starship HLS
+version = 1.12.5
+description = Starship HLS with SEP Raptors. Lands on the ring of thrusters on the core: shut the Raptors down and activate them. SEP Block 3 booster fits underneath.
+type = VAB
+size = 12,80,12
+steamPublishedFileId = 0
+persistentId = 1508782171
+rot = 0,0,0,0
+missionFlag = Squad/Flags/default
+vesselType = Ship
+OverrideDefault = False,False,False,False
+OverrideActionControl = 0,0,0,0
+OverrideAxisControl = 0,0,0,0
+OverrideGroupNames = ,,,
+PART
+{
+	part = STMS.HLS.Crew_4290100073
+	partName = Part
+	persistentId = 1690100073
+	pos = 0,51.1037,0
+	attPos = 0,0,0
+	attPos0 = 0,51.1037,0
+	rot = 0,0,0,1
+	attRot = 0,0,0,1
+	attRot0 = 0,0,0,1
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Off
+	rigidAttachment = False
+	istg = -1
+	resPri = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	sepI = -1
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	link = STMS.HLS.Core_4290100074
+	link = STMS.HLS.Lift_4290100085
+	attN = bottom,STMS.HLS.Core_4290100074_0|0|0_0|-1|0_0|0|0_0|-1|0
+	attN = lift,STMS.HLS.Lift_4290100085_0|0.6463|-2.4_0|0|-1_0|0.6463|-2.4_0|0|-1
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
+PART
+{
+	part = STMS.HLS.Core_4290100074
+	partName = Part
+	persistentId = 1690100074
+	pos = 0,30,0
+	attPos = 0,0,0
+	attPos0 = 0,-21.1037,0
+	rot = 0,0,0,1
+	attRot = 0,0,0,1
+	attRot0 = 0,0,0,1
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Off
+	rigidAttachment = False
+	istg = -1
+	resPri = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	sepI = -1
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	link = SEP.26.R3.SL.C_4290100075
+	link = SEP.26.R3.SL.C_4290100076
+	link = SEP.26.R3.SL.C_4290100077
+	link = SEP.26.R3.VAC_4290100078
+	link = SEP.26.R3.VAC_4290100079
+	link = SEP.26.R3.VAC_4290100080
+	link = STMS.HLS.Leg_4290100081
+	link = STMS.HLS.Leg_4290100082
+	link = STMS.HLS.Leg_4290100083
+	link = STMS.HLS.Leg_4290100084
+	attN = top,STMS.HLS.Crew_4290100073_0|21.1037|0_0|1|0_0|21.1037|0_0|1|0
+	attN = sl1,SEP.26.R3.SL.C_4290100075_0|1.8916|-0.5829_0|-1|0_0|1.8916|-0.5829_0|-1|0
+	attN = sl2,SEP.26.R3.SL.C_4290100076_0.504806|1.8916|0.29145_0|-1|0_0.504806|1.8916|0.29145_0|-1|0
+	attN = sl3,SEP.26.R3.SL.C_4290100077_-0.504806|1.8916|0.29145_0|-1|0_-0.504806|1.8916|0.29145_0|-1|0
+	attN = vac1,SEP.26.R3.VAC_4290100078_1.72841|2.7821|-0.9979_0|-1|0_1.72841|2.7821|-0.9979_0|-1|0
+	attN = vac2,SEP.26.R3.VAC_4290100079_2.44415e-16|2.7821|1.9958_0|-1|0_2.44415e-16|2.7821|1.9958_0|-1|0
+	attN = vac3,SEP.26.R3.VAC_4290100080_-1.72841|2.7821|-0.9979_0|-1|0_-1.72841|2.7821|-0.9979_0|-1|0
+	attN = leg1,STMS.HLS.Leg_4290100081_1.98874|4.35|-1.98874_0.707107|0|-0.707107_1.98874|4.35|-1.98874_0.707107|0|-0.707107
+	attN = leg2,STMS.HLS.Leg_4290100082_1.98874|4.35|1.98874_0.707107|0|0.707107_1.98874|4.35|1.98874_0.707107|0|0.707107
+	attN = leg3,STMS.HLS.Leg_4290100083_-1.98874|4.35|1.98874_-0.707107|0|0.707107_-1.98874|4.35|1.98874_-0.707107|0|0.707107
+	attN = leg4,STMS.HLS.Leg_4290100084_-1.98874|4.35|-1.98874_-0.707107|0|-0.707107_-1.98874|4.35|-1.98874_-0.707107|0|-0.707107
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
+PART
+{
+	part = SEP.26.R3.SL.C_4290100075
+	partName = Part
+	persistentId = 1690100075
+	pos = 0,30.0791,-0.5829
+	attPos = 0,0,0
+	attPos0 = 0,0.07910001,-0.5829
+	rot = 0,0,0,1
+	attRot = 0,0,0,1
+	attRot0 = 0,0,0,1
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Grandparent
+	rigidAttachment = False
+	istg = 0
+	resPri = 0
+	dstg = 0
+	sidx = 0
+	sqor = 0
+	sepI = 0
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	sym = SEP.26.R3.SL.C_4290100076
+	sym = SEP.26.R3.SL.C_4290100077
+	attN = node_top_R3,STMS.HLS.Core_4290100074_0|1.8125|0_0|1|0_0|1.8125|0_0|1|0
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
+PART
+{
+	part = SEP.26.R3.SL.C_4290100076
+	partName = Part
+	persistentId = 1690100076
+	pos = 0.5048062,30.0791,0.29145
+	attPos = 0,0,0
+	attPos0 = 0.5048062,0.07910001,0.29145
+	rot = 0,0,0,1
+	attRot = 0,0,0,1
+	attRot0 = 0,0,0,1
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Grandparent
+	rigidAttachment = False
+	istg = 0
+	resPri = 0
+	dstg = 0
+	sidx = 1
+	sqor = 0
+	sepI = 0
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	sym = SEP.26.R3.SL.C_4290100075
+	sym = SEP.26.R3.SL.C_4290100077
+	attN = node_top_R3,STMS.HLS.Core_4290100074_0|1.8125|0_0|1|0_0|1.8125|0_0|1|0
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
+PART
+{
+	part = SEP.26.R3.SL.C_4290100077
+	partName = Part
+	persistentId = 1690100077
+	pos = -0.5048062,30.0791,0.29145
+	attPos = 0,0,0
+	attPos0 = -0.5048062,0.07910001,0.29145
+	rot = 0,0,0,1
+	attRot = 0,0,0,1
+	attRot0 = 0,0,0,1
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Grandparent
+	rigidAttachment = False
+	istg = 0
+	resPri = 0
+	dstg = 0
+	sidx = 2
+	sqor = 0
+	sepI = 0
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	sym = SEP.26.R3.SL.C_4290100075
+	sym = SEP.26.R3.SL.C_4290100076
+	attN = node_top_R3,STMS.HLS.Core_4290100074_0|1.8125|0_0|1|0_0|1.8125|0_0|1|0
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
+PART
+{
+	part = SEP.26.R3.VAC_4290100078
+	partName = Part
+	persistentId = 1690100078
+	pos = 1.728413,30.9696,-0.9979
+	attPos = 0,0,0
+	attPos0 = 1.728413,0.9696,-0.9979
+	rot = 0,0,0,1
+	attRot = 0,0,0,1
+	attRot0 = 0,0,0,1
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Grandparent
+	rigidAttachment = False
+	istg = 0
+	resPri = 0
+	dstg = 0
+	sidx = 3
+	sqor = 0
+	sepI = 0
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	sym = SEP.26.R3.VAC_4290100079
+	sym = SEP.26.R3.VAC_4290100080
+	attN = top,STMS.HLS.Core_4290100074_0|1.8125|0_0|1|0_0|1.8125|0_0|1|0
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
+PART
+{
+	part = SEP.26.R3.VAC_4290100079
+	partName = Part
+	persistentId = 1690100079
+	pos = 2.44415e-16,30.9696,1.9958
+	attPos = 0,0,0
+	attPos0 = 2.44415e-16,0.9696,1.9958
+	rot = 0,0,0,1
+	attRot = 0,0,0,1
+	attRot0 = 0,0,0,1
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Grandparent
+	rigidAttachment = False
+	istg = 0
+	resPri = 0
+	dstg = 0
+	sidx = 4
+	sqor = 0
+	sepI = 0
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	sym = SEP.26.R3.VAC_4290100078
+	sym = SEP.26.R3.VAC_4290100080
+	attN = top,STMS.HLS.Core_4290100074_0|1.8125|0_0|1|0_0|1.8125|0_0|1|0
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
+PART
+{
+	part = SEP.26.R3.VAC_4290100080
+	partName = Part
+	persistentId = 1690100080
+	pos = -1.728413,30.9696,-0.9979
+	attPos = 0,0,0
+	attPos0 = -1.728413,0.9696,-0.9979
+	rot = 0,0,0,1
+	attRot = 0,0,0,1
+	attRot0 = 0,0,0,1
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Grandparent
+	rigidAttachment = False
+	istg = 0
+	resPri = 0
+	dstg = 0
+	sidx = 5
+	sqor = 0
+	sepI = 0
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	sym = SEP.26.R3.VAC_4290100078
+	sym = SEP.26.R3.VAC_4290100079
+	attN = top,STMS.HLS.Core_4290100074_0|1.8125|0_0|1|0_0|1.8125|0_0|1|0
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
+PART
+{
+	part = STMS.HLS.Leg_4290100081
+	partName = Part
+	persistentId = 1690100081
+	pos = 1.988738,34.35,-1.988738
+	attPos = 0,0,0
+	attPos0 = 1.988738,4.35,-1.988738
+	rot = 0,-0.3826834,0,0.9238795
+	attRot = 0,0,0,1
+	attRot0 = 0,-0.3826834,0,0.9238795
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Grandparent
+	rigidAttachment = False
+	istg = -1
+	resPri = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	sepI = -1
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	sym = STMS.HLS.Leg_4290100082
+	sym = STMS.HLS.Leg_4290100083
+	sym = STMS.HLS.Leg_4290100084
+	attN = mount,STMS.HLS.Core_4290100074_0|0|0_0|0|1_0|0|0_0|0|1
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
+PART
+{
+	part = STMS.HLS.Leg_4290100082
+	partName = Part
+	persistentId = 1690100082
+	pos = 1.988738,34.35,1.988738
+	attPos = 0,0,0
+	attPos0 = 1.988738,4.35,1.988738
+	rot = 0,-0.9238795,0,0.3826834
+	attRot = 0,0,0,1
+	attRot0 = 0,-0.9238795,0,0.3826834
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Grandparent
+	rigidAttachment = False
+	istg = -1
+	resPri = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	sepI = -1
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	sym = STMS.HLS.Leg_4290100081
+	sym = STMS.HLS.Leg_4290100083
+	sym = STMS.HLS.Leg_4290100084
+	attN = mount,STMS.HLS.Core_4290100074_0|0|0_0|0|1_0|0|0_0|0|1
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
+PART
+{
+	part = STMS.HLS.Leg_4290100083
+	partName = Part
+	persistentId = 1690100083
+	pos = -1.988738,34.35,1.988738
+	attPos = 0,0,0
+	attPos0 = -1.988738,4.35,1.988738
+	rot = 0,-0.9238795,0,-0.3826834
+	attRot = 0,0,0,1
+	attRot0 = 0,-0.9238795,0,-0.3826834
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Grandparent
+	rigidAttachment = False
+	istg = -1
+	resPri = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	sepI = -1
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	sym = STMS.HLS.Leg_4290100081
+	sym = STMS.HLS.Leg_4290100082
+	sym = STMS.HLS.Leg_4290100084
+	attN = mount,STMS.HLS.Core_4290100074_0|0|0_0|0|1_0|0|0_0|0|1
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
+PART
+{
+	part = STMS.HLS.Leg_4290100084
+	partName = Part
+	persistentId = 1690100084
+	pos = -1.988738,34.35,-1.988738
+	attPos = 0,0,0
+	attPos0 = -1.988738,4.35,-1.988738
+	rot = 0,-0.3826834,0,-0.9238795
+	attRot = 0,0,0,1
+	attRot0 = 0,-0.3826834,0,-0.9238795
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Grandparent
+	rigidAttachment = False
+	istg = -1
+	resPri = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	sepI = -1
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	sym = STMS.HLS.Leg_4290100081
+	sym = STMS.HLS.Leg_4290100082
+	sym = STMS.HLS.Leg_4290100083
+	attN = mount,STMS.HLS.Core_4290100074_0|0|0_0|0|1_0|0|0_0|0|1
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
+PART
+{
+	part = STMS.HLS.Lift_4290100085
+	partName = Part
+	persistentId = 1690100085
+	pos = 0,51.75,-2.4
+	attPos = 0,0,0
+	attPos0 = 0,0.6463,-2.4
+	rot = 0,0,0,1
+	attRot = 0,0,0,1
+	attRot0 = 0,0,0,1
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Grandparent
+	rigidAttachment = False
+	istg = -1
+	resPri = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	sepI = -1
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	attN = mount,STMS.HLS.Crew_4290100073_0|0|0_0|0|1_0|0|0_0|0|1
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
