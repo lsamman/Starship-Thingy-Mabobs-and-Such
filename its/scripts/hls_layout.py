@@ -38,6 +38,6 @@ SOL_AZ = (48.75, 311.25); SOL_HW = 18.75; SOL_Z = (22.95, 23.8)
 # ---- legs (plane of one leg: r outward, z)
 HINGE = (2.87, 4.35); SOLE = -1.0; FOOT_R = 5.35; FOOT_STOW = .52
 COLLAR = 1.15               # drag strut collar, up the strut from the ankle (deployed)
-LIFT_TRAVEL = 22.6
+LIFT_TRAVEL = 22.3
 SHEET = {'core': (0.0, Z_SKIN), 'crew': (Z_SKIN, Z_OGIVE + 7.40)}
 PAD = .003

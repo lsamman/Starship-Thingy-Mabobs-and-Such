@@ -7,7 +7,7 @@ Four parts and a craft file (`Ships/VAB/Starship HLS.craft`), modelled on the NA
 | **Core** (`STMS_HLS_Core`) | 322 t of methalox, 3 sea-level + 3 vacuum Raptor 3 nodes, 18 landing thrusters in the black band, 4 leg nodes, elevator track and ladder, RCS, floodlights |
 | **Crew Section** (`STMS_HLS_Crew`) | 8 crew, ten windows, airlock bay with an awning door, two solar arrays behind the side hatches, nose cap over a docking port |
 | **Landing Leg** (`STMS_HLS_Leg`) | Use four |
-| **Elevator** (`STMS_HLS_Lift`) | Goes on the `lift` node in the airlock; a Breaking Ground piston, 22.6 m |
+| **Elevator** (`STMS_HLS_Lift`) | Goes on the `lift` node in the airlock; a Breaking Ground piston, 22.3 m |
 
 ## SEP compatibility
 
@@ -20,7 +20,7 @@ Four parts and a craft file (`Ships/VAB/Starship HLS.craft`), modelled on the NA
 
 Dry about 45 t with engines and gear. The ring gives 540 kN, 414 kN of it straight down, so it can hover up to 255 t in lunar gravity. Brake with the Raptors, shut them down near the ground (about 100 m), activate the landing thrusters on the core. They share the throttle.
 
-On the ground: Open Airlock Door, Lower Deck, then slide the elevator's Target Extension to -22.6. Back to 0, fold the deck and close the door before leaving. The track is also a ladder.
+On the ground: Open Airlock Door, Lower Deck, then slide the elevator's Target Extension to -22.3. Back to 0, fold the deck and close the door before leaving. The track is also a ladder.
 
 ## Where it differs from the renders
 

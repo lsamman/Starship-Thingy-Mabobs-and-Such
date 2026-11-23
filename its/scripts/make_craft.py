@@ -18,7 +18,7 @@ def node(part, n):
     return tuple(j['pos']), tuple(j['dir'])
 
 
-NID = {'ITS_RVac': 'node_top_R3', 'SEP_26_R3_SL_C': 'node_top_R3'}
+NID = {'ITS_RVac': 'node_top_R3', 'SEP_26_R3_SL_C': 'node_top_R3', 'SEP_26_R3_VAC': 'node_top_R3'}
 s_ = lambda v: '|'.join(('%.6g' % x) for x in v)
 
 

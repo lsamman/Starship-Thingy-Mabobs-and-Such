@@ -47,6 +47,7 @@ for b in bores:
     P.empty('landingThrust', None, P.model)
     e = bpy.data.objects[[o.name for o in P.coll.objects if o.name.startswith('landingThrust')][-1]]
     y = ax.normalized(); x = V((math.cos(a), math.sin(a), 0)); z_ = x.cross(y); m = Matrix((x, y, z_)).transposed().to_4x4(); m.translation = c0 + ax * .02
+    if 75 < b < 109 or 251 < b < 285: m = Rz(1.875 if b > 180 else -1.875) @ m      # the beam groups sit a half facet off; their thrust does not, so it balances
     P.place(e, m, P.model)
 ho = P.mesh('hull', hull, MH, smooth_angle=30)
 import bmesh                                             # weld the patches to the skin so the shading runs across

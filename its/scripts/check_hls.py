@@ -54,7 +54,7 @@ ok(not hit, 'elevator clear along its travel ' + str({k: (len(x), x[:4]) for k, 
 for i, az in enumerate(HL.LEG_AZ):
     t2, _ = tree(leg1, None, Matrix.Rotation(math.radians(az), 4, 'Z') @ W)
     for k in (HL.LIFT_TRAVEL, HL.LIFT_TRAVEL - 1, HL.LIFT_TRAVEL - 2, HL.LIFT_TRAVEL - 3): ok(not tree(l1, ('carriage', 'deckmesh'), L0 @ Tz(-k))[0].overlap(t2), f'elevator {HL.LIFT_TRAVEL - k:.0f} m up clear of leg {az}') if az in (45, 315) else None
-v = tree(l1, ('carriage', 'deckmesh'), L0 @ Tz(-HL.LIFT_TRAVEL))[1]; lo = min(p.z for p in v); ok(0 < lo - HL.SOLE < .4, 'lowered deck underside %.2f m above the soles' % (lo - HL.SOLE))
+v = tree(l1, ('carriage', 'deckmesh'), L0 @ Tz(-HL.LIFT_TRAVEL))[1]; lo = min(p.z for p in v); ok(.2 < lo - HL.SOLE < .6, 'lowered deck underside %.2f m above the soles' % (lo - HL.SOLE))
 if SEP and os.path.exists(SEP):
     r = load(os.path.join(SEP, 'SEP_26_RAPTOR_3.mu')); R0 = 1.8125
     sl = [n for n in ('Powerhead', 'Nozzle_SL', 'Pipes_Common', 'Shield_BOX') if n in r]; vc = [n for n in ('Powerhead', 'Nozzle_VAC', 'Nozzle_VAC_Extension', 'Pipes_Common') if n in r]
@@ -64,4 +64,19 @@ if SEP and os.path.exists(SEP):
     for a in (60, 180, 300):
         s, c = math.sin(math.radians(a)), math.cos(math.radians(a)); t, v = tree(r, vc, Matrix.Translation((HL.R_VAC * s, -HL.R_VAC * c, HL.Z_VAC - R0)))
         h = t.overlap(tc); lim = max(math.hypot(p.x, p.y) for p in v); ok(not h, 'vacuum Raptor %d: r max %.3f, exit z %.3f, %d hits' % (a, lim, min(p.z for p in v), len(h)))
+load(mu('STMS_HLS_Core'))
+tt = [o.matrix_world.copy() for o in bpy.data.objects if base(o) == 'landingThrust']
+ok(len(tt) == 18 and len({tuple(round(x, 2) for x in m.translation) for m in tt}) == 18, '%d distinct landing thrust transforms' % len(tt))
+f = [(m.translation, (m.to_3x3() @ V((0, 1, 0))).normalized()) for m in tt]
+ok(all(HL.BAND[0] < p.z < HL.BAND[1] and d.z < -.7 and d.x * p.x + d.y * p.y > 0 for p, d in f), 'exhaust down and outward, z %.3f' % max(d.z for _, d in f)); s = sum((d for _, d in f), V()); ok(abs(s.x) + abs(s.y) < .01, 'sideways thrust cancels')
+for pn, tn in (('STMS_HLS_Core', 'RCSthruster'), ('STMS_HLS_Crew', 'RCSthruster')):
+    load(mu(pn)); q = [((o.matrix_world.to_3x3() @ V((0, 0, 1))).normalized(), o.matrix_world.translation.copy()) for o in bpy.data.objects if base(o) == tn]
+    ok(len(q) == 16 and all(d.x * p.x + d.y * p.y > 0 for d, p in q), f'{pn}: {len(q)} RCS, all outward')
+if SEP and os.path.exists(SEP):
+    h = load(os.path.join(SEP, 'SEP_26_SHIP_DOCKING_HARDWARE.mu')); N0 = V((0, -2.875, -1.0276))
+    M = Matrix.Translation((0, HL.R_DOCK, HL.Z_DOCK)) @ Matrix.Rotation(math.pi, 4, 'Z') @ Matrix.Translation(-N0)
+    for n in h:
+        t, v = tree(h, (n,), M); c = [k for k, o in (('core', tc), ('crew', tw)) if t.overlap(o)]
+        print('      dock', n, 'z %.2f..%.2f' % (min(p.z for p in v), max(p.z for p in v)), 'r %.2f..%.2f' % (min(math.hypot(p.x, p.y) for p in v), max(math.hypot(p.x, p.y) for p in v)), 'touches', c)
+        for az in HL.LEG_AZ: ok(not t.overlap(tree(leg0, None, Matrix.Rotation(math.radians(az), 4, 'Z') @ W)[0]), f'{n} clear of stowed leg {az}') if t.overlap(tree(leg0, None, Matrix.Rotation(math.radians(az), 4, 'Z') @ W)[0]) else None
 print('check_hls:', bad, 'failures')
