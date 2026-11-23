@@ -26,7 +26,7 @@ What they asked for, in order: upgrade the ITS mod to BDB / HabTech2 / Benjee10 
 
 ## Hard rules
 
-1. **Never commit SEP's or Thrimm's files.** SEP's Raptor is only referenced by path in ModuleManager copies (`its/scripts/make_rings.py`).
+1. **Never commit SEP's or Thrimm's files.** SEP's Raptor and Block 3 nosecone are only referenced by path in ModuleManager copies (`its/scripts/make_rings.py`, `v3/scripts/make_nose_cfg.py`); `v3/scripts/layout.py` keeps a few measured radii of the nose, never mesh or texture data.
 2. **Part names must not change.** The `default` save has ITS parts in flight, and craft use `SEP.CW.*`.
 3. Leave `GameData/SpaceX_ITS` (Thrimm's old mod) on the PC alone; an old craft uses it.
 4. No SpaceX endorsement claim. Credit Thrimm and SEP. Our assets are CC BY-NC-SA 4.0, scripts MIT.
@@ -63,7 +63,7 @@ What can't be done in the cloud: run KSP, deploy, read KSP.log, bake the V3 mask
 | `its/scripts/photo.py` | Renders a .craft; `--pose ITS_Leg:legDeploy`, `--only`, `--sky day/space/studio`, `--lit` for windows |
 | `its/scripts/check_fit.py`, `check_float.py`, `check_balance.py`, `check_rings.py`, `lint.py` | Clearances; pieces touching nothing; TWR and delta-v; engine overlap; cfg/model/texture checks |
 | `its/extras/ITS_PBR.cfg.txt` | Opt-in PBR material swap, untested |
-| `v3/` | Winch and expendable V3: `build.sh`, `cfg/`, `patches/`, `scripts/` |
+| `v3/` | Winch, expendable V3 and the Block 3 crew nosecones' window kits: `build.sh`, `cfg/`, `patches/`, `scripts/` (`nose.py` lays pieces on SEP's nose from the measured rings in `layout.py`) |
 
 ## Conventions and traps
 
@@ -98,6 +98,7 @@ What can't be done in the cloud: run KSP, deploy, read KSP.log, bake the V3 mask
 7. The save with ITS parts still loads after the merge. `ITS.ShipAft` gained docking and reaction wheel modules and its solar/leg nodes since that craft flew.
 8. VAB symmetry on `ITS.ShipAft` (`stackSymmetry = 2`, 16 mixed nodes): with symmetry on, attach one SL Raptor, one vac Raptor, one leg, one fan. If copies land on the wrong nodes, drop `stackSym` in `make_cfg.py`.
 9. Whether to turn on PBR. Unknowns: which channel of `_MetalMap` Resurfaced/Standard reads, and whether the hull keeps its painted gloss without one.
+10. Block 3 crew nosecones (`STMS_B3_NoseCrew`, `STMS_B3_NoseCrewCargo`; `v3/scripts/build_nosekit.py`, `make_nose_cfg.py`, `check_nose.py`): both appear in the Pods tab with SEP's model plus our windows (two MODELs, like the rings); Toggle Cabin Lights lights only the glass and not SEP's hull (`ModuleColorChanger` with `includedRenderer = stms_b3_glass`, not yet seen working; without it SEP's materials would take the colour too); flaps attach to both fin nodes and, folded or deflected, don't cover the outer windows (edges at 52 deg, hinges at 70); both Ablative subtypes leave the windows on bare steel; RCS still fires; crew board in the VAB and can EVA through the airlock trigger at SEP's hatch (SEP's model has none); the crew-cargo nose sits on SEP's Block 3 cargo section and that bay still shields its payload. Render: `its/build/photos/b3nose_*.png`.
 
 **Waiting for a verdict:** bare-carbon livery, an optional B9 switch (Livery: White / Bare carbon, White default) on branch `claude/carbon-livery`; +54 MB of textures, no carbon normal maps. In game: the switch on all five hull parts, switching back, the old save loading, weave shimmer.
 
