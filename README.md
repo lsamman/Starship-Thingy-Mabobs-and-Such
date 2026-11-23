@@ -1,6 +1,6 @@
-# Starship Thingy Mabobs and Such
+# Starship Thingy Mabobs and Such (STMS)
 
-Add-ons for Kari's [Starship Expansion Project](https://github.com/Kari1407/Starship-Expansion-Project), in one folder: `GameData/StarshipThingyMabobsAndSuch`. Private repository, for personal use.
+Add-ons for Kari's [Starship Expansion Project](https://github.com/Kari1407/Starship-Expansion-Project), in one folder: `GameData/StarshipThingyMabobsAndSuch`. 
 
 | | What it adds | Notes |
 |---|---|---|
