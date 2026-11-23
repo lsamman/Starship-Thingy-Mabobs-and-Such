@@ -5,7 +5,7 @@ from mathutils import Matrix, Vector
 from mathutils.bvhtree import BVHTree
 import layout as L
 addon_utils.enable('io_object_mu', default_set=True)
-SEP = os.path.expanduser('~/.local/share/Steam/steamapps/common/Kerbal Space Program Modded SOL/GameData/StarshipExpansionProject/Assets/BL3/SEP_26_RAPTOR_3.mu')
+SEP = os.path.join(os.environ.get('KSP_DIR') or os.path.expanduser('~/.local/share/Steam/steamapps/common/Kerbal Space Program Modded SOL'), 'GameData/StarshipExpansionProject/Assets/BL3/SEP_26_RAPTOR_3.mu')
 for o in list(bpy.data.objects): bpy.data.objects.remove(o)
 bpy.ops.import_object.ksp_mu(filepath=SEP); bpy.context.view_layer.update()
 def under(o, names):

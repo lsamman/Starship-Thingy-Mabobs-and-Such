@@ -73,7 +73,7 @@ test('fan stowed / aft', tree(fan0, fanM(60)), AT, 1900)   # its rails are bolte
 for fr in (.1, .2, .3, .5, .75, 1):
     m = mesh('ITS_FanArray', fr, ('base',)); t = tree(m, fanM(60)); test(f'fan {fr} / legs', t, LT[0]); test(f'fan {fr} / leg120', t, LT[1])
 # vacuum engine beside the fan: SEP's real mesh
-SEP = os.path.expanduser('~/.local/share/Steam/steamapps/common/Kerbal Space Program Modded SOL/GameData/StarshipExpansionProject/Assets/BL3/SEP_26_RAPTOR_3.mu')
+SEP = os.path.join(os.environ.get('KSP_DIR') or os.path.expanduser('~/.local/share/Steam/steamapps/common/Kerbal Space Program Modded SOL'), 'GameData/StarshipExpansionProject/Assets/BL3/SEP_26_RAPTOR_3.mu')
 if os.path.exists(SEP):
     bpy.ops.import_object.ksp_mu(filepath=SEP); bpy.context.view_layer.update(); v, f = [], []
     def under(o):

@@ -5,11 +5,11 @@
   * module names exist in installed assemblies; B9 tank types are defined
 usage: python3 -I scripts/lint.py <GameData/SHABTech> [installed GameData]"""
 import os, re, sys, glob
-A = os.path.expanduser('~/Applications/blender-3.6/3.6/scripts/addons/io_object_mu')
+A = os.environ.get('IO_OBJECT_MU') or os.path.expanduser('~/Applications/blender-3.6/3.6/scripts/addons/io_object_mu')
 sys.path.insert(0, A)
 from mu import Mu
 root = sys.argv[1]
-gd = sys.argv[2] if len(sys.argv) > 2 else os.path.expanduser('~/.local/share/Steam/steamapps/common/Kerbal Space Program Modded SOL/GameData')
+gd = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.environ.get('KSP_DIR') or os.path.expanduser('~/.local/share/Steam/steamapps/common/Kerbal Space Program Modded SOL'), 'GameData')
 errs = []; warns = []
 STOCK = open(os.path.join(os.path.dirname(gd), 'KSP_x64_Data', 'Managed', 'Assembly-CSharp.dll'), 'rb').read() if os.path.exists(os.path.join(os.path.dirname(gd), 'KSP_x64_Data', 'Managed', 'Assembly-CSharp.dll')) else b''
 extra = b''

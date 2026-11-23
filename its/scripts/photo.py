@@ -14,7 +14,7 @@ while a:
     x = a.pop(0)
     if x.startswith('--'): opt[x[2:]] = a.pop(0)
     else: files.append(x)
-SEP = os.path.expanduser('~/.local/share/Steam/steamapps/common/Kerbal Space Program Modded SOL/GameData/StarshipExpansionProject/Assets/BL3/SEP_26_RAPTOR_3.mu')
+SEP = os.path.join(os.environ.get('KSP_DIR') or os.path.expanduser('~/.local/share/Steam/steamapps/common/Kerbal Space Program Modded SOL'), 'GameData/StarshipExpansionProject/Assets/BL3/SEP_26_RAPTOR_3.mu')
 HERE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 sc = bpy.context.scene
 for o in list(bpy.data.objects): bpy.data.objects.remove(o)
@@ -134,6 +134,7 @@ BST = ('R3Vac_Stuff', 'R3C_Stuff', 'R3_Gimballing_Stuff'); CEN = ('R3Vac_Stuff',
 
 def place(part, M):
     if only and part not in only: return
+    if (part in L.RINGS or part == 'ITS_RVac' or part.startswith('SEP_26')) and not os.path.exists(SEP): return   # no SEP here: no engines in the picture
     if part in L.RINGS:
         n, r, a0 = L.RINGS[part]
         for rr, az in [(r, a0 + 360 * i / n) for i in range(n)] + ([(0, 0)] if part == 'ITS_Ring7' else []):
