@@ -1,32 +1,53 @@
 # Handoff
 
-State on 2026-11-23, written at the end of the local session that built this. Read it first; it replaces that conversation.
+State on 2026-11-23, 6 pm ET, written at the end of the cloud session for the user's Linux desktop. Read it first; it replaces that conversation. The model is Opus 5.5 (no Fable): Opus plans, reviews and does the hard 3D/physics work; Sonnet and Haiku take standard and bulk jobs.
+
+## Start here on the PC
+
+Nothing from the cloud session has been in KSP yet. Three branches, all pushed; `main` is unchanged:
+
+| Branch | What | Status |
+|---|---|---|
+| `claude/tonight` | Pre-flight config fixes (Ring7 deletes both SEP `SEP_NODE_Switch` B9 modules; CTT patch `:LAST`; fan `isBreakable`; docking `allowRotation` dropped; cargo platform no surface attach), cloud setup fixes, `tools/usage_plan.py` | test first |
+| `claude/b3-crew-nose` | `claude/tonight` + two SEP Block 3 crew nosecones with the ITS big lattice window: `STMS_B3_NoseCrew` (3 rows of small windows, 12 crew), `STMS_B3_NoseCrewCargo` (1 row, 4 crew; `NOSE_SMALL_COUNT` in `v3/scripts/layout.py` for 2) | built and checked in the cloud; needs KSP |
+| `claude/carbon-livery` | `claude/tonight` + optional B9 "Livery: White / Bare carbon" on booster, aft and the three forward sections; +54 MB | waiting for the user's verdict |
+
+With KSP closed:
+
+```
+git fetch origin && git checkout claude/b3-crew-nose     # has everything except the livery
+./build_all.sh && ./deploy.sh
+```
+
+Then work through **Open** below with the user, ask for KSP.log lines mentioning `ITS`, `SEP_CW`, `STMS` or `StarshipThingy`, and fix what breaks. Once the livery is approved, merge `claude/carbon-livery` and `claude/b3-crew-nose` into one branch (both edit `its/scripts/photo.py` and `lint.py`; resolve by keeping both features), rebuild, retest the switch, then offer a PR to `main`. Merge only when the user says so.
+
+Usage: the user's weekly Claude limit resets Tue 2026-11-24 at 11 pm ET and was about 60 % used at 4 pm Monday; one full 5-hour window costs roughly 13 % of it. Have them run `/usage`, then `python3 tools/usage_plan.py --five <5h %> --week <weekly %> --five-reset HH:MM --week-reset "+1 23:00" --work "HH:MM-23:00"` for a pace.
 
 ## What this is
 
 **Starship Thingy Mabobs and Such**: the user's personal KSP 1.12.5 mod, add-ons for Kari's Starship Expansion Project (SEP). One installed folder, `GameData/StarshipThingyMabobsAndSuch`, built from two halves:
 
-- `v3/`: cargo winch for SEP's V3 cargo bay and an expendable config for the V3 body (formerly "SEP Extras").
+- `v3/`: for SEP's V3 (Block 3) ship: cargo winch for the cargo bay, an expendable config for the body (formerly "SEP Extras"), and the crew nosecones' window kits.
 - `its/`: the 2016 Interplanetary Transport System, rebuilt from scratch (started as a fork of Thrimm's 2016 mod, none of its assets used).
 
 Everything is modelled procedurally in Blender Python and textured with numpy. Generated configs, models and textures are never edited by hand.
 
-**Status:** every part is built, textured, configured and installed on the user's PC. The final build has **not been tested in game**. An earlier phase-1 build was loaded once (rings compiled, no errors from our parts, some lag).
+**Status:** every ITS part is built, textured, configured and was installed on the PC before the cloud session; the final build has **not been tested in game**. An earlier phase-1 build was loaded once (rings compiled, no errors from our parts, some lag).
 
 ## The user
 
 - New to coding; plays KSP on a Linux PC (the "Sol" install). Explain plainly and lead with the result.
 - Wants photos at key milestones (they're in `docs/photos`).
-- Approves useful subagents. Wants to be asked before anything public.
+- Approves useful subagents. Wants to be asked before anything public (SEP's licence forbids re-using its assets, so no fork of SEP; reference its parts by path).
 - They judge looks in game. Show a render, ship it, then wait for the verdict before rolling a new look out everywhere.
 
 Choices they made: SEP scale (real x 0.625, 7.5 m body); booster engines as ring parts only; cargo ship with side doors and a crane; placeholder IVA; the mod's name.
 
-What they asked for, in order: upgrade the ITS mod to BDB / HabTech2 / Benjee10 Orion quality, research real ITS structure and TPS materials, use SEP's engines, more model detail, a cargo variant; photos at milestones; finish the grid fins; gyros on the ship strong enough to beat aerodynamic forces for a flip and burn; aeroshielding on the legs; a sane polygon count and less lag; fix things floating over the surface; merge with SEP Extras; put it on GitHub; this name.
+What they asked for, in order: upgrade the ITS mod to BDB / HabTech2 / Benjee10 Orion quality, research real ITS structure and TPS materials, use SEP's engines, more model detail, a cargo variant; photos at milestones; finish the grid fins; gyros on the ship strong enough to beat aerodynamic forces for a flip and burn; aeroshielding on the legs; a sane polygon count and less lag; fix things floating over the surface; merge with SEP Extras; put it on GitHub; this name. On 2026-11-23 (cloud): a plan and a tool to spend their Claude usage well; the bare-carbon livery to look at; ITS-style windows on SEP's Block 3 nose, the big window on both, a few rows of small windows on the crew nose and one or two on the crew-and-cargo nose.
 
 ## Hard rules
 
-1. **Never commit SEP's or Thrimm's files.** SEP's Raptor is only referenced by path in ModuleManager copies (`its/scripts/make_rings.py`).
+1. **Never commit SEP's or Thrimm's files.** SEP's Raptor and Block 3 nosecone are only referenced by path in ModuleManager copies (`its/scripts/make_rings.py`, `v3/scripts/make_nose_cfg.py`); `v3/scripts/layout.py` keeps a few measured radii of the nose, never mesh or texture data.
 2. **Part names must not change.** The `default` save has ITS parts in flight, and craft use `SEP.CW.*`.
 3. Leave `GameData/SpaceX_ITS` (Thrimm's old mod) on the PC alone; an old craft uses it.
 4. No SpaceX endorsement claim. Credit Thrimm and SEP. Our assets are CC BY-NC-SA 4.0, scripts MIT.
@@ -63,7 +84,7 @@ What can't be done in the cloud: run KSP, deploy, read KSP.log, bake the V3 mask
 | `its/scripts/photo.py` | Renders a .craft; `--pose ITS_Leg:legDeploy`, `--only`, `--sky day/space/studio`, `--lit` for windows |
 | `its/scripts/check_fit.py`, `check_float.py`, `check_balance.py`, `check_rings.py`, `lint.py` | Clearances; pieces touching nothing; TWR and delta-v; engine overlap; cfg/model/texture checks |
 | `its/extras/ITS_PBR.cfg.txt` | Opt-in PBR material swap, untested |
-| `v3/` | Winch and expendable V3: `build.sh`, `cfg/`, `patches/`, `scripts/` |
+| `v3/` | Winch, expendable V3 and the Block 3 crew nosecones' window kits: `build.sh`, `cfg/`, `patches/`, `scripts/` (`nose.py` lays pieces on SEP's nose from the measured rings in `layout.py`) |
 
 ## Conventions and traps
 
@@ -98,6 +119,7 @@ What can't be done in the cloud: run KSP, deploy, read KSP.log, bake the V3 mask
 7. The save with ITS parts still loads after the merge. `ITS.ShipAft` gained docking and reaction wheel modules and its solar/leg nodes since that craft flew.
 8. VAB symmetry on `ITS.ShipAft` (`stackSymmetry = 2`, 16 mixed nodes): with symmetry on, attach one SL Raptor, one vac Raptor, one leg, one fan. If copies land on the wrong nodes, drop `stackSym` in `make_cfg.py`.
 9. Whether to turn on PBR. Unknowns: which channel of `_MetalMap` Resurfaced/Standard reads, and whether the hull keeps its painted gloss without one.
+10. Block 3 crew nosecones (`STMS_B3_NoseCrew`, `STMS_B3_NoseCrewCargo`; `v3/scripts/build_nosekit.py`, `make_nose_cfg.py`, `check_nose.py`): both appear in the Pods tab with SEP's model plus our windows (two MODELs, like the rings); Toggle Cabin Lights lights only the glass and not SEP's hull (`ModuleColorChanger` with `includedRenderer = stms_b3_glass`, not yet seen working; without it SEP's materials would take the colour too); flaps attach to both fin nodes and, folded or deflected, don't cover the windows (the ITS-style big window's lower corners at 48 deg, z 2.65; small-window edges at 52 deg, z -0.9; hinges at 70 deg, z 4.25); both Ablative subtypes leave the windows on bare steel; RCS still fires; crew board in the VAB and can EVA through the airlock trigger at SEP's hatch (SEP's model has none); the crew-cargo nose sits on SEP's Block 3 cargo section and that bay still shields its payload. Render: `its/build/photos/b3nose_*.png`.
 
 **Waiting for a verdict:** bare-carbon livery, an optional B9 switch (Livery: White / Bare carbon, White default) on branch `claude/carbon-livery`; +54 MB of textures, no carbon normal maps. In game: the switch on all five hull parts, switching back, the old save loading, weave shimmer.
 
@@ -107,4 +129,4 @@ What can't be done in the cloud: run KSP, deploy, read KSP.log, bake the V3 mask
 
 ## Good first steps in a new session
 
-Ask for the user's in-game results and KSP.log excerpts, fix what they report, then the livery verdict, then offer the crew interior. `tools/usage_plan.py` lays out the user's Claude usage windows (feed it the numbers from `/usage`).
+Ask for the user's in-game results and KSP.log excerpts, fix what they report, then the livery verdict, then offer the crew interior.
