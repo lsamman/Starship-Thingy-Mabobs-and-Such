@@ -8,4 +8,4 @@ this notice being included in all copies. THE SOFTWARE IS PROVIDED "AS IS", WITH
 
 The V3 mask textures (*_MASK_BARE.dds, built by v3/scripts/bake_masks.py and only present in releases) are derived from
 Starship Expansion Project textures. They and the SEP models shown by the engine rings are All Rights Reserved by their
-authors, are not covered by the licences above, and must not be redistributed without permission.
+authors and are not covered by the licences above.

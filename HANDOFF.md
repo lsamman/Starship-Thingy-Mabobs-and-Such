@@ -17,20 +17,19 @@ Everything is modelled procedurally in Blender Python and textured with numpy. G
 
 - New to coding; plays KSP on a Linux PC (the "Sol" install). Explain plainly and lead with the result.
 - Wants photos at key milestones (they're in `docs/photos`).
-- Approves useful subagents. Wants to be asked before anything public; pushing to this private repo was approved.
+- Approves useful subagents. Wants to be asked before anything public.
 - They judge looks in game. Show a render, ship it, then wait for the verdict before rolling a new look out everywhere.
 
 Choices they made: SEP scale (real x 0.625, 7.5 m body); booster engines as ring parts only; cargo ship with side doors and a crane; placeholder IVA; the mod's name.
 
-What they asked for, in order: upgrade the ITS mod to BDB / HabTech2 / Benjee10 Orion quality, research real ITS structure and TPS materials, use SEP's engines, more model detail, a cargo variant; photos at milestones; finish the grid fins; gyros on the ship strong enough to beat aerodynamic forces for a flip and burn; aeroshielding on the legs; a sane polygon count and less lag; fix things floating over the surface; merge with SEP Extras; put it on GitHub for personal use; this name.
+What they asked for, in order: upgrade the ITS mod to BDB / HabTech2 / Benjee10 Orion quality, research real ITS structure and TPS materials, use SEP's engines, more model detail, a cargo variant; photos at milestones; finish the grid fins; gyros on the ship strong enough to beat aerodynamic forces for a flip and burn; aeroshielding on the legs; a sane polygon count and less lag; fix things floating over the surface; merge with SEP Extras; put it on GitHub; this name.
 
 ## Hard rules
 
-1. **Keep the repository and releases private.** SEP's art is All Rights Reserved; the expendable V3 masks (`*_MASK_BARE.dds`, release only) derive from it, and the engine rings show SEP's models. Public release needs Kari's permission.
-2. **Never commit SEP's or Thrimm's files.** SEP's Raptor is only referenced by path in ModuleManager copies (`its/scripts/make_rings.py`).
-3. **Part names must not change.** The `default` save has ITS parts in flight, and craft use `SEP.CW.*`.
-4. Leave `GameData/SpaceX_ITS` (Thrimm's old mod) on the PC alone; an old craft uses it.
-5. No SpaceX endorsement claim. Credit Thrimm and SEP. Our assets are CC BY-NC-SA 4.0, scripts MIT.
+1. **Never commit SEP's or Thrimm's files.** SEP's Raptor is only referenced by path in ModuleManager copies (`its/scripts/make_rings.py`).
+2. **Part names must not change.** The `default` save has ITS parts in flight, and craft use `SEP.CW.*`.
+3. Leave `GameData/SpaceX_ITS` (Thrimm's old mod) on the PC alone; an old craft uses it.
+4. No SpaceX endorsement claim. Credit Thrimm and SEP. Our assets are CC BY-NC-SA 4.0, scripts MIT.
 
 ## Working in the cloud
 

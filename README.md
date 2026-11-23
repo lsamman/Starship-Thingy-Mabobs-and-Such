@@ -19,4 +19,4 @@ Needs SEP, ModuleManager and B9PartSwitch. The winch and crane need Breaking Gro
 
 ## Licence
 
-See [LICENSE](LICENSE). The V3 mask textures in the release are derived from SEP's, which are All Rights Reserved, and the engine rings show SEP's engines. Don't make this repository or its releases public without Kari's permission.
+See [LICENSE](LICENSE). The V3 mask textures in the release are derived from SEP's, which are All Rights Reserved, and the engine rings show SEP's engines.
