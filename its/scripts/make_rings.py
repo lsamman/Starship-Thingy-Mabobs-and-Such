@@ -41,7 +41,7 @@ for nm, (n, r, a0) in L.RINGS.items():
           '\t@attachRules = 1,0,1,0,0', '\t@bulkheadProfiles = size4', '\t%breakingForce = 5000', '\t%breakingTorque = 5000',
           '\t@MODULE[ModuleEnginesFX]', '\t{', f'\t\t@maxThrust = {THRUST * c}', '\t\t%exhaustDamageMultiplier = 10', '\t}',
           '\t@MODULE[ModuleAlternator]', '\t{', '\t\t@RESOURCE', '\t\t{', f'\t\t\t@rate = {2 * c}', '\t\t}', '\t}',
-          '\t!MODULE[ModuleB9PartSwitch]:HAS[#moduleID[SEP_NODE_Switch]] {}',
+          '\t!MODULE[ModuleB9PartSwitch]:HAS[#moduleID[SEP_NODE_Switch]],* {}',
           '\t@MODULE[ModuleB9DisableTransform]', '\t{'] + [f'\t\ttransform = {t}' for t in HIDE[nm]] + ['\t}',
           '\t!MODULE[ModuleSEPRaptor] {}', '\t!MODULE[FXModuleLookAtConstraint] {}']
     if nm == 'ITS_Ring7':

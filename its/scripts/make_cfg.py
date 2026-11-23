@@ -113,7 +113,7 @@ part('ITS_ShipAft', 'ITS Ship Aft Section', 'Tanks, leg fairings, swept skirt an
      modules=[tank(390), rcs(90), res('ElectricCharge', 4000),
               mod('ModuleReactionWheel', 'PitchTorque = 8000', 'YawTorque = 8000', 'RollTorque = 2500', 'actuatorModeCycle = 0', block('RESOURCE', 'name = ElectricCharge', 'rate = 12')), mod('ModuleToggleCrossfeed', 'crossfeedStatus = true', 'toggleEditor = true', 'toggleFlight = true')] +
              [mod('ModuleDockingNode', f'nodeTransformName = dock{x}', f'controlTransformName = dock{x}', 'nodeType = ITSTransfer', 'acquireRange = 0.8', 'acquireForce = 4', 'acquireTorque = 4', 'captureRange = 0.12', 'undockEjectionForce = 6',
-                  'stagingEnabled = False', 'allowRotation = False') for x in 'AB'],
+                  'stagingEnabled = False') for x in 'AB'],
      stackSym=2)
 part('ITS_FwdCrew', 'ITS Crew Section', 'Cabins, common areas, a solar storm shelter, and a window large enough to see the whole problem coming. Fits on the aft section. The restaurant mentioned at the conference is represented by a snack drawer.',
      'ship crew cabin window habitat nose command', 16.3, 88000, 'Pods', 'experimentalRocketry',
@@ -159,7 +159,7 @@ if have('ITS_FanArray'):
     part('ITS_FanArray', 'ITS Fan Solar Array', 'Seven folding petals on a hand fan, slid out from under the skirt once nobody is firing an engine through it. Tracks the sun. Opening it in an atmosphere is a short story.',
          'ship solar panel array fan power', .3, 9800, 'Electrical', 'experimentalElectrics', rules='1,1,0,0,0', node_attach='0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 1', profiles='srf, size1', crash=12,
          modules=[mod('ModuleDeployableSolarPanel', 'animationName = fanDeploy', 'pivotName = sunPivot', 'raycastTransformName = suncatcher', 'secondaryTransformName = suncatcher', 'isTracking = true', 'sunAlignFactor = 1', 'retractable = true',
-                      'breakable = true', 'impactResistance = 6', 'windResistance = 6', 'resourceName = ElectricCharge', 'chargeRate = 48', 'showStatus = true', 'bypassAnimations = false', 'trackingSpeed = 0.15')])
+                      'isBreakable = true', 'impactResistance = 6', 'windResistance = 6', 'resourceName = ElectricCharge', 'chargeRate = 48', 'showStatus = true', 'bypassAnimations = false', 'trackingSpeed = 0.15')])
 
 PROBE = lambda ec: [command(0), sas(), res('ElectricCharge', ec), wheel(200, 1), antenna(5000000), rcs(90),
          mod('ModuleKerbNetAccess', 'MinimumFoV = 5', 'MaximumFoV = 50', 'enhancedSituationMask = 7', 'requiresAnimation = False', block('DISPLAY_MODES', 'Mode = Terrain', 'Mode = Biome'))]
@@ -183,7 +183,7 @@ if have('ITS_CargoBoom'):
          modules=[piston('BoomAnchor', 'BoomServo', 'hoist', LL.CR_TRAVEL, .3, .6, 'Z')], **kw)
     part('ITS_CargoHoist', 'ITS Cargo Crane Hoist', f'Two winches on a crossbeam. Top node to the boom, lower node to the platform. With the boom out, slide Target Extension toward -{LL.CR_HOIST} to lower the platform to the surface. Needs Breaking Ground.', 'cargo crane hoist winch', mass=.5, cost=1900,
          modules=[piston('CableAnchor', 'HoistServo', 'platform', LL.CR_HOIST, .75, 1, 'Y')], **kw)
-    kw['rules'] = '1,1,1,1,1'
+    kw['rules'] = '1,0,1,1,1'      # others attach to the deck; the deck itself has no surface node
     part('ITS_CargoPlatform', 'ITS Cargo Crane Platform', f'A {LL.CR_DECK_W} by {LL.CR_DECK_D} m deck, open at both ends so a rover can drive off. Fix cargo to the deck node or surface attach it, and use Release Deck Cargo on the ground.', 'cargo crane platform elevator', mass=.8, cost=1300,
          extra=['fx_gasBurst_white = 0.0, 0.02, 0.0, 0.0, 1.0, 0.0, decouple', 'sound_decoupler_fire = decouple'],
          modules=[mod('ModuleDecouple', 'ejectionForce = 1', 'explosiveNodeID = cargo', 'stagingEnabled = False', 'menuName = Release Deck Cargo')], node_attach=None, **kw)

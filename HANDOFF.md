@@ -26,7 +26,7 @@ What they asked for, in order: upgrade the ITS mod to BDB / HabTech2 / Benjee10 
 
 ## Hard rules
 
-1. **Never commit SEP's or Thrimm's files.** SEP's Raptor is only referenced by path in ModuleManager copies (`its/scripts/make_rings.py`).
+1. **Never commit SEP's or Thrimm's files.** SEP's Raptor and Block 3 nosecone are only referenced by path in ModuleManager copies (`its/scripts/make_rings.py`, `v3/scripts/make_nose_cfg.py`); `v3/scripts/layout.py` keeps a few measured radii of the nose, never mesh or texture data.
 2. **Part names must not change.** The `default` save has ITS parts in flight, and craft use `SEP.CW.*`.
 3. Leave `GameData/SpaceX_ITS` (Thrimm's old mod) on the PC alone; an old craft uses it.
 4. No SpaceX endorsement claim. Credit Thrimm and SEP. Our assets are CC BY-NC-SA 4.0, scripts MIT.
@@ -40,7 +40,7 @@ source tools/env.sh
 its/p.sh name --view 25,0,60,0,0,87 --sky studio "../Ships/VAB/ITS Crew.craft"     # render -> its/build/photos/name.png
 ```
 
-`p.sh` works from `its/`, so craft paths start with `../`. Setup, build, a render and the fit check were tested from a clean clone on the PC with no KSP or SEP visible: models came out vertex-identical, textures equal to rounding. They have not been run on an actual cloud machine; the apt step in particular is untested, and setup needs download.blender.org and github.com to be reachable. If Blender can't be downloaded, config, patch and script edits are still possible, and `make_cfg.py` needs built models (the release zip has them).
+`p.sh` works from `its/`, so craft paths start with `../`. Setup, build, a render and the fit check were tested from a clean clone on the PC with no KSP or SEP visible: models came out vertex-identical, textures equal to rounding. First run on a real cloud machine on 2026-11-23: setup, full build (3.5 min), lint, check_fit/float/balance and photos all work. The cloud environment must allow download.blender.org (github.com comes through the git proxy). Ubuntu's ImageMagick is version 6, so setup puts a `magick` shim on PATH via `tools/env.sh`; IM6 ignores `dds:mipmaps=fromlist`, so **cloud DDS have a single mip level**: fine for renders and checks, never ship them (deploy refuses a cloud build anyway). If Blender can't be downloaded, config, patch and script edits are still possible, and `make_cfg.py` needs built models (the release zip has them).
 
 What can't be done in the cloud: run KSP, deploy, read KSP.log, bake the V3 masks, `check_rings.py`, the engine part of `check_fit.py`, and engines in photos (all need SEP). So: **edit, build and check here, push a branch, and the user pulls on the PC** and runs `./build_all.sh && ./deploy.sh` there with KSP closed. A cloud build has no masks and `deploy.sh` refuses it.
 
@@ -63,7 +63,7 @@ What can't be done in the cloud: run KSP, deploy, read KSP.log, bake the V3 mask
 | `its/scripts/photo.py` | Renders a .craft; `--pose ITS_Leg:legDeploy`, `--only`, `--sky day/space/studio`, `--lit` for windows |
 | `its/scripts/check_fit.py`, `check_float.py`, `check_balance.py`, `check_rings.py`, `lint.py` | Clearances; pieces touching nothing; TWR and delta-v; engine overlap; cfg/model/texture checks |
 | `its/extras/ITS_PBR.cfg.txt` | Opt-in PBR material swap, untested |
-| `v3/` | Winch and expendable V3: `build.sh`, `cfg/`, `patches/`, `scripts/` |
+| `v3/` | Winch, expendable V3 and the Block 3 crew nosecones' window kits: `build.sh`, `cfg/`, `patches/`, `scripts/` (`nose.py` lays pieces on SEP's nose from the measured rings in `layout.py`) |
 
 ## Conventions and traps
 
@@ -96,12 +96,16 @@ What can't be done in the cloud: run KSP, deploy, read KSP.log, bake the V3 mask
 5. The flip against the airstream.
 6. Fan arrays deploy and track; crane pistons; side-by-side docking (`dockA`/`dockB`, nodeType ITSTransfer).
 7. The save with ITS parts still loads after the merge. `ITS.ShipAft` gained docking and reaction wheel modules and its solar/leg nodes since that craft flew.
-8. Whether to turn on PBR. Unknowns: which channel of `_MetalMap` Resurfaced/Standard reads, and whether the hull keeps its painted gloss without one.
+8. VAB symmetry on `ITS.ShipAft` (`stackSymmetry = 2`, 16 mixed nodes): with symmetry on, attach one SL Raptor, one vac Raptor, one leg, one fan. If copies land on the wrong nodes, drop `stackSym` in `make_cfg.py`.
+9. Whether to turn on PBR. Unknowns: which channel of `_MetalMap` Resurfaced/Standard reads, and whether the hull keeps its painted gloss without one.
+10. Block 3 crew nosecones (`STMS_B3_NoseCrew`, `STMS_B3_NoseCrewCargo`; `v3/scripts/build_nosekit.py`, `make_nose_cfg.py`, `check_nose.py`): both appear in the Pods tab with SEP's model plus our windows (two MODELs, like the rings); Toggle Cabin Lights lights only the glass and not SEP's hull (`ModuleColorChanger` with `includedRenderer = stms_b3_glass`, not yet seen working; without it SEP's materials would take the colour too); flaps attach to both fin nodes and, folded or deflected, don't cover the windows (the ITS-style big window's lower corners at 48 deg, z 2.65; small-window edges at 52 deg, z -0.9; hinges at 70 deg, z 4.25); both Ablative subtypes leave the windows on bare steel; RCS still fires; crew board in the VAB and can EVA through the airlock trigger at SEP's hatch (SEP's model has none); the crew-cargo nose sits on SEP's Block 3 cargo section and that bay still shields its payload. Render: `its/build/photos/b3nose_*.png`.
 
-**Not built:** bare-carbon livery (planned), a real crew interior (uses `MK3_CrewCab_Int`; FreeIva logs hatch errors for it), RealFuels volumes, a custom category icon.
+**Waiting for a verdict:** bare-carbon livery, an optional B9 switch (Livery: White / Bare carbon, White default) on branch `claude/carbon-livery`; +54 MB of textures, no carbon normal maps. In game: the switch on all five hull parts, switching back, the old save loading, weave shimmer.
+
+**Not built:** a real crew interior (uses `MK3_CrewCab_Int`; FreeIva logs hatch errors for it), RealFuels volumes, a custom category icon.
 
 **Known and left alone:** `check_float.py` still lists joint rings, bolts and hinge brackets hidden inside the hull, the lettering (7 mm proud) and the leg shells (they rest on the ship, not on the leg). Fan packages show slightly under the skirt rim when stowed. SEP's own `ModuleSEPRaptor` throws an exception on the SL_C engine in the editor; not ours. `lint.py` warns about `ModuleDeployableAero` (Kerbal Reusability Expansion's DLL isn't scanned).
 
 ## Good first steps in a new session
 
-Ask for the user's in-game results and KSP.log excerpts, fix what they report, then offer the bare-carbon livery or the crew interior.
+Ask for the user's in-game results and KSP.log excerpts, fix what they report, then the livery verdict, then offer the crew interior. `tools/usage_plan.py` lays out the user's Claude usage windows (feed it the numbers from `/usage`).

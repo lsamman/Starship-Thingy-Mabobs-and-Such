@@ -4,7 +4,7 @@ Add-ons for Kari's [Starship Expansion Project](https://github.com/Kari1407/Star
 
 | | What it adds | Notes |
 |---|---|---|
-| **V3 ship** | Cargo winch for the V3 cargo bay, and an expendable config for the V3 body | [docs/V3.md](docs/V3.md) |
+| **V3 ship** | Cargo winch for the V3 cargo bay, an expendable config for the V3 body, and two crew nosecones with ITS-style windows | [docs/V3.md](docs/V3.md) |
 | **ITS 2016** | The Interplanetary Transport System: booster, engine rings, crew, cargo and tanker ships, legs, solar fans, crane | [docs/ITS.md](docs/ITS.md) |
 
 ## Install
