@@ -1,7 +1,8 @@
 """Milestone photos: loads a craft file (or single .mu files) with real textures, SEP's engines included, and renders it.
 usage: blender -b -P photo.py -- out.png [--res WxH] [--view az,el,dist,tx,ty,tz] [--sun az,el] [--lens mm] [--sky day|space|studio]
        [--only part,part] [--hide name] [--pose part:clip] [--mirror] [--livery Carbon] x.craft | part.mu[@x,y,z,yaw] ...
---livery: the B9 subtype whose TEXTURE swaps to show, read from each part's build/cfg/<part>.cfg (as B9 applies them)."""
+--livery: the B9 subtype whose TEXTURE swaps to show, read from each part's build/cfg/<part>.cfg (as B9 applies them).
+A .mu path outside build/mu (SEP's nosecone, a v3 kit) is shown as it is, with --hide applied to it."""
 import bpy, sys, os, math, re, addon_utils
 import numpy as np
 from mathutils import Vector, Matrix, Quaternion
@@ -177,7 +178,11 @@ for f in files:
         pos = (0, 0, 0); yaw = 0
         if '@' in f:
             f, t = f.split('@'); t = [float(v) for v in t.split(',')]; pos = t[:3]; yaw = t[3] if len(t) > 3 else 0
-        place(os.path.basename(f)[:-3], Matrix.Translation(pos) @ Matrix.Rotation(math.radians(yaw), 4, 'Z'))
+        M = Matrix.Translation(pos) @ Matrix.Rotation(math.radians(yaw), 4, 'Z')
+        if os.path.isfile(f) and os.path.dirname(os.path.abspath(f)) != os.path.abspath(os.path.join(HERE, 'build/mu')):
+            put(os.path.abspath(f), M, hide)       # any other .mu as it is, e.g. SEP's Block 3 nosecone or a v3 window kit
+        else:
+            place(os.path.basename(f)[:-3], M)
 
 sc.render.engine = 'CYCLES'; sc.cycles.device = 'CPU'; sc.cycles.samples = int(opt['samples']); sc.cycles.use_denoising = True; sc.cycles.max_bounces = 4
 sc.render.resolution_x, sc.render.resolution_y = [int(v) for v in opt['res'].split('x')]

@@ -71,6 +71,10 @@ for c in glob.glob(os.path.join(root, '**', '*.cfg'), recursive=True):
     allnames = set(); allanims = set()
     for m_ in models:
         key = m_
+        if key not in mu_info and os.path.exists(os.path.join(gd, key + '.mu')):    # another mod's model (SEP's), read from the install
+            mm = Mu()
+            if mm.read(os.path.join(gd, key + '.mu')):
+                nn, aa = set(), set(); walk(mm.obj, nn, aa, None); mu_info[key] = (nn, aa)
         if key in mu_info:
             allnames |= mu_info[key][0]; allanims |= mu_info[key][1]
         elif not os.path.isdir(gd):
