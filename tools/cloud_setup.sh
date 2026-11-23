@@ -20,8 +20,13 @@ if [ ! -d "$A" ]; then
     git clone -q https://github.com/taniwha/io_object_mu "$A"; git -C "$A" checkout -q ff04234
     patch -s -p1 -d "$A" < "$HERE/io_object_mu.patch"
 fi
+# The scripts call ImageMagick 7's `magick`; distro packages often ship only 6's `convert`.
+mkdir -p "$T/bin"
+if ! command -v magick >/dev/null && command -v convert >/dev/null; then
+    printf '#!/bin/sh\nexec convert "$@"\n' > "$T/bin/magick"; chmod +x "$T/bin/magick"
+fi
 cat > "$HERE/env.sh" <<X
-export BLENDER="$T/blender-3.6/blender" IO_OBJECT_MU="$T/$A"
+export BLENDER="$T/blender-3.6/blender" IO_OBJECT_MU="$T/$A" PATH="$T/bin:\$PATH"
 X
 "$T/blender-3.6/blender" --version | head -1
 echo "ready: source tools/env.sh"
