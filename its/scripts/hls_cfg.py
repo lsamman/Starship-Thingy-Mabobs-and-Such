@@ -35,7 +35,7 @@ def write(G):
     anim = lambda a, on, off, what, grp='None': mod('ModuleAnimateGeneric', f'animationName = {a}', f'actionGUIName = Toggle {what}', f'startEventGUIName = {on}', f'endEventGUIName = {off}', f'defaultActionGroup = {grp}', 'allowDeployLimit = false', 'evaDistance = 6')
     part('STMS_HLS_Crew', 'Starship HLS Crew Section', 'Cabins behind a row of ten windows, an airlock the size of a garage under an awning door, and a nose cap that tips back off a docking port so visitors from Orion can come in the front. Two solar arrays roll out of the side hatches. The deck is a long way up; the elevator is sold separately and is not optional.',
          T + ' crew cabin window airlock nose docking port solar command', 13.0, 42000, 'Pods', 'veryHeavyRocketry', rules='1,0,1,1,0', profiles='size4p5', crash=14, tmax=2000, skin=2000, brk=5000,
-         extra=['CrewCapacity = 8', 'vesselType = Lander', RCS_FX, block('INTERNAL', 'name = MK3_CrewCab_Int')],
+         extra=['CrewCapacity = 8', 'vesselType = Lander', RCS_FX, block('INTERNAL', 'name = STMS_IVA_HLS')],
          modules=[anim('noseCap', 'Open Nose Cap', 'Close Nose Cap', 'Nose Cap'),
                   mod('ModuleDockingNode', 'nodeTransformName = dockPort', 'controlTransformName = dockPort', 'nodeType = B10_APAS, size1', 'deployAnimationController = 0', 'deployAnimationTarget = 1', 'stagingEnabled = False', 'acquireRange = 0.6', 'captureRange = 0.08'),
                   anim('doorOpen', 'Open Airlock Door', 'Close Airlock Door', 'Airlock Door'), sol(1), sol(2),

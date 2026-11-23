@@ -27,4 +27,8 @@ On the ground: Open Airlock Door, Lower Deck, then slide the elevator's Target E
 - No NASA or SpaceX logos; a flag on the door (switchable).
 - The renders show no solar arrays, only outlined hatches; the roll-out arrays are our reading of those.
 - Press describes a dozen landing engines; the renders space them for six groups of three, so 18.
-- The band sits about a metre lower (real scale), to stay on the core's side of SEP's joint. The track is recessed deeper, so the folded elevator fits behind the door. Crew interior is the stock Mk3 cabin.
+- The band sits about a metre lower (real scale), to stay on the core's side of SEP's joint. The track is recessed deeper, so the folded elevator fits behind the door.
+
+## Interiors
+
+`its/scripts/ivalib.py` builds three cabins from `iva_layout.py`: HLS (flight deck and wardroom, airlock deck below), and the Block 3 crew and crew-cargo noses. White panelled rooms with cove lighting, a curved console under the windows and a ladder well, after SpaceX's October 2025 cabin renders. Seats, displays, lockers and galley are HabTechProps and stock props, by name, so **HabTechProps must be installed** or those are missing (KSP logs it; the room and the crew positions still work). Double-click a window to look out. Not set up for walking about in FreeIva yet. Render: `its/ri.sh name STMS_IVA_HLS x,y,z,tx,ty,tz`.

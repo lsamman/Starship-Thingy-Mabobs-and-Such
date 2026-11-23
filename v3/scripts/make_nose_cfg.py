@@ -29,7 +29,7 @@ def lines(variant):
          f'\t@description = <#ef7b06>Needs SEP: this is its Block 3 nosecone with our windows on it.</color> {desc}',
          f'\t@tags = starship sep block3 v3 nose nosecone ship {tags}',
          f'\t@mass += {dm}', f'\t@cost += {dc}', f'\t@entryCost += {dc * 2}',
-         f'\tCrewCapacity = {crew}', '\tINTERNAL', '\t{', '\t\tname = MK3_CrewCab_Int', '\t}',
+         f'\tCrewCapacity = {crew}', '\tINTERNAL', '\t{', '\t\tname = ' + {'crew': 'STMS_IVA_Crew', 'crewcargo': 'STMS_IVA_CrewCargo'}[variant], '\t}',
          # No cargo goes in a cabin. SEP's bay has no doors (it points at itself), so it is only an occlusion volume,
          # and its 5 m radius would reach the top of the cargo section below.
          '\t!MODULE[ModuleCargoBay] {}',
