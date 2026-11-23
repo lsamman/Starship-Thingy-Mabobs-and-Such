@@ -38,10 +38,10 @@ What they asked for, in order: upgrade the ITS mod to BDB / HabTech2 / Benjee10 
 ./tools/cloud_setup.sh          # Blender 3.6.23, io_object_mu + our exporter fix, numpy/Pillow, ImageMagick
 source tools/env.sh
 ./build_all.sh                  # about 2.5 min; ITS_HULL=1024 makes the textures quick for a test
-its/p.sh name --view 25,0,60,0,0,87 --sky studio "Ships/VAB/ITS Crew.craft"     # render -> its/build/photos/name.png
+its/p.sh name --view 25,0,60,0,0,87 --sky studio "../Ships/VAB/ITS Crew.craft"     # render -> its/build/photos/name.png
 ```
 
-Run craft renders as `its/p.sh name ... "../Ships/VAB/ITS Crew.craft"` (the script works from `its/`). Setup and the build were tested from a clean clone on the PC with no KSP or SEP visible: models came out vertex-identical, textures equal to rounding. They have not been run on an actual cloud machine; the apt step in particular is untested, and setup needs download.blender.org and github.com to be reachable. If Blender can't be downloaded, config, patch and script edits are still possible, and `make_cfg.py` needs built models (the release zip has them).
+`p.sh` works from `its/`, so craft paths start with `../`. Setup, build, a render and the fit check were tested from a clean clone on the PC with no KSP or SEP visible: models came out vertex-identical, textures equal to rounding. They have not been run on an actual cloud machine; the apt step in particular is untested, and setup needs download.blender.org and github.com to be reachable. If Blender can't be downloaded, config, patch and script edits are still possible, and `make_cfg.py` needs built models (the release zip has them).
 
 What can't be done in the cloud: run KSP, deploy, read KSP.log, bake the V3 masks, `check_rings.py`, the engine part of `check_fit.py`, and engines in photos (all need SEP). So: **edit, build and check here, push a branch, and the user pulls on the PC** and runs `./build_all.sh && ./deploy.sh` there with KSP closed. A cloud build has no masks and `deploy.sh` refuses it.
 
