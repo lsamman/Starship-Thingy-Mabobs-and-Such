@@ -39,11 +39,16 @@ NOSE_WELDS = (-2.282, -1.139, 0.003)   # weld grooves and the barrel-ogive seam:
 NOSE_STEEL = ((-2.7, 70), (-0.9, 70), (-0.7, 63.5), (-0.5, 53), (-0.4, 47.5), (0.8, 47.5), (0.83, 26), (1.34, 26),
               (1.4, 47.5), (2.0, 47.5), (2.5, 64.5), (2.6, 72.5), (4.85, 72.5))
 NOSE_FLAP_AZ = 70.0
-# Window rows like the ITS crew section's: (z, count, half-span of the window centres in deg, pane w, pane h).
-# The panes are the ITS ones at the same 0.625 scale: 0.74 x 0.50 m real up top, 0.50 x 0.42 m real below.
-BIG, SMALL = (.4625, .3125), (.3125, .2625)
-NOSE_ROWS = {'crew': ((4.30, 5, 40) + BIG, (3.00, 7, 46) + BIG, (1.70, 9, 40) + SMALL, (0.40, 9, 40) + SMALL, (-0.90, 11, 48) + SMALL),
-             'crewcargo': ((4.30, 5, 40) + BIG,)}
+# The ITS crew section's big window: a geodesic lattice in a half-ellipse, laid on the skin from z0 (straight lower
+# edge, half-width ha along the skin) to z1 (top of the arch). ha 2.1 puts the lower corners at +-46 deg, 24 deg short
+# of the flap hinges; the arch's rim tops out at 4.66, 0.19 under the Ablative 43 band; below 2.6 the steel narrows.
+NOSE_BIG = dict(z0=2.65, z1=4.60, ha=2.1, side=.4875)     # side: the ITS lattice's 0.78 m real
+# Small windows under it, as in the ITS crew section's lower rows: (z, count, half-span of the centres in deg).
+# Panes are the ITS ones at the same 0.625 scale, 0.50 x 0.42 m real. Rows sit 1.3 apart, clear of the tile patches
+# (0.83-1.34) and the welds; each variant takes the first N rows: for two rows on the crew-cargo nose, make its 1 a 2.
+SMALL = (.3125, .2625)
+NOSE_SMALL_ROWS = ((1.70, 9, 40), (0.40, 9, 40), (-0.90, 11, 48))
+NOSE_SMALL_COUNT = {'crew': 3, 'crewcargo': 1}
 NOSE_FRAME = .035           # frame border around a pane
 NOSE_FRAME_H = .022         # frame height before the sink: 14 mm proud of the hull
 NOSE_SINK = .008            # everything laid on the hull is bent onto its facets and sunk this much

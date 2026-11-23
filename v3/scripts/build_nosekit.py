@@ -39,4 +39,4 @@ bpy.data.objects.remove(proxy)
 P.two_sided = True
 P.meta['windows'] = len(spots)
 P.export(out); P.save_blend(out)
-print(f'KIT {NAME}: {len(spots)} windows')
+print(f'KIT {NAME}: big window + {len(spots)} small')

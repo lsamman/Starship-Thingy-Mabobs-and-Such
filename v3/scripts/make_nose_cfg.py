@@ -8,12 +8,12 @@ import layout as L
 KIT = 'StarshipThingyMabobsAndSuch/Parts/'
 PARTS = {
     'crew': ('STMS_B3_NoseCrew', 'STMS_B3_WindowsCrew', 'Block 3 Crew Nosecone', 2.0, 9000,
-             'SEP\'s Block 3 nose with the payload space turned into five decks of cabins and forty-one windows on the leeward '
-             'steel, ITS style. The tiles stay on the windward side, where the view is mostly plasma anyway. Twelve kerbals, '
+             'SEP\'s Block 3 nose with the payload space turned into cabins: the ITS crew section\'s big lattice window up top, '
+             'three rows of portholes below, all on the leeward steel. The tiles stay on the windward side, where the view is mostly plasma anyway. Twelve kerbals, '
              'each with more room than they get on a space station and less than they will ask for.',
              'crew cabin window habitat passenger'),
     'crewcargo': ('STMS_B3_NoseCrewCargo', 'STMS_B3_WindowsCrewCargo', 'Block 3 Crew-Cargo Nosecone', 1.0, 4000,
-                  'SEP\'s Block 3 nose with a flight deck for four under one row of windows. Made to sit on SEP\'s Block 3 '
+                  'SEP\'s Block 3 nose with a flight deck for four behind the ITS crew section\'s big lattice window, and a row of portholes below. Made to sit on SEP\'s Block 3 '
                   'cargo section: the crew rides up top and the payload goes in the bay below, which does the cargo part.',
                   'crew cabin window cargo flight deck'),
 }
