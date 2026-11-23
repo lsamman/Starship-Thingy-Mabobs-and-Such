@@ -1,13 +1,75 @@
 {
-  "note": "Rate-limit samples from this cloud session's rate_limit_event log. t = UTC ISO time, five/week = utilization 0..1 (rounded to 0.01 by the server).",
-  "samples": [
-    {"t": "2026-11-17T15:29:05Z", "five": 0.45, "week": 0.48, "five_reset": 1794944400, "week_reset": 1794974400},
-    {"t": "2026-11-17T15:33:30Z", "five": 0.52, "week": 0.49, "five_reset": 1794944400, "week_reset": 1794974400},
-    {"t": "2026-11-23T15:16:40Z", "five": 0.03, "week": 0.51, "five_reset": 1795462800, "week_reset": 1795579200},
-    {"t": "2026-11-23T15:17:37Z", "five": 0.17, "week": 0.53, "five_reset": 1795462800, "week_reset": 1795579200},
-    {"t": "2026-11-23T15:23:08Z", "five": 0.20, "week": 0.53, "five_reset": 1795462800, "week_reset": 1795579200},
-    {"t": "2026-11-23T18:04:50Z", "five": 0.23, "week": 0.53, "five_reset": 1795462800, "week_reset": 1795579200},
-    {"t": "2026-11-23T18:05:33Z", "five": 0.24, "week": 0.54, "five_reset": 1795462800, "week_reset": 1795579200},
-    {"t": "2026-11-23T18:19:42Z", "five": 0.26, "week": 0.54, "five_reset": 1795462800, "week_reset": 1795579200}
-  ]
+ "note": "Rate-limit samples from this cloud session's rate_limit_event log. t = UTC ISO time, five/week = utilization 0..1 (rounded to 0.01 by the server).",
+ "samples": [
+  {
+   "t": "2026-11-17T15:29:05Z",
+   "five": 0.45,
+   "week": 0.48,
+   "five_reset": 1794944400,
+   "week_reset": 1794974400
+  },
+  {
+   "t": "2026-11-17T15:33:30Z",
+   "five": 0.52,
+   "week": 0.49,
+   "five_reset": 1794944400,
+   "week_reset": 1794974400
+  },
+  {
+   "t": "2026-11-23T15:16:40Z",
+   "five": 0.03,
+   "week": 0.51,
+   "five_reset": 1795462800,
+   "week_reset": 1795579200
+  },
+  {
+   "t": "2026-11-23T15:17:37Z",
+   "five": 0.17,
+   "week": 0.53,
+   "five_reset": 1795462800,
+   "week_reset": 1795579200
+  },
+  {
+   "t": "2026-11-23T15:23:08Z",
+   "five": 0.2,
+   "week": 0.53,
+   "five_reset": 1795462800,
+   "week_reset": 1795579200
+  },
+  {
+   "t": "2026-11-23T18:04:50Z",
+   "five": 0.23,
+   "week": 0.53,
+   "five_reset": 1795462800,
+   "week_reset": 1795579200
+  },
+  {
+   "t": "2026-11-23T18:05:33Z",
+   "five": 0.24,
+   "week": 0.54,
+   "five_reset": 1795462800,
+   "week_reset": 1795579200
+  },
+  {
+   "t": "2026-11-23T18:19:42Z",
+   "five": 0.26,
+   "week": 0.54,
+   "five_reset": 1795462800,
+   "week_reset": 1795579200
+  },
+  {
+   "t": "2026-11-23T18:41:51Z",
+   "five": 0.43,
+   "week": 0.56,
+   "five_reset": 1795462800,
+   "week_reset": 1795579200
+  },
+  {
+   "t": "2026-11-23T19:41:44Z",
+   "five": 0.0,
+   "week": 0.56,
+   "five_reset": 1795480800,
+   "week_reset": 1795579200
+  }
+ ]
 }
