@@ -65,6 +65,11 @@ for r in range(9):
 f = np.asarray(im.resize((fw, fh), Image.LANCZOS)).astype(np.float32) / 255 * .80; c.albedo[fy:fy + fh, fx:fx + fw] = f; c.gloss[fy:fy + fh, fx:fx + fw] = .42
 c.save('its_det', nstrength=.55)
 tl.write_dds((np.dstack([metal, metal, metal, np.ones_like(metal)]) * 255).astype(np.uint8), 'its_det_metal')
+# bare-carbon livery (B9 subtype Carbon on the hull parts): white trim and hatches become carbon; diffuse only, same normals
+cs, _, _ = zone('carbon')
+for k in ('white', 'hatch'):
+    s, w, h = zone(k); c.albedo[s] = c.albedo[cs][:h, :w]; c.gloss[s] = c.gloss[cs][:h, :w]
+c.save('its_det_carbon', nstrength=.55, nrm=False)
 
 # ---------------- solar petals: four panels, u across, v out along the petal
 S, T_ = 512, 2048

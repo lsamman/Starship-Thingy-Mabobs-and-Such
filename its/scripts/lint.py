@@ -1,6 +1,7 @@
 """Offline checks for the SHABTech package, since KSP itself can't run here unattended:
   * every cfg parses (balanced braces)
   * every MODEL exists; every texture a .mu references exists as a DDS next to it
+  * every B9 TEXTURE swap names a DDS in the package and a currentTexture the part's model uses
   * transform / animation names used by modules exist in the .mu
   * module names exist in installed assemblies; B9 tank types are defined
 usage: python3 -I scripts/lint.py <GameData/SHABTech> [installed GameData]"""
@@ -32,7 +33,7 @@ def walk(o, names, anims, mats):
         walk(c, names, anims, mats)
 
 
-mu_info = {}
+mu_info = {}; mu_tex = {}
 for f in glob.glob(os.path.join(root, '**', '*.mu'), recursive=True):
     m = Mu()
     if not m.read(f):
@@ -40,6 +41,7 @@ for f in glob.glob(os.path.join(root, '**', '*.mu'), recursive=True):
     names, anims = set(), set()
     walk(m.obj, names, anims, None)
     mu_info[os.path.splitext(os.path.relpath(f, os.path.dirname(root)))[0]] = (names, anims)
+    mu_tex[os.path.splitext(os.path.relpath(f, os.path.dirname(root)))[0]] = {os.path.splitext(t.name)[0] for t in m.textures}
     d = os.path.dirname(f)
     for t in m.textures:
         base = os.path.splitext(t.name)[0]
@@ -91,6 +93,10 @@ for c in glob.glob(os.path.join(root, '**', '*.cfg'), recursive=True):
                 for name in re.split(r'\s*,\s*', v):
                     if name and name not in allnames:
                         errs.append(f'{os.path.basename(c)}: includedRenderer {name} not in model')
+            if k == 'texture' and v.startswith(os.path.basename(os.path.normpath(root)) + '/') and not any(os.path.exists(os.path.join(os.path.dirname(os.path.normpath(root)), v + e)) for e in ('.dds', '.png')):
+                errs.append(f'{os.path.basename(c)}: B9 texture {v} not found')
+            if k == 'currentTexture' and not any(v in mu_tex[m_] for m_ in models):
+                errs.append(f'{os.path.basename(c)}: currentTexture {v} not used by its model')
             if k == 'tankType' and v not in tanks:
                 errs.append(f'{os.path.basename(c)}: tankType {v} undefined')
     if not STOCK:
