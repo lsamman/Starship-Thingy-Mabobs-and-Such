@@ -1,13 +1,13 @@
 """Crew access arm in the manner of the ship quick disconnect arm: a tubular dog-leg round the other side of the tower, a
-walkway along it, and a white room at the noses' EVA hatch. Attaches radially to the rear column, facing straight out from
-the tower; frame: +x out of the column, the walkway floor at z 0 (the hatch sill)."""
+walkway along it, and a white room at the noses' EVA hatch. Attaches radially to the rear column, square to the tower's
+face at azimuth -37; frame: +x out of the column, the walkway floor at z 0 (the hatch sill)."""
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *
 import tower_layout as TL
 import numpy as np
 P = start('STMS_CrewArm'); V = Vector
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'arm_common.py')).read())
-ya = math.atan2(TL.NODE_N[1], TL.NODE_N[0]); R_ = Matrix.Rotation(-ya, 3, 'Z'); O_ = V((TL.NODE[0], TL.NODE[1], 0)); rel = lambda x, y, z=0: R_ @ (V((x, y, z)) - O_)
+ya = math.radians(TL.FACE_AZ); R_ = Matrix.Rotation(-ya, 3, 'Z'); O_ = V((*TL.CREW, 0)); rel = lambda x, y, z=0: R_ @ (V((x, y, z)) - O_)
 N = V((1, 0, 0)); H = rel(6.9, -.5); E = rel(4.4, -9.2); TIP = rel(TL.SHIP[0] + TL.HULL - .10, TL.SHIP[1]); away = R_ @ V((1, 0, 0)); ROOM = 2.2
 END = TIP + away * (ROOM + .45); d2 = END - E; d2.z = 0; L2 = d2.length; u2 = d2.normalized(); u1 = (E - H).normalized(); um = (u1 + u2).normalized(); MID = E + u2 * (L2 * .45)
 hinge(N, H, (-2.0, .8), 1.1); arm = P.empty('arm', T(*H), P.model); HF = T(*H); g = Geo(); W = 1.5
@@ -45,4 +45,4 @@ for s in (-1, 1): k_ = V((-u2.y, u2.x, 0)) * s * .64; seg_collider('col_wall%d' 
 def bx(nm, c, s): P.hull_collider(nm, [tuple(RF @ V((c[0] + i * s[0] / 2, c[1] + j * s[1] / 2, c[2] + k * s[2] / 2))) for i in (-1, 1) for j in (-1, 1) for k in (-1, 1)], parent=room)
 bx('col_rfloor', (xm, 0, -.05), (ROOM + .9, RW, .1)); [bx('col_rwall%d' % (s > 0), (xm, s * RW / 2, RH / 2), (ROOM, .06, RH)) for s in (-1, 1)]
 print('crew arm: legs %.1f + %.1f m' % ((E - H).length, L2))
-P.node('mount', (0, 0, 0), (-1, 0, 0), 3); P.bake_clips(0); finish(P)
+P.bake_clips(0); finish(P)
