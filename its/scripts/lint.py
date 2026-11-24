@@ -10,7 +10,7 @@ A = os.environ.get('IO_OBJECT_MU') or os.path.expanduser('~/Applications/blender
 sys.path.insert(0, A)
 from mu import Mu
 root = sys.argv[1]
-gd = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.environ.get('KSP_DIR') or os.path.expanduser('~/.local/share/Steam/steamapps/common/Kerbal Space Program Modded SOL'), 'GameData')
+gd = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.environ.get('KSP_DIR') or os.path.expanduser('~/.local/share/Steam/steamapps/common/Kerbal Space Program'), 'GameData')
 errs = []; warns = []
 STOCK = open(os.path.join(os.path.dirname(gd), 'KSP_x64_Data', 'Managed', 'Assembly-CSharp.dll'), 'rb').read() if os.path.exists(os.path.join(os.path.dirname(gd), 'KSP_x64_Data', 'Managed', 'Assembly-CSharp.dll')) else b''
 extra = b''

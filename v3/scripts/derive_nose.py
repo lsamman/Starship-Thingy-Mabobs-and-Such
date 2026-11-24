@@ -16,7 +16,7 @@ ORIG = {}
 def remember(nm, o):
     me = o.data.copy(); me.transform(o.matrix_world); me.calc_normals_split(); me.calc_loop_triangles()
     tri = [tuple(t.vertices) for t in me.loop_triangles]; from mathutils.bvhtree import BVHTree
-    ORIG[nm] = (BVHTree.FromPolygons([v.co.copy() for v in me.vertices], tri), [([me.vertices[i].co.copy() for i in t.vertices], [me.loops[l].normal.copy() for l in t.loops]) for t in me.loop_triangles])
+    ORIG[nm] = (BVHTree.FromPolygons([v.co.copy() for v in me.vertices], tri), [([me.vertices[i].co.copy() for i in t.vertices], [me.loops[l].normal.copy() for l in t.loops], [me.uv_layers[0].data[l].uv.copy() for l in t.loops] if me.uv_layers else None) for t in me.loop_triangles])
 
 
 def grab(f, want):
@@ -44,7 +44,7 @@ az_of = lambda p: math.degrees(math.atan2(p.x, -p.y))
 src = grab('SEP_26_SHIP_NOSECONE.mu', ['Nose_7_EXT∧', 'Tiles∧', 'Tiles∧.001'] + (['Cylinder∧.002'] if CARGO else []))
 if CARGO: car = grab('SEP_26_SHIP_CARGO.mu', ['Cylinder∧', 'Cylinder∧.001', 'Cylinder∧.002', 'Cylinder∧.003', 'Cylinder∧.004', 'Cylinder∧.005'])
 P = Part(NAME); ANIM = {}
-def add(nm, bm, mat, parent=None, frame=None, src_=None, move=None):
+def add(nm, bm, mat, parent=None, frame=None, src_=None, move=None, bend=None, uv_from=None):
     if not bm.faces: return None
     bmesh.ops.triangulate(bm, faces=[f for f in bm.faces if len(f.verts) > 4]); bm.normal_update(); fr = frame or Matrix(); nrm = None
     if src_:
@@ -54,7 +54,15 @@ def add(nm, bm, mat, parent=None, frame=None, src_=None, move=None):
             c = f.calc_center_median()
             for l in f.loops:
                 h = tr.find_nearest(l.vert.co.lerp(c, .02))          # a hair inside the face, so a seam picks its own side
-                co, ns = tris[h[2]]; w = poly_3d_calc(co, h[0]); nrm.append(sum((n * k for n, k in zip(ns, w)), V()).normalized())
+                co, ns, _ = tris[h[2]]; w = poly_3d_calc(co, h[0]); n_ = sum((n * k for n, k in zip(ns, w)), V()).normalized(); nrm.append(bend(l.vert.co, n_) if bend else n_)
+    if uv_from:                                                  # texture taken from elsewhere on the same mesh
+        from mathutils.interpolate import poly_3d_calc
+        tr, tris = ORIG[src_]; lay = bm.loops.layers.uv.active
+        for f in bm.faces:
+            c = f.calc_center_median()
+            for l in f.loops:
+                h = tr.find_nearest(uv_from(l.vert.co.lerp(c, .02))); co, _, uv = tris[h[2]]
+                q = sum((u * k for u, k in zip(uv, poly_3d_calc(co, h[0]))), Vector((0, 0))); l[lay].uv = q
     if move:
         for v in bm.verts: v.co = move(v.co.copy())
     bm.transform(fr.inverted())
@@ -91,9 +99,12 @@ sm = lambda t: max(0, min(1, t)) ** 2 * (3 - 2 * max(0, min(1, t)))
 bump = lambda p: D['bulge'] * sm((HWm - abs(p.dot(tan_))) / .20) * sm((HHm - abs(p.z - dzm)) / .20)
 press = lambda p: p + out_ * bump(p); dslide = P.empty('stms_dockturn', None, P.model); dpanel = P.empty('stms_dockdoor', None, dslide)
 dk = part_of(nose, indock)
-for a in [da - dw + 2 * dw * k / 12 for k in range(1, 12)]: t = math.radians(a); cut(dk, (0, 0, 0), (math.cos(t), math.sin(t), 0))
-for k in range(1, 12): cut(dk, (0, 0, dz0 + (dz1 - dz0) * k / 12), (0, 0, 1))
-add('stms_dockskin', dk, mnose, dpanel, src_=None, move=press)
+for a in [da - dw + 2 * dw * k / 24 for k in range(1, 24)]: t = math.radians(a); cut(dk, (0, 0, 0), (math.cos(t), math.sin(t), 0))
+for k in range(1, 24): cut(dk, (0, 0, dz0 + (dz1 - dz0) * k / 24), (0, 0, 1))
+def bent(p, n):                                              # the hull's normal, tilted by the slope of the bulge
+    e = .002; return (n - tan_ * ((bump(p + tan_ * e) - bump(p - tan_ * e)) / (2 * e)) - V((0, 0, (bump(p + V((0, 0, e))) - bump(p - V((0, 0, e)))) / (2 * e)))).normalized()
+# SEP's texture is black under the tile patch removed here, so the door borrows the bare steel at az 0 (a whole number of facets away)
+add('stms_dockskin', dk, mnose, dpanel, src_=snose, move=press, bend=bent, uv_from=lambda p: Matrix.Rotation(math.radians(-da), 3, 'Z') @ p)
 MD = P.material('its_det', spec=(.8, .8, .8), shininess=.45); 
 DET = dict(white=(0, 0, 512, 512), grey=(512, 0, 512, 512), steel=(1536, 0, 512, 512), dark=(0, 512, 512, 512), alu=(512, 512, 512, 512), black=(1024, 512, 512, 512), wall=(0, 1024, 1024, 512), deck=(1024, 1024, 512, 512), hatch=(1536, 1280, 512, 256), stripe=(1536, 1024, 512, 256), lamp=(1024, 1920, 256, 128))
 Z = {k: Zone(*v, atlas=2048, ppm=170) for k, v in DET.items()}
@@ -102,12 +113,12 @@ def quad(g, pts, zn, toward):
     if nrm.dot(V(toward) - cen) < 0: idx, uv = idx[::-1], uv[::-1]
     g.face(idx, uv)
 # ---------------- docking bay: a lined recess with a flat seat and a node
-d = Geo(); RP = D['plate']; SF = Matrix((tan_, V((0, 0, 1)), out_)).transposed().to_4x4(); SF.translation = out_ * RP + V((0, 0, dzm))      # +X along the hull, +Y up, +Z out
+d = Geo(); li = Geo(); RP = D['plate']; SF = Matrix((tan_, V((0, 0, 1)), out_)).transposed().to_4x4(); SF.translation = out_ * RP + V((0, 0, dzm))      # +X along the hull, +Y up, +Z out
 PX, PY = .66, HHm
 edge = [(da - dw + 2 * dw * k / 8, dz0) for k in range(9)] + [(da + dw, dz0 + (dz1 - dz0) * k / 4) for k in range(1, 4)] + [(da + dw - 2 * dw * k / 8, dz1) for k in range(9)] + [(da - dw, dz1 - (dz1 - dz0) * k / 4) for k in range(1, 4)]
 for (a0, z0), (a1, z1) in zip(edge, edge[1:] + edge[:1]):
-    p, q = N.point(a0, z0, -.006), N.point(a1, z1, -.006); fl = lambda v: SF @ V((max(-PX, min(PX, (SF.inverted() @ v).x)), (SF.inverted() @ v).y, 0)); quad(d, [p, q, fl(q), fl(p)], Z['grey'], out_ * 2.7 + V((0, 0, dzm)))
-quad(d, [SF @ V((x, y, 0)) for x, y in ((-PX, -PY), (PX, -PY), (PX, PY), (-PX, PY))], Z['grey'], out_ * 9)
+    p, q = N.point(a0, z0, -.006), N.point(a1, z1, -.006); fl = lambda v: SF @ V((max(-PX, min(PX, (SF.inverted() @ v).x)), (SF.inverted() @ v).y, 0)); quad(li, [p, q, fl(q), fl(p)], Z['grey'], out_ * 2.7 + V((0, 0, dzm)))
+quad(li, [SF @ V((x, y, 0)) for x, y in ((-PX, -PY), (PX, -PY), (PX, PY), (-PX, PY))], Z['grey'], out_ * 9)
 d.add(lathe([(.62, -.002), (.60, .016), (.50, .016), (.48, .006), (0, .006)][::-1], 56, zone=Z['alu'], flip=True), SF)
 bl = cyl(.014, .012, 6, zone=Z['steel'], center_z=False); [d.add(bl, SF @ T(.55 * math.cos(TAU * k / 24), .55 * math.sin(TAU * k / 24), .015)) for k in range(24)]
 for sx in (-1, 1):
@@ -127,11 +138,14 @@ P.mesh('stms_dockin', di2, MD, parent=dpanel)
 NP_ = SF @ V((0, 0, .016)); P.node('port', NP_, out_, 1); print('NODE %.4f %.4f %.4f dir %.4f %.4f %.4f' % (NP_.x, NP_.z, NP_.y, out_.x, out_.z, out_.y))
 # ---------------- EVA airlock: a real recess with an inner hatch
 zm_ = 0; yf = -N.ring_r(hz0) + .02; yb = -1.95; X = math.sin(math.radians(ha)) * 2.70; zm = (hz0 + hz1) / 2
-for (z, tw) in ((hz0, 9), (hz1, -9)): quad(d, [(-X, yf - .04, z), (X, yf - .04, z), (X, yb, z), (-X, yb, z)], Z['deck'] if tw > 0 else Z['white'], (0, yb, z + tw))
-for s in (-1, 1): quad(d, [(s * X, yf - .04, hz0), (s * X, yf - .04, hz1), (s * X, yb, hz1), (s * X, yb, hz0)], Z['white'], (0, yf, zm))
-quad(d, [(-X, yb, hz0), (X, yb, hz0), (X, yb, hz1), (-X, yb, hz1)], Z['white'], (0, -9, zm))
+fp = lambda a, z: N.point(a, z, -.006)                      # front edges follow the hull, just inside it
+for (z, tw) in ((hz0, 9), (hz1, -9)):
+    for k in range(8):
+        a0, a1 = [-ha + 2 * ha * t / 8 for t in (k, k + 1)]; x0, x1 = [-X + 2 * X * t / 8 for t in (k, k + 1)]; quad(li, [fp(a0, z), fp(a1, z), (x1, yb, z), (x0, yb, z)], Z['deck'] if tw > 0 else Z['white'], (0, yb, z + tw))
+for s in (-1, 1): quad(li, [fp(s * ha, hz0), fp(s * ha, hz1), (s * X, yb, hz1), (s * X, yb, hz0)], Z['white'], (0, yf, zm))
+quad(li, [(-X, yb, hz0), (X, yb, hz0), (X, yb, hz1), (-X, yb, hz1)], Z['white'], (0, -9, zm))
 BF = Matrix(((1, 0, 0, 0), (0, 0, -1, yb), (0, 1, 0, zm), (0, 0, 0, 1))); d.add(rounded_rect_ring(.56, .98, .14, .06, .05, 6, zone=Z['alu']), BF); d.add(quad_patch(.46, .88, Z['hatch']), BF @ T(0, 0, .02)); d.add(tube([tuple(BF @ V((.10 * math.cos(t), .10 * math.sin(t), .05))) for t in np.linspace(0, TAU, 21)], .012, 6, zone=Z['steel']))
-d.add(rounded_rect_ring(2 * X + .10, hz1 - hz0 + .10, .03, .05, .03, 2, zone=Z['alu']), Matrix(((1, 0, 0, 0), (0, 0, -1, yf + .02), (0, 1, 0, zm), (0, 0, 0, 1))))
+ef = [(-ha, hz0), (ha, hz0), (ha, hz1), (-ha, hz1)]; d.add(tube([tuple(N.point(a0 + (a1 - a0) * k / 8, z0 + (z1 - z0) * k / 8, .008)) for (a0, z0), (a1, z1) in zip(ef, ef[1:] + ef[:1]) for k in range(8)], .020, 6, zone=Z['alu'], closed=True, caps=False))      # frame, following the hull
 di = Geo(); ea = [(-ha, hz0), (ha, hz0), (ha, hz1), (-ha, hz1)]; nE = 6; ring_ = []
 for (a0, z0), (a1, z1) in zip(ea, ea[1:] + ea[:1]): ring_ += [(a0 + (a1 - a0) * k / nE, z0 + (z1 - z0) * k / nE) for k in range(nE)]
 cI = N.point(0, zm, -.09)
@@ -163,7 +177,7 @@ if CARGO:
     for z in (-2.2, -1.3, -.4): d.add(lathe([(2.785, z - .03), (2.69, z - .03), (2.69, z + .03), (2.785, z + .03)], 60, 48, 312, zone=Z['alu'], flip=True))
     for s in (-1, 1): d.add(box(.6, .10, .03, zone=Z['lamp']), T(s * .9, 0, -.15)); add_spot(P, 'stms_baylight', (s * .9, 0, -.18), (0, 0, -1), power=260, angle=120, reach=6)
     P.node('cargo', (0, 0, -2.5159), (0, 0, 1), 3); P.node('cargotop', (0, 0, -.15), (0, 0, -1), 2)
-P.mesh('stms_details', d, MD, smooth_angle=35)
+P.mesh('stms_details', d, MD, smooth_angle=35); P.mesh('stms_liner', li, MD, smooth_angle=35)
 # ---------------- colliders in place of SEP's, which would close the openings
 def rp(z, a0, a1, n, r=None): return [(rr * math.sin(math.radians(a)), -rr * math.cos(math.radians(a)), z) for a in [a0 + (a1 - a0) * i / n for i in range(n + 1)] for rr in ([r] if r else [N.ring_r(z)])]
 zlo = 0.0 if CARGO else -3.412
@@ -180,7 +194,8 @@ if CARGO:
         a0, a1 = 46 + 53.6 * j, 46 + 53.6 * (j + 1); P.hull_collider(f'col_b{j}', [p for z in (-3.412, 0) for p in rp(z, a0, a1, 4, 2.8125) + rp(z, a0, a1, 4, 2.70)])
     P.hull_collider('col_floor', rp(-3.412, 0, 345, 23, 2.8) + rp(-2.53, 0, 345, 23, 2.7)); P.hull_collider('col_roof', rp(-.13, 0, 345, 23, 2.75) + rp(0, 0, 345, 23, 2.75))
 else: P.hull_collider('col_floor', rp(-3.412, 0, 345, 23, 2.8) + rp(-2.53, 0, 345, 23, 2.7))
-P.bake_clips(0); ours = [o for o in P.coll.objects if o.type == 'MESH' and o.muproperties.collider == 'MU_COL_NONE' and o.material_slots and o.material_slots[0].material == MD]
-fix_facing(ours, [0, 120]); P.two_sided = True
+P.bake_clips(0); ours = [o for o in P.coll.objects if o.type == 'MESH' and o.muproperties.collider == 'MU_COL_NONE' and o.material_slots and o.material_slots[0].material == MD and not o.name.startswith('stms_liner')]
+hull = [o for o in P.coll.objects if o.type == 'MESH' and o.muproperties.collider == 'MU_COL_NONE' and o not in ours]
+fix_facing(ours, [0, 120], blockers=hull); P.two_sided = True
 import facing; _f = facing.fix_facing; facing.fix_facing = lambda *a, **k: None      # SEP's own faces are right already
 P.export(out); facing.fix_facing = _f; P.save_blend(out)

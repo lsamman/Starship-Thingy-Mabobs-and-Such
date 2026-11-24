@@ -43,7 +43,7 @@ def _bvh(objs, dg):
     return BVHTree.FromPolygons(verts, polys, all_triangles=False, epsilon=0.0) if polys else None
 
 
-def fix_facing(objects, frames, verbose=True):
+def fix_facing(objects, frames, verbose=True, blockers=()):
     meshes = [o for o in objects if o.type == 'MESH' and o.muproperties.collider == 'MU_COL_NONE' and len(o.data.polygons)]
     # damaged-state meshes share space with the good ones, so they only block themselves
     hidden = [o for o in meshes if o.muproperties.tag == 'Icon_Hidden']
@@ -59,7 +59,7 @@ def fix_facing(objects, frames, verbose=True):
     for fr in frames:
         sc.frame_set(fr); bpy.context.view_layer.update()
         dg = bpy.context.evaluated_depsgraph_get()
-        main = _bvh(normal, dg)
+        main = _bvh(normal + list(blockers), dg)         # blockers hide faces but are never changed
         for o in meshes:
             tree = _bvh([o], dg) if o in hidden else main
             m = o.evaluated_get(dg).matrix_world; nm = m.to_3x3().inverted_safe().transposed()
