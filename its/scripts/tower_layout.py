@@ -8,3 +8,5 @@ EVA_Z = NOSE_Z + .96                # sill of our noses' EVA hatch
 QD_Z = CORE_Z - 10.02               # middle of the ship's quick disconnect plate
 CREW, QD = (.70, -5.51), (-.70, 5.51)  # where the arms bolt on: outer faces of the two side columns (a corner of the tower faces the ship)
 HULL = 2.8125
+BOOST_Z = 24.199                    # origin of SEP's Block 3 booster core; its top meets the ship at 45.684
+CLAW_Z = BOOST_Z + 18.2             # where the claw holds the booster
