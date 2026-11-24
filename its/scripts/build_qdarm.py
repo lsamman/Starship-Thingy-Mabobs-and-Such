@@ -19,33 +19,41 @@ PLT = deck(g, MID - u2 * .6, END, 1.9, ZB + .08, rail=None); deck(g, E, MID, 1.0
 g.add(box(1.5, 1.0, .5, zone=Z.white, bevel=.03), PLT @ T(-2.2, .35, .5)); [g.add(box(.5, .4, 1.0, zone=Z.grey, bevel=.03), PLT @ T(x, -.6, .6)) for x in (-3.4, -1.0, 1.2)]
 # pipework: two lagged mains that snake down the dog-leg, smaller lines beside them, runs of cable on the side
 def pipe(off, z, r, zn, up=.0):
-    q = lambda c, dr, k, zz: c + V((-dr.y, dr.x, 0)) * k + V((0, 0, zz)); pts = [q(H + u1 * .9, u1, off, z), q(E - u1 * 1.2, u1, off, z), q(E, um, off, z), q(E + u2 * 1.2, u2, off, z), q(MID - u2 * 1.5, u2, off, z), q(MID - u2 * .6, u2, off, ZB + .55 + up), q(END - u2 * 3.2, u2, off, ZB + .55 + up)]
+    q = lambda c, dr, k, zz: c + V((-dr.y, dr.x, 0)) * k + V((0, 0, zz)); pts = [q(H + u1 * .9, u1, off, z), q(E - u1 * 1.2, u1, off, z), q(E, um, off, z), q(E + u2 * 1.2, u2, off, z), q(MID - u2 * 1.5, u2, off, z), q(MID - u2 * .6, u2, off, ZB + .55 + up), q(END - u2 * 7.2, u2, off, ZB + .55 + up)] + [q(END - u2 * k, u2, max(-.4, min(.4, off)), ZB + .55 + up + h) for k, h in ((6.2, 0), (5.45, 0), (5.22, .04), (5.03, .17), (4.92, .36), (4.9, .56))] + [q(END - u2 * 4.9, u2, max(-.4, min(.4, off)), ZT + .16)]
     g.add(tube([tuple(p) for p in pts], r, 12, zone=zn)); [g.add(tube([tuple(a.lerp(b, t)), tuple(a.lerp(b, t) + (b - a).normalized() * .08)], r + .035, 12, zone=Z.grey)) for a, b in zip(pts, pts[1:]) if (b - a).length > 2 for t in (.25, .5, .75)]
 pipe(.35, -.1, .20, Z.white); pipe(-.15, -.15, .20, Z.white, .1); pipe(-.55, .0, .10, Z.alu); pipe(.68, -.2, .08, Z.copper, -.2)
-for k in range(5): g.add(tube([tuple(p + V((0, 0, -.12 * k - .5))) for p in (S2[3] + u2 * .5, S3[3] - u2 * 1.0)], .018, 5, zone=Z.steel))
-for k in range(3): c = MID + u2 * (1.2 + 1.5 * k); g.add(tube([tuple(c + V((0, 0, ZB + .4))), tuple(c + V((0, 0, ZB + .9)) + u2 * .4), tuple(c + V((0, 0, ZT - .1)) + u2 * .5)], .12, 10, zone=Z.white))
-# tan stabiliser plates under the platform, and the access cage by the plate
+g.add(box(.5, 1.7, .7, zone=Z.grey, bevel=.04), T(*(H + u1 * .85 + V((0, 0, -.12)))) @ Rz(math.degrees(math.atan2(u1.y, u1.x))))      # manifold the mains start from
+CA, CB = S2[3], S3[3]
+for k in range(5): g.add(tube([tuple(p + V((0, 0, -.12 * k - .5))) for p in (CA, CB)], .018, 5, zone=Z.steel))
+for t in np.linspace(0, 1, 7): c = CA.lerp(CB, float(t)); g.add(tube([tuple(c), tuple(c + V((0, 0, -1.06)))], .035, 6, zone=Z.dark))
+# tan stabiliser plates under the platform
 for s in (-1, 1): g.add(box(1.8, .5, .14, zone=Z.invar, bevel=.02), PLT @ T(-1.2, s * .6, -.55) @ Rz(s * 24)); g.add(box(.3, .3, .5, zone=Z.invar, bevel=.02), PLT @ T(-1.9, s * .5, -.35))
-for x in (.0, .9):
-    for s in (-1, 1): g.add(tube([tuple(PLT @ V((L2 * .24 - x, s * .85, ZT - ZB))), tuple(PLT @ V((L2 * .24 - x, s * .85, ZT - ZB + 1.1)))], .03, 6, zone=Z.dark))
-for zz in (.55, 1.1):
-    for s in (-1, 1): g.add(tube([tuple(PLT @ V((L2 * .24, s * .85, ZT - ZB + zz))), tuple(PLT @ V((L2 * .24 - 2.6, s * .85, ZT - ZB + zz)))], .028, 6, zone=Z.dark))
-deck(g, END - u2 * 3.4, END, 1.8, ZT + .06)
+deck(g, END - u2 * 5.8, END, 1.8, ZT + .06)
+AF = T(END.x, END.y, ZT + .085) @ Rz(math.degrees(math.atan2(-u2.y, -u2.x)))        # deck top at the boom end; +X back along the arm
+for k in (-1, 1): g.add(box(4.5, .10, .09, zone=Z.steel, bevel=.01), AF @ T(2.5, k * .62, .045)); g.add(box(.12, .22, .26, zone=Z.dark, bevel=.02), AF @ T(4.72, k * .62, .13)); g.add(box(.12, .22, .26, zone=Z.dark, bevel=.02), AF @ T(.28, k * .62, .13))
+g.add(box(1.0, 1.0, .18, zone=Z.grey, bevel=.02), AF @ T(4.9, 0, .09))        # where the mains come up
 P.mesh('truss', Geo().add(g), P.det, parent=arm, frame=HF)
 for nm, a, b in (('col_a', S0, S1), ('col_b', S1, S2), ('col_c', S2, S3)): seg_collider(nm, a, b, arm)
 # ---------------- boom with the X plate; frame: x away from the ship
+BA = math.degrees(math.atan2(-u2.y, -u2.x)); BK = lambda k, y, z: T(2.6, 0, 0) @ Rz(BA) @ V((k, y, z))      # k metres back along the arm from its end
 PF = T(TIP.x, TIP.y, PZ); plate = P.empty('plate', PF, arm); r = Geo()
 for s1 in (-1, 1):
     for s2 in (-1, 1): r.add(box(.16, .16, .82, zone=Z.invar, bevel=.02), T(.16, s1 * .30, s2 * .36) @ Rx(-s1 * s2 * 34)); r.add(box(.12, .24, .16, zone=Z.alu, bevel=.02), T(.08, s1 * .52, s2 * .70)); r.add(cyl(.05, .16, 10, zone=Z.steel), T(.04, s1 * .52, s2 * .70) @ Ry(90))
 r.add(box(.14, .62, .86, zone=Z.alu, bevel=.03, center=(.10, 0, 0))); r.add(box(.08, .5, .7, zone=Z.grey, bevel=.02, center=(.04, 0, 0)))
 for y, z, rr in ((-.13, .16, .11), (.13, .16, .11), (-.13, -.14, .09), (.13, -.14, .09), (0, -.28, .05)):
-    r.add(cyl(rr, .12, 18, zone=Z.steel, bevel=.012), T(.0, y, z) @ Ry(90)); r.add(tube([(.16, y, z), (.8, y * 1.2, z), (2.0, y * 1.6, z * .6 - .05), (3.4, y * 2.0, -.25), (4.2, y * 2.2, -.55)], rr * .85, 10, zone=Z.white if rr > .08 else Z.copper))
-for s in (-1, 1): r.add(tube([(.2, s * .3, .0), (4.4, s * .42, .0)], .07, 10, zone=Z.dark)); r.add(tube([(.2, s * .3, -.34), (4.4, s * .42, -.40)], .06, 10, zone=Z.dark)); [r.add(tube([(x, s * .34, 0), (x + .5, s * .36, -.37)], .04, 6, zone=Z.dark)) for x in (.5, 1.2, 1.9, 2.6, 3.3)]
-r.add(box(.6, 1.0, .34, zone=Z.dark, bevel=.03, center=(3.3, 0, -.55))); r.add(box(1.9, .3, .16, zone=Z.alu, bevel=.02, center=(3.6, 0, -.66))); r.add(tube([(2.6, 0, .35), (6.5, 0, .05)], .09, 10, zone=Z.dark)); r.add(box(.5, .7, .4, zone=Z.dark, bevel=.04, center=(2.6, 0, .18))); r.add(box(.06, 1.0, .10, zone=Z.stripe, center=(.30, 0, .56)))
+    r.add(cyl(rr, .12, 18, zone=Z.steel, bevel=.012), T(.0, y, z) @ Ry(90)); r.add(tube([(.16, y, z), (.8, y * 1.2, z), (1.7, y * 1.6, z * .6 - .03)] + [tuple(BK(k, y * 2.0, zz)) for k, zz in ((.1, -.20), (.5, -.22), (1.0, -.22))], rr * .85, 10, zone=Z.white if rr > .08 else Z.copper))
+for s in (-1, 1):
+    for z0, z1, rr in ((.0, .0, .07), (-.34, -.38, .06)): r.add(tube([(.2, s * .3, z0), (2.1, s * .40, z1), tuple(BK(.2, s * .46, z1)), tuple(BK(1.0, s * .46, z1))], rr, 10, zone=Z.dark))
+    [r.add(tube([(x, s * (.3 + (x - .2) * .052), 0), (x + .4, s * (.3 + (x + .2) * .052), -.36)], .04, 6, zone=Z.dark)) for x in (.4, .9, 1.4)]
+CF = T(2.6, 0, 0) @ Rz(BA); DK = ZT + .085 - PZ                # carriage, in the arm's direction; DK: deck top
+r.add(box(1.5, 1.15, -DK + .02, zone=Z.dark, bevel=.04, center=(1.65, 0, DK / 2 + .07)), CF); r.add(box(1.3, .8, .16, zone=Z.grey, bevel=.03, center=(1.65, 0, .16)), CF); r.add(box(.06, 1.0, .10, zone=Z.stripe, center=(.88, 0, .0)), CF)
+for k in (-1, 1):
+    r.add(box(1.5, .16, .16, zone=Z.alu, bevel=.02, center=(1.65, k * .62, DK + .17)), CF); [r.add(cyl(.08, .14, 14, zone=Z.steel), CF @ T(x, k * .62, DK + .17) @ Rx(90)) for x in (1.1, 2.2)]
+r.add(box(.06, 1.0, .10, zone=Z.stripe, center=(.30, 0, .56)))
 P.mesh('boom', Geo().add(r, PF), P.det, parent=plate, frame=PF)
-P.hull_collider('col_boom', [(TIP.x + x, TIP.y + y, PZ + z) for x in (.1, 4.2) for y in (-.45, .45) for z in (-.6, .5)], parent=plate)
+P.hull_collider('col_boom', [(TIP.x + x, TIP.y + y, PZ + z) for x in (.1, 2.6) for y in (-.45, .45) for z in (-.5, .5)] + [tuple(PF @ BK(k, y, z)) for k in (.9, 2.4) for y in (-.55, .55) for z in (-.6, .2)], parent=plate)
 CL = 'qdArm'; NF = 108; l0 = plate.location.copy()
-for f, l in ((0, l0), (20, l0 + V((1.5, 0, 0))), (NF, l0 + V((1.5, 0, 0)))): P.key(CL, plate, f, location=l)
+for f, l in ((0, l0), (6, l0 + V((.3, 0, 0))), (20, l0 + V((.3, 0, 0)) - u2 * 1.3), (NF, l0 + V((.3, 0, 0)) - u2 * 1.3)): P.key(CL, plate, f, location=l)
 q = P.rest_quat(arm); SW = -92
 for f, a in ((0, 0), (14, 0), (NF, SW)): P.key(CL, arm, f, rotation_quaternion=q @ Quaternion((0, 0, 1), math.radians(a)))
 P.clips['qdArmStage'] = {k: list(v) for k, v in P.clips[CL].items()}         # StagedAnimation plays its own copy
