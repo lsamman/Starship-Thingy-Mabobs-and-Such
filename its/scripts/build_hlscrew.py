@@ -2,7 +2,7 @@
 and an opening nose cap over a docking port for Orion. Origin at the joint's stack node."""
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hls_common import *
-P = start('STMS_HLS_Crew'); MH = P.material('hls_crew', spec=(.75, .75, .75), shininess=.5); MG = glass_mat(P); LM = lamp_mat(P)
+P = start('STMS_HLS_Crew'); MH = P.material('hls_crew', spec=(1, 1, 1), shininess=.62); MG = glass_mat(P); LM = lamp_mat(P)
 O = HL.Z_TOP; dz = V((0, 0, O)); D0, D1 = HL.DOOR; S0, S1 = HL.SOL_Z; ZC = HL.Z_OGIVE + 7.40
 zs = sorted({HL.Z_SKIN, D0, D1, S0, S1, HL.Z_OGIVE, *[HL.Z_OGIVE + z for z, _ in HL.OGIVE], *[HL.Z_OGIVE + z for z in (.42, 1.33, 2.2, 2.97, 3.75, 4.97, 6.0)]})
 insol = lambda a: any(abs(wrap(a - s)) < HL.SOL_HW for s in HL.SOL_AZ)
@@ -60,7 +60,7 @@ add_spot(P, 'doorLight', (0, -1.75, D1 - O - .04), (0, -.25, -1), power=170, ang
 # frame round the door opening
 for s in (-1, 1): d.add(lay(box(.05, D1 - D0 + .1, .016, zone=Z.alu, bevel=.005), s * (HL.DOOR_AZ + .5), (D0 + D1) / 2, O, sink=.004))
 for z in (D0 - .025, D1 + .025):
-    d.add(lay(box(XB * 2.08, .05, .016, zone=Z.alu, bevel=.005), 0, z, O, sink=.004)) if z > D0 else [d.add(lay(box(.50, .05, .016, zone=Z.alu, bevel=.005), s * 13.2, z, O, sink=.004)) for s in (-1, 1)]
+    d.add(lay(box(XB * 2.08, .05, .016, zone=Z.alu, bevel=.005), 0, z, O, sink=.004)) if z > D0 else [d.add(lay(box(.50, .05, .016, zone=Z.alu, bevel=.005), s * 13.2, z - .012, O, sink=.004)) for s in (-1, 1)]
 # ---------------- door: an awning hinged on its top edge
 HY = -HL.R - .02; HZ = D1 - .015; hf = T(0, HY, HZ - O)
 door = Geo(); ids = {}; dd = Geo(); az_d = [a for a in az_s]
@@ -92,10 +92,9 @@ for i in range(HL.WIN_N):
     wg.add(lay(pane(WW, WHt, .075, (i * 3 + 1) % 8), az, HL.WIN_Z, O, .08, -.004))
 d.add(wf)
 P.mesh('windows', wg, MG, smooth_angle=60)
-# ---------------- solar bays: pocket, hatch, telescoping array
-MS = P.material('its_solar', spec=(.9, .9, .95), shininess=.6)
+# ---------------- solar bays: four pockets with a node each; the array part brings its own hatch
 for k, az0 in enumerate(HL.SOL_AZ):
-    t = k + 1; sg = 1 if k == 0 else -1; F = on_cyl(az0, (S0 + S1) / 2 - O, 0); HWx = HL.R * math.sin(math.radians(HL.SOL_HW)); Hh = (S1 - S0) / 2; DP = 1.38   # local +Z out, +Y up
+    F = on_cyl(az0, (S0 + S1) / 2 - O, 0); HWx = HL.R * math.sin(math.radians(HL.SOL_HW)); Hh = (S1 - S0) / 2; DP = HL.SOL_DP   # local +Z out, +Y up
     loc = lambda x, y, r: F @ V((x, y, r))
     aa = [az0 - HL.SOL_HW + 3.75 * i for i in range(11)]
     for z, flip in ((S0, False), (S1, True)):
@@ -107,42 +106,7 @@ for k, az0 in enumerate(HL.SOL_AZ):
         e = [hp(az0 + s * HL.SOL_HW, z) - dz for z in (S0, S1)]; b = [loc(s * HWx, -Hh, DP), loc(s * HWx, Hh, DP)]
         f = [e[0], b[0], b[1], e[1]]; quad(f if s < 0 else f[::-1], Z.wall, d)
     quad([loc(-HWx, -Hh, DP), loc(HWx, -Hh, DP), loc(HWx, Hh, DP), loc(-HWx, Hh, DP)], Z.wall, d)
-    # hatch, hinged on its lower edge, skin 12 mm proud so its outline shows
-    hm = Geo(); hs = Geo(); rz = (S0 + .012, S1 - .012); ha = [az0 - HL.SOL_HW + .25 + (2 * HL.SOL_HW - .5) * i / 10 for i in range(11)]
-    for i in range(10):
-        q = [(ha[i], rz[0]), (ha[i + 1], rz[0]), (ha[i + 1], rz[1]), (ha[i], rz[1])]
-        n = len(hs.v); hs.v += [tuple(hp(a, z) - dz) for a, z in q]; hs.face(range(n, n + 4), [huv(a, z, 'crew') for a, z in q])
-        n = len(hm.v); hm.v += [tuple(hp(a, z, r=HL.R - .04) - dz) for a, z in q][::-1]; hm.face(range(n, n + 4), [Z.grey.uv(*u) for u in ((0, 1), (.1, 1), (.1, 0), (0, 0))])
-    ed = [(a, rz[0]) for a in ha] + [(a, rz[1]) for a in ha[::-1]] + [(ha[0], rz[0])]
-    for A, B in zip(ed, ed[1:]):
-        n = len(hm.v); hm.v += [tuple(hp(*A, r=HL.R - .04) - dz), tuple(hp(*B, r=HL.R - .04) - dz), tuple(hp(*B) - dz), tuple(hp(*A) - dz)]; hm.face(range(n, n + 4), [Z.white.uv(*u) for u in ((0, 0), (.1, 0), (.1, .05), (0, .05))])
-    hfr = F @ T(0, -Hh + .01, HL.R + .01); hp_ = P.empty(f'sol{t}hatch', hfr, P.model)
-    P.mesh(f'sol{t}hatchskin', hs, MH, parent=hp_, frame=hfr, smooth_angle=30); P.mesh(f'sol{t}hatchin', hm, P.det, parent=hp_, frame=hfr)
-    clip = f'solar{t}'; qh = P.rest_quat(hp_); END = 240
-    for f, a in ((0, 0), (50, 112), (END, 112)): P.key(clip, hp_, f, rotation_quaternion=qh @ Quaternion((1, 0, 0), math.radians(a)))
-    # carriage slides out, then seven nested panels slide out of each other
-    slide = P.empty(f'sol{t}slide', F @ T(0, 0, DP + .05), P.model); r0 = slide.location.copy(); uo = (F.to_3x3() @ V((0, 0, 1)))
-    for f, x in ((0, 0), (50, 0), (90, 1.30), (END, 1.30)): P.key(clip, slide, f, location=r0 + uo * x)
-    sf = F @ T(0, 0, DP + .05)                           # authored stowed
-    c = Geo(); c.add(box(.5, .34, .30, zone=Z.white, bevel=.03), sf @ T(0, 0, .15)); [c.add(box(.06, .08, .5, zone=Z.alu, bevel=.01), sf @ T(s * .45, -.28, .22)) for s in (-1, 1)]
-    c.add(box(1.0, .10, .10, zone=Z.alu, bevel=.01), sf @ T(0, -.22, .10))
-    P.mesh(f'sol{t}carriage', c, P.det, parent=slide, frame=sf)
-    pf = sf @ T(0, 0, .30); piv = P.empty(f'sol{t}pivot', pf, slide); P.empty(f'sol{t}catch', pf @ T(0, .1, 2.0), piv)
-    h_ = Geo(); h_.add(cyl(.13, .12, 20, zone=Z.dark, bevel=.012, center_z=False), pf); h_.add(box(1.5, .12, .10, zone=Z.white, bevel=.015), pf @ T(0, 0, .14)); P.mesh(f'sol{t}hub', h_, P.det, parent=piv, frame=pf)
-    PW, PL, NPn = 1.42, .62, 9
-    par, pfr = piv, pf @ T(0, 0, .20)
-    for i in range(NPn):
-        yy = (i - NPn // 2) * .022; pn = Geo(); fr_ = pfr if i == 0 else pf @ T(0, yy, .20 + 0)
-        n = len(pn.v); w = PW / 2; uvs = lambda x, z: (.5 + x / PW * .96, .02 + .96 * (1 + (i % 3) + z / PL) / 4)
-        pn.v += [(x, .006, z) for x, z in ((-w, .0), (w, .0), (w, PL), (-w, PL))]; pn.face([3, 2, 1, 0], [uvs(*((-w, 0), (w, 0), (w, PL), (-w, PL))[q]) for q in (3, 2, 1, 0)])
-        pn.v += [(x, -.002, z) for x, z in ((-w, .0), (w, .0), (w, PL), (-w, PL))]; pn.face([4, 5, 6, 7], [(.90, .05)] * 4)
-        for s in (-1, 1): pn.add(box(.03, .018, PL, center=(s * (w - .0), 0, PL / 2))); pn.uv[-6:] = [tuple([(.10, .05)] * len(u)) for u in pn.uv[-6:]]
-        for zz in (.012, PL - .012): pn.add(box(PW, .016, .024, center=(0, 0, zz))); pn.uv[-6:] = [tuple([(.10, .05)] * len(u)) for u in pn.uv[-6:]]
-        mg = Geo(); mg.add(pn, fr_); o = P.mesh(f'sol{t}p{i}', mg, MS, parent=par, frame=fr_)
-        if i:                                            # each panel rides on the one before; both slide and settle into one plane
-            l0 = o.location.copy(); l1 = l0 + V((0, -.022, PL - .01))
-            for f, l in ((0, l0), (90, l0), (END, l1)): P.key(clip, o, f, location=l)
-        par, pfr = o, fr_
+    P.node(f'solar{k + 1}', F @ V((0, 0, HL.R)), F.to_3x3() @ V((0, 0, 1)), 1)
 # ---------------- nose cap, docking port
 g = Geo(); CR = [(HL.Z_OGIVE + z, r) for z, r in HL.CAP]
 g = skin([z for z, _ in CR if z < HL.Z_OGIVE + 8.56], 'crew', O)
@@ -156,15 +120,10 @@ ci.add(box(.5, .10, .09, zone=Z.dark, bevel=.015), T(0, R0 - .05, ZC - O + .05))
 qc = P.rest_quat(cap); NC = 90
 for f, a in ((0, 0), (NC, -125)): P.key('noseCap', cap, f, rotation_quaternion=qc @ Quaternion((1, 0, 0), math.radians(a)))
 zc = ZC - O
-d.add(lathe([(R0 - .003, zc), (R0 - .05, zc), (R0 - .07, zc - .05), (.62, zc - .05), (.62, zc + .02), (.60, zc + .06), (.545, zc + .085), (.505, zc + .085), (.49, zc + .04), (.49, zc - .12), (.42, zc - .20), (0, zc - .20)], 48, zone=Z.grey))
-d.add(lathe([(.40, zc - .195), (.40, zc - .17), (.36, zc - .16), (0, zc - .15)], 40, zone=Z.hatch)); d.add(bolts(24, .585, .014), T(0, 0, zc + .045))
-for a in (0, 120, 240):                                  # guide petals
-    d.add(box(.24, .03, .17, zone=Z.alu, bevel=.012), Rz(a) @ T(0, -.475, zc + .12) @ Rx(-14))
-d.add(ring(.43, .493, zc + .0, zc + .05, Z.steel, 40)); d.add(tube([(-.24, 0, zc - .148), (.24, 0, zc - .148)], .015, 6, zone=Z.steel))
-d.add(box(.36, .10, .12, zone=Z.dark, bevel=.015), T(0, R0 - .12, zc - .0))
-dn = P.empty('dockPort', T(0, 0, zc + .20), P.model)
-m = Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1)))        # Unity forward (Blender +Y) must point out of the port
-y = V((0, 0, 1)); x = V((1, 0, 0)); z_ = x.cross(y); m = Matrix((x, y, z_)).transposed().to_4x4(); m.translation = (0, 0, zc + .20); P.place(dn, m, P.model)
+# flat seat for whatever docking port the user puts on the node; the shut cap covers it
+d.add(lathe([(R0 - .002, zc), (R0 - .05, zc), (R0 - .055, zc - .03), (.40, zc - .03)], 64, zone=Z.grey)); d.add(lathe([(.40, zc - .03), (.385, zc - .022), (0, zc - .022)], 48, zone=Z.alu))
+d.add(bolts(24, .62, .016), T(0, 0, zc - .03)); d.add(bolts(16, .36, .010), T(0, 0, zc - .022)); d.add(box(.34, .10, .07, zone=Z.dark, bevel=.015), T(0, R0 - .10, zc - .005))
+P.node('port', (0, 0, zc - .022), (0, 0, 1), 1)
 # ---------------- bottom: dome, skirt inside
 zb = HL.Z_SKIN - O
 d.add(lathe([(2.765, zb), (2.765, .30), (2.36, .33)], 96, TR, 360 - TR, zone=Z.wall, flip=True)); d.add(lathe([(2.36, .33), (0, .36)], 96, zone=Z.wall, flip=True))
@@ -195,8 +154,8 @@ P.hull_collider('col_over', [p for z in (D1, HL.Z_OGIVE) for r in (2.1, HL.R) fo
 P.hull_collider('col_base', [p for z in (zb + O + .55, O + .36) for p in ringpts(z, 0, 345, 23, 2.4)])
 for i, (za, zb_) in enumerate(((0, 1.82), (1.82, 3.36), (3.36, 4.64), (4.64, 5.81), (5.81, 7.40))):
     P.hull_collider(f'col_n{i}', [p for z in (HL.Z_OGIVE + za, HL.Z_OGIVE + zb_) for p in ringpts(z, 0, 345, 23)])
+P.hull_collider('col_seat', [(.9 * math.cos(t * math.pi / 8), .9 * math.sin(t * math.pi / 8), z) for z in (zc - .2, zc - .03) for t in range(16)])
 P.hull_collider('col_cap', [tuple(hp(a, HL.Z_OGIVE + z) - dz) for z in (7.41, 7.93, 8.38) for a in range(0, 360, 30)] + [(0, 0, HL.Z_OGIVE + 8.56 - O)], parent=cap, frame=cf)
-P.hull_collider('col_port', [(r * math.cos(t * math.pi / 8), r * math.sin(t * math.pi / 8), z) for r, z in ((.6, zc - .1), (.55, zc + .085)) for t in range(16)])
 P.box_trigger('airlock', climb_frame((0, YB - .28, D0 - O + .75), (0, -1, 0)), (.8, .5, 1.1), 'Airlock')
 P.box_trigger('ladder', climb_frame((0, -RR - .14, (HL.Z_SKIN + D0) / 2 - O + .1), (0, -1, 0)), (.5, .3, D0 - HL.Z_SKIN + .2), 'Ladder')
 P.bake_clips(0)

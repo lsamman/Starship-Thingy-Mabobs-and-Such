@@ -2,7 +2,8 @@
 Stock wheel-module layout as in ITS_Leg. Authored deployed; frame 0 of legDeploy is stowed. Origin on the hull, -Y outboard."""
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hls_common import *
-P = start('STMS_HLS_Leg'); N = 120; F_SWING, F_SLIDE, F_DONE = 70, 25, 100; XA = V((1, 0, 0))
+SHIP = globals().get('SHIP', False)                        # True: the aeroshielded leg for SEP's ship
+P = start('STMS_Ship_Leg' if SHIP else 'STMS_HLS_Leg'); N = 120; F_SWING, F_SLIDE, F_DONE = 70, 25, 100; XA = V((1, 0, 0))
 H0 = V((0, -(HL.HINGE[0] - HL.R) - .20, 0)); OZ = HL.HINGE[1]     # hinge pin, proud of the hull
 SUSP, RAD = .32, .30; AN = V((0, -(HL.FOOT_R - HL.R), HL.SOLE - OZ + RAD + SUSP))   # ankle at rest
 U = (AN - H0).normalized(); SLEN = (AN - H0).length; TILT = math.atan2(-U.y, -U.z)
@@ -32,6 +33,17 @@ UNSW = Quaternion((1, 0, 0), SW)
 if (UNSW @ U - V((0, 0, -1))).length > .01: UNSW = Quaternion((1, 0, 0), -SW)
 assert (UNSW @ U - V((0, 0, -1))).length < .01
 for f, t in ((0, 0), (F_SWING, 1), (N, 1)): P.key('legDeploy', pb, f, rotation_quaternion=UNSW if t == 0 else Quaternion())
+if SHIP:                                                 # shell that swings out with the strut; its nose stays on the hull
+    OFFS = T(0, HL.R, -OZ); sw = T(*H0) @ UNSW.inverted().to_matrix().to_4x4() @ T(*-H0) @ OFFS
+    zs = [.26, .30, .36, .46, .62, .8, 1.1, 1.5, 2.0, 2.6, 3.2, 3.7, 4.02]
+    for nm, zn in (('shell_steel', Z.steel), ('shell_tile', Z.pica)):
+        P.mesh(nm, Geo().add(blister(zs, zn), sw), P.det, parent=pb, frame=pf, smooth_angle=50)
+        P.mesh(nm.replace('shell', 'nose'), Geo().add(blister([4.06, 4.2, 4.35, 4.6, 4.75, 4.9, 5.05, 5.2, 5.33, 5.45, 5.5], zn), OFFS), P.det, parent=leg, smooth_angle=50)
+    li = Geo().add(recolor(blister(zs[1:], Z.dark, inner=.05, flip=True), Z.dark), sw)
+    for z in (1.5, 2.4, 3.3): li.add(box(1.0, .07, .06, zone=Z.alu, bevel=.01), sw @ T(0, -HL.R - .34, z))
+    P.mesh('shell_in', li, P.det, parent=pb, frame=pf, smooth_angle=50)
+    P.variants = ({'shell_steel', 'nose_steel'}, {'shell_tile', 'nose_tile'})
+    P.hull_collider('col_shell', [tuple(sw @ V((x, -math.sqrt(HL.R ** 2 - x * x) - h, z))) for x, h in ((-.9, .1), (-.6, .45), (.6, .45), (.9, .1)) for z in (.8, 3.9)], parent=pb, frame=pf)
 parent = pb; prev = OUT_L
 for k, r in enumerate(RS):
     s0 = at(STEP * (k + 1)); end = OUT_L + STEP * (k + 1); g = Geo(); g.add(tube([at(end - STEP - .35), at(end + (0 if k < NST - 1 else .35))], r, 18, zone=Z.grey if k else Z.alu)); g.add(tube([at(end - .11), at(end + .02)], r + .03, 18, zone=Z.black))
@@ -88,4 +100,4 @@ cap('pistonbaseCollider', at(.1), at(OUT_L), R1, pb); cap('col_strut', at(SLEN -
 o = P.empty('piston_collider', T(*AN), pi); m = o.muproperties; m.collider = 'MU_COL_CAPSULE'; m.isTrigger = False; m.radius = .12; m.height = SUSP + .3; m.direction = 'MU_Z'; m.center = (0, 0, -SUSP / 2); m.layer = 26
 P.hull_collider('col_bracket', [(x, y, z) for x in (-.3, .3) for y in (0, -.26) for z in (-.25, .25)], parent=leg)
 P.node('mount', (0, 0, 0), (0, 1, 0), 1)
-P.bake_clips(0); finish(P)
+P.bake_clips(0); finish(P, P.variants if SHIP else ())

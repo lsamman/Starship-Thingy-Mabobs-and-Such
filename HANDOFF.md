@@ -25,7 +25,9 @@ Built in `~/Projects/STMS-HLS`, a fresh clone, because the `.git` in `~/Projects
 
 Parts: `STMS_HLS_Core`, `_Crew`, `_Leg`, `_Lift`, built by the ITS pipeline (`its/scripts/hls_layout.py` numbers, `hls_common.py`, `build_hls*.py`, `tex_hls.py`, `hls_cfg.py`, `check_hls.py`; patch `its/patches/STMS_HLS.cfg`). See `docs/HLS.md`. `check_hls.py` passes, lint passes.
 
-Interiors `STMS_IVA_HLS`, `STMS_IVA_Crew`, `STMS_IVA_CrewCargo` (`ivalib.py`, `iva_layout.py`, `tex_iva.py`, `render_iva.py`) replace the Mk3 placeholder on the HLS and the two Block 3 noses; check seat poses, light levels and window cameras. No FreeIva walk shell yet. Note that this repo is **public** now.
+**After the user's first flight (2026-11-23 night):** flat docking seat with node; four separate solar parts (two panel modules on one part stopped each other); sill z-fighting; plume origin and size; glossier whites, matte blacks (`hls_det`); white docking hardware; leg shrouds; `STMS_Ship_Leg`; FreeIva shells; noses with cap, EVA hatch and, on crew-cargo, a real bay (`derive_nose.py`: SEP-derived, never commit); tower core copy, crew arm, QD arm. All of that is untested in game.
+
+Interiors `STMS_IVA_HLS`, `STMS_IVA_Crew`, `STMS_IVA_CrewCargo` (`ivalib.py`, `iva_layout.py`, `tex_iva.py`, `render_iva.py`) replace the Mk3 placeholder on the HLS and the two Block 3 noses; check seat poses, light levels and window cameras. Note that this repo is **public** now.
 
 To test in game: landing ring thrust direction and plume (the ring pushes up, 18 plumes point down and out); legs hold it and the pads sit level; RCS directions; elevator piston (anchor/servo names, a kerbal riding the deck, ladder); airlock EVA with the door open; nose port docks with Orion; arrays track; both light switches; SEP Raptors and booster snap on.
 

@@ -1,4 +1,4 @@
-"""Window kit for SEP's Block 3 nosecone: frames, glass and an airlock trigger, in the nosecone model's own frame,
+"""Window kit for SEP's Block 3 nosecone: frames and glass, in the nosecone model's own frame,
 for a second MODEL on the STMS_B3_Nose* copies of SEP_26_SHIP_NOSECONE. Our geometry and textures only; it is laid
 on the nose's surface rebuilt from measured numbers (layout.py), so it builds without SEP installed.
 usage: blender -b -P build_nosekit.py -- <build/mu> crew|crewcargo"""
@@ -19,8 +19,6 @@ MG = P.material('stms_b3_glass', shader='KSP/Emissive/Bumped Specular', spec=(1,
 frames, glass, spots = N.windows(variant, Zone(0, 0, 256, 256, atlas=256))
 P.mesh('stms_b3_frames', frames, MF, smooth_angle=40)
 P.mesh('stms_b3_glass', glass, MG, smooth_angle=60)
-az, z = L.NOSE_AIRLOCK
-P.box_trigger('stms_b3_airlock', N.surf(az, z, .30), (.9, .7, .5), 'Airlock')
 
 # KSP draws front faces only. Judge which side of each piece shows against a stand-in of SEP's shell
 # (from the same measured rings, 1 mm under it), then drop the stand-in so none of it is exported.

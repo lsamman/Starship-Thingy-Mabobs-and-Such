@@ -13,10 +13,10 @@ for s in (-1, 1):
 for z in (-.04, .38, .86): c.add(box(.44, .05, .06, zone=Z.white, bevel=.01, center=(0, -.135, z)))
 c.add(box(.22, .07, .30, zone=Z.dark, bevel=.015, center=(0, -.12, .62))); c.add(tube([(-.22, -.17, -.02), (.22, -.17, -.02)], .022, 10, zone=Z.steel))
 P.mesh('carriage', c, P.det, parent=servo)
-HG = V((0, -.17, -.02)); hf = T(*HG); deck = P.empty('deck', hf, servo); DW, DD, ST = 1.46, 1.32, .30       # tongue first: the deck proper starts outside the hull
+HG = V((0, -.17, -.045)); hf = T(*HG); deck = P.empty('deck', hf, servo); DW, DD, ST = 1.46, 1.32, .30       # tongue first: the deck proper starts outside the hull
 g = Geo()
-for s in (-1, 1): g.add(box(.06, ST + .1, .05, zone=Z.alu, bevel=.01, center=(s * .18, HG.y - ST / 2, -.025)))
-g.add(box(.42, ST, .02, zone=Z.deck, center=(0, HG.y - ST / 2, -.01)))
+for s in (-1, 1): g.add(box(.06, ST + .1, .05, zone=Z.alu, bevel=.01, center=(s * .18, HG.y - ST / 2, -.050)))
+g.add(box(.42, ST, .02, zone=Z.deck, center=(0, HG.y - ST / 2, -.028)))
 y0, y1 = HG.y - ST, HG.y - ST - DD + .25; yc = (y0 + y1) / 2; dp = y0 - y1
 g.add(box(DW, dp, .025, zone=Z.deck, center=(0, yc, -.0125)))
 for s in (-1, 1): g.add(box(.05, dp, .07, zone=Z.alu, bevel=.01, center=(s * (DW / 2 - .025), yc, -.045)))

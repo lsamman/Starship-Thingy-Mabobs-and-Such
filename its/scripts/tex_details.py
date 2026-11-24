@@ -65,6 +65,11 @@ for r in range(9):
 f = np.asarray(im.resize((fw, fh), Image.LANCZOS)).astype(np.float32) / 255 * .80; c.albedo[fy:fy + fh, fx:fx + fw] = f; c.gloss[fy:fy + fh, fx:fx + fw] = .42
 c.save('its_det', nstrength=.55)
 tl.write_dds((np.dstack([metal, metal, metal, np.ones_like(metal)]) * 255).astype(np.uint8), 'its_det_metal')
+# the HLS copy: glossier whites, matte blacks
+keep_g = c.gloss.copy()
+for k, g_ in (('white', .62), ('hatch', .60), ('alu', .60), ('black', .07), ('dark', .12), ('rubber', .05)):
+    s, _, _ = zone(k); c.gloss[s] = g_ + (c.gloss[s] - c.gloss[s].mean())
+c.save('hls_det', nstrength=.55, nrm=False); c.gloss[:] = keep_g
 # bare-carbon livery (B9 subtype Carbon on the hull parts): white trim and hatches become carbon; diffuse only, same normals
 cs, _, _ = zone('carbon')
 for k in ('white', 'hatch'):

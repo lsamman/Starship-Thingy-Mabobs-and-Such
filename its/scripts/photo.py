@@ -25,7 +25,7 @@ imgs, nimg = {}, {}
 
 def load_tex(dirn, name):
     base = name.rsplit('.', 1)[0]
-    for d_ in (dirn, os.path.join(dirn, '..', 'tex')):
+    for d_ in ((os.path.dirname(SEP),) if name.startswith('SEP_B3') else ()) + (dirn, os.path.join(dirn, '..', 'tex'), os.path.join(HERE, 'build/tex'), os.path.join(HERE, '../v3/build/tex')):
         for ext in ('.dds', '.png', '.DDS', '.tga'):
             p = os.path.join(d_, base + ext)
             if os.path.exists(p):

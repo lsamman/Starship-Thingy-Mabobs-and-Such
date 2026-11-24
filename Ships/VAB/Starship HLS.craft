@@ -40,8 +40,16 @@ PART
 	modSize = 0,0,0
 	link = STMS.HLS.Core_4290100074
 	link = STMS.HLS.Lift_4290100085
+	link = STMS.HLS.Solar_4290100086
+	link = STMS.HLS.Solar_4290100087
+	link = STMS.HLS.Solar_4290100088
+	link = STMS.HLS.Solar_4290100089
 	attN = bottom,STMS.HLS.Core_4290100074_0|0|0_0|-1|0_0|0|0_0|-1|0
 	attN = lift,STMS.HLS.Lift_4290100085_0|0.6463|-2.4_0|0|-1_0|0.6463|-2.4_0|0|-1
+	attN = solar1,STMS.HLS.Solar_4290100086_2.11455|2.2713|-1.85441_0.75184|0|-0.659346_2.11455|2.2713|-1.85441_0.75184|0|-0.659346
+	attN = solar2,STMS.HLS.Solar_4290100087_2.75846|2.2713|0.548692_0.980785|0|0.19509_2.75846|2.2713|0.548692_0.980785|0|0.19509
+	attN = solar3,STMS.HLS.Solar_4290100088_-2.75846|2.2713|0.548692_-0.980785|0|0.19509_-2.75846|2.2713|0.548692_-0.980785|0|0.19509
+	attN = solar4,STMS.HLS.Solar_4290100089_-2.11455|2.2713|-1.85441_-0.75184|0|-0.659346_-2.11455|2.2713|-1.85441_-0.75184|0|-0.659346
 	EVENTS
 	{
 	}
@@ -529,6 +537,166 @@ PART
 	modCost = 0
 	modMass = 0
 	modSize = 0,0,0
+	attN = mount,STMS.HLS.Crew_4290100073_0|0|0_0|0|1_0|0|0_0|0|1
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
+PART
+{
+	part = STMS.HLS.Solar_4290100086
+	partName = Part
+	persistentId = 1690100086
+	pos = 2.114549,53.375,-1.85441
+	attPos = 0,0,0
+	attPos0 = 2.114549,2.2713,-1.85441
+	rot = 0,-0.412707,0,0.9108638
+	attRot = 0,0,0,1
+	attRot0 = 0,-0.412707,0,0.9108638
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Grandparent
+	rigidAttachment = False
+	istg = -1
+	resPri = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	sepI = -1
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	sym = STMS.HLS.Solar_4290100087
+	sym = STMS.HLS.Solar_4290100088
+	sym = STMS.HLS.Solar_4290100089
+	attN = mount,STMS.HLS.Crew_4290100073_0|0|0_0|0|1_0|0|0_0|0|1
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
+PART
+{
+	part = STMS.HLS.Solar_4290100087
+	partName = Part
+	persistentId = 1690100087
+	pos = 2.758459,53.375,0.5486915
+	attPos = 0,0,0
+	attPos0 = 2.758459,2.2713,0.5486915
+	rot = 0,-0.7730105,0,0.6343933
+	attRot = 0,0,0,1
+	attRot0 = 0,-0.7730105,0,0.6343933
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Grandparent
+	rigidAttachment = False
+	istg = -1
+	resPri = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	sepI = -1
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	sym = STMS.HLS.Solar_4290100086
+	sym = STMS.HLS.Solar_4290100088
+	sym = STMS.HLS.Solar_4290100089
+	attN = mount,STMS.HLS.Crew_4290100073_0|0|0_0|0|1_0|0|0_0|0|1
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
+PART
+{
+	part = STMS.HLS.Solar_4290100088
+	partName = Part
+	persistentId = 1690100088
+	pos = -2.758459,53.375,0.5486915
+	attPos = 0,0,0
+	attPos0 = -2.758459,2.2713,0.5486915
+	rot = 0,-0.7730105,0,-0.6343933
+	attRot = 0,0,0,1
+	attRot0 = 0,-0.7730105,0,-0.6343933
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Grandparent
+	rigidAttachment = False
+	istg = -1
+	resPri = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	sepI = -1
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	sym = STMS.HLS.Solar_4290100086
+	sym = STMS.HLS.Solar_4290100087
+	sym = STMS.HLS.Solar_4290100089
+	attN = mount,STMS.HLS.Crew_4290100073_0|0|0_0|0|1_0|0|0_0|0|1
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	PARTDATA
+	{
+	}
+}
+PART
+{
+	part = STMS.HLS.Solar_4290100089
+	partName = Part
+	persistentId = 1690100089
+	pos = -2.114549,53.375,-1.85441
+	attPos = 0,0,0
+	attPos0 = -2.114549,2.2713,-1.85441
+	rot = 0,-0.412707,0,-0.9108638
+	attRot = 0,0,0,1
+	attRot0 = 0,-0.412707,0,-0.9108638
+	mir = 1,1,1
+	symMethod = Radial
+	autostrutMode = Grandparent
+	rigidAttachment = False
+	istg = -1
+	resPri = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	sepI = -1
+	attm = 0
+	sameVesselCollision = False
+	modCost = 0
+	modMass = 0
+	modSize = 0,0,0
+	sym = STMS.HLS.Solar_4290100086
+	sym = STMS.HLS.Solar_4290100087
+	sym = STMS.HLS.Solar_4290100088
 	attN = mount,STMS.HLS.Crew_4290100073_0|0|0_0|0|1_0|0|0_0|0|1
 	EVENTS
 	{

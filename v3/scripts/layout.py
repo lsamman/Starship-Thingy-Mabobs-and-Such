@@ -31,7 +31,7 @@ Z = dict(FRAME=(0, 0, 512, 512), DARK=(512, 0, 512, 256), CABLE=(512, 256, 512, 
 NOSE_SIDES = 48             # the steel shell is a 48-sided lathe with its vertices on multiples of 7.5 deg
 # Vertex rings of the shell, (z, vertex radius): the barrel (Cylinder) and the ogive (Nose_7_EXT), straight between rings
 NOSE_RINGS = ((-3.412, 2.8125), (0.006, 2.8124), (0.840, 2.7892), (1.816, 2.7151), (2.581, 2.6023), (3.360, 2.4546),
-              (4.132, 2.2600), (4.640, 2.1174), (5.307, 1.8957), (5.807, 1.7041), (6.234, 1.5289))
+              (4.132, 2.2600), (4.640, 2.1174), (5.307, 1.8957), (5.807, 1.7041), (6.2340, 1.5289), (6.4700, 1.4229), (6.7123, 1.3066), (6.9450, 1.1934), (7.1446, 1.0920), (7.2794, 1.0187), (7.4021, 0.9507), (7.5308, 0.8786), (7.6688, 0.8027), (7.7987, 0.7270), (7.9277, 0.6502), (8.0297, 0.5907), (8.1360, 0.5202), (8.2905, 0.4202), (8.3776, 0.3616), (8.4339, 0.3219), (8.4853, 0.2701), (8.5244, 0.2072), (8.5528, 0.0976))
 NOSE_WELDS = (-2.282, -1.139, 0.003)   # weld grooves and the barrel-ogive seam: no window crosses them
 # Bare steel half-width (deg either side of az 0) by height, the narrower of the two ablative subtypes (39 and 43).
 # Above 4.85 the Ablative 43 band and the tip tiles cover it; 0.83-1.34 has two tile patches at +-26..34 deg;
@@ -47,13 +47,14 @@ NOSE_BIG = dict(z0=2.65, z1=4.60, ha=2.1, side=.4875)     # side: the ITS lattic
 # Panes are the ITS ones at the same 0.625 scale, 0.50 x 0.42 m real. Rows sit 1.3 apart, clear of the tile patches
 # (0.83-1.34) and the welds; each variant takes the first N rows: for two rows on the crew-cargo nose, make its 1 a 2.
 SMALL = (.3125, .2625)
-NOSE_SMALL_ROWS = ((1.70, 9, 40), (0.40, 9, 40), (-0.90, 11, 48))
+NOSE_SMALL_ROWS = ((1.70, 10, 41), (0.40, 9, 40), (-0.90, 11, 48))   # the first row leaves its middle to the EVA hatch
+CAP_Z = 7.2794               # the tip above this ring is a hinged cap over the docking seat
+EVA_Z, EVA_HW = (.96, 2.04), 6.8   # EVA hatch at az 0: heights, half-width in degrees; the access arm on the tower meets it
 NOSE_SMALL_COUNT = {'crew': 3, 'crewcargo': 1}
 NOSE_FRAME = .035           # frame border around a pane
 NOSE_FRAME_H = .022         # frame height before the sink: 14 mm proud of the hull
 NOSE_SINK = .008            # everything laid on the hull is bent onto its facets and sunk this much
 NOSE_GLASS_OFF = .004       # glass this far above the hull, under the frame's inner lip
-NOSE_AIRLOCK = (5.9, -3.04) # az, z of SEP's own hatch at the bottom of the leeward barrel (SEP's model has no airlock)
 # Crew: the shell holds 184 m3 from the bulkhead at z -2.53 to the tip. Twelve kerbals is 15 m3 each, about 63 m3 a
 # person at real scale (the ISS gives its seven about 55). The ITS crew section's density (16 in 447 m3) would allow
 # only 6-7 here; that is roomy for KSP, where stock cabins give about 2 m3 a kerbal. The crew-cargo nose's cabin is

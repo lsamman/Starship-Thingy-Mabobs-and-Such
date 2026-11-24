@@ -39,8 +39,10 @@ gap = min(math.hypot(p.x, p.y) for p in v) - HL.R; print('      by piece', {n: r
 half = max(abs(math.degrees(math.atan2(p.x, -p.y))) for p in v if p.y < 0); ok(half < 37.5, 'stowed leg half-width %.1f deg (track starts 37.5 away)' % half)
 t, v = tree(leg1, None, W); ok(abs(min(p.z for p in v) - HL.SOLE) < .06, 'deployed sole at %.3f (want %.2f)' % (min(p.z for p in v), HL.SOLE))
 core = load(mu('STMS_HLS_Core')); crew = load(mu('STMS_HLS_Crew')); tc, _ = tree(core); tw, _ = tree(crew, None, Tz(HL.Z_TOP)); td, _ = tree(crew, ('doorskin', 'doorframe', 'flag'), Tz(HL.Z_TOP)); tb, _ = tree(crew, ('hull', 'windows', 'details'), Tz(HL.Z_TOP))
-th, _ = tree(crew, ['sol%dhatch%s' % (i, k) for i in (1, 2) for k in ('skin', 'in')]); sp = [n for n in crew if n.startswith('sol') and 'hatch' not in n]; ts, vs = tree(crew, sp)
-ok(not ts.overlap(th), 'solar packages clear of their shut hatches (%d hits)' % len(ts.overlap(th))); thull, _ = tree(crew, ('hull',)); ok(not ts.overlap(thull), 'solar packages inside the hull (%d hits)' % len(ts.overlap(thull)))
+so = load(mu('STMS_HLS_Solar'), 'solarDeploy'); so1 = load(mu('STMS_HLS_Solar'), 'solarDeploy', True); ZS = sum(HL.SOL_Z) / 2
+for az in HL.SOL_AZ:
+    MS = Matrix.Rotation(math.radians(az), 4, 'Z') @ Matrix.Translation((0, -HL.R, ZS)); hh = ('hatchskin', 'hatchin'); tp, _ = tree(so, [n for n in so if n not in hh + ('rails',)], MS); t2, _ = tree(so, hh, MS); t3, _ = tree(so1, [n for n in so1 if n not in ('rails',)], MS)
+    ok(not tp.overlap(t2), f'solar {az}: package clear of the shut hatch'); n = {k: len(tp.overlap(tree(crew, (k,), Tz(HL.Z_TOP))[0])) for k in crew}; print('      package touches', {k: c for k, c in n.items() if c}); n = {k: len(t3.overlap(tree(crew, (k,), Tz(HL.Z_TOP))[0])) for k in crew}; print('      deployed touches', {k: c for k, c in n.items() if c})
 L0 = Matrix.Translation((0, -HL.TRACK_R, HL.DOOR[0])); l0, l1 = load(mu('STMS_HLS_Lift'), 'deckFold'), load(mu('STMS_HLS_Lift'), 'deckFold', True)
 t, v = tree(l0, ('carriage', 'deckmesh'), L0); ok(not t.overlap(td), 'folded elevator clear of the shut door (%d hits)' % len(t.overlap(td))); ok(not t.overlap(tb), 'folded elevator clear of the bay (%d hits)' % len(t.overlap(tb)))
 hit = {}
@@ -79,4 +81,14 @@ if SEP and os.path.exists(SEP):
         t, v = tree(h, (n,), M); c = [k for k, o in (('core', tc), ('crew', tw)) if t.overlap(o)]
         print('      dock', n, 'z %.2f..%.2f' % (min(p.z for p in v), max(p.z for p in v)), 'r %.2f..%.2f' % (min(math.hypot(p.x, p.y) for p in v), max(math.hypot(p.x, p.y) for p in v)), 'touches', c)
         for az in HL.LEG_AZ: ok(not t.overlap(tree(leg0, None, Matrix.Rotation(math.radians(az), 4, 'Z') @ W)[0]), f'{n} clear of stowed leg {az}') if t.overlap(tree(leg0, None, Matrix.Rotation(math.radians(az), 4, 'Z') @ W)[0]) else None
+sh, _ = tree(load(mu('STMS_HLS_LegShroud')), ('shroud_black', 'inside'), W)
+for n in leg0: ok(not sh.overlap(tree(leg0, (n,), W)[0]) or n == 'bracket', 'shroud over stowed leg: ' + n) if sh.overlap(tree(leg0, (n,), W)[0]) else None
+q0, q1 = load(mu('STMS_Ship_Leg'), 'legDeploy'), load(mu('STMS_Ship_Leg'), 'legDeploy', True)
+for tag, q in (('stowed', q0), ('deployed', q1)):
+    sx, _ = tree(q, ('shell_steel', 'shell_in'), W); print('      ship leg', tag, 'shell touches', [n for n in q if n[:5] not in ('shell', 'nose_') and sx.overlap(tree(q, (n,), W)[0])])
+if SEP and os.path.exists(SEP):
+    co = load(os.path.join(SEP, 'SEP_26_SHIP_CORE.mu')); M0 = Tz(12.5993)
+    for az in HL.LEG_AZ:
+        for tag, q in (('stowed', q0), ('deployed', q1)):
+            tt_, _ = tree(q, [n for n in q if n not in ('bracket', 'nose_steel', 'nose_tile')], Matrix.Rotation(math.radians(az), 4, 'Z') @ W); h = {n: len(tt_.overlap(tree(co, (n,), M0)[0])) for n in co if n != 'atmofx_envelope'}; h = {n: c for n, c in h.items() if c}; print('      ship leg', az, tag, 'on SEP core touches', h)
 print('check_hls:', bad, 'failures')

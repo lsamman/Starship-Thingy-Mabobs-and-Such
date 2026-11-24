@@ -15,7 +15,7 @@ def radius(z):
 
 
 def build(sheet, seams, seed):
-    c = tl.Canvas(W, W, albedo=(.80, .80, .79), gloss=.40); z0, z1 = HL.SHEET[sheet]
+    c = tl.Canvas(W, W, albedo=(.80, .80, .79), gloss=.62); z0, z1 = HL.SHEET[sheet]
     az = np.clip((c.x / W - HL.PAD) / (1 - 2 * HL.PAD), 0, 1) * 180; z = z0 + (z1 - z0) * np.clip((1 - c.y / W - HL.PAD) / (1 - 2 * HL.PAD), 0, 1)
     r = radius(z); x = np.radians(az) * r; aa = (z1 - z0) / W * .7
     cloud, fine = noise(seed, 5, 5), noise(seed + 1, 60)
@@ -47,11 +47,11 @@ def build(sheet, seams, seed):
         edge = line(ub, .010, aa); h -= .9 * edge
         pal = .043 + .006 * cloud + .002 * fine
         c.albedo[:] = c.albedo * (1 - black[..., None]) + np.dstack([pal, pal, pal * 1.03]) * black[..., None]
-        c.gloss[:] = c.gloss * (1 - black) + (.30 + .03 * cloud + .02 * fine) * black
+        c.gloss[:] = c.gloss * (1 - black) + (.07 + .010 * cloud + .008 * fine) * black
         for b in HL.GROUPS:                                     # frames round each group of ports, and a ring round each port
             for k in (-1, 0, 1):
                 d_ = np.abs(az - (b + k * HL.PITCH)); ee = np.hypot(np.radians(d_) * HL.R / HL.BORE[0], (z - bm) / HL.BORE[1]); rg = line((ee - 1.06) * .3, .016, aa)
-                c.albedo[:] = c.albedo * (1 - rg[..., None]) + .13 * rg[..., None]; c.gloss += .2 * rg; h += .6 * rg
+                c.albedo[:] = c.albedo * (1 - rg[..., None]) + .13 * rg[..., None]; c.gloss += .03 * rg; h += .6 * rg
         _, ea = cells(az, 60, .0); k = line(np.radians(ea) * HL.R, .004, aa) * (np.abs(z - bm) < bh); h -= .7 * k
     else:
         for a0, hw, zz in ((48.75, HL.SOL_HW, HL.SOL_Z),):      # hatch outline, and a second service hatch aft
@@ -65,3 +65,9 @@ def build(sheet, seams, seed):
 build('core', (2.2, 4.85, 7.4, 10.1, 12.8, 15.5, 18.2), 51)
 build('crew', (21.3, 24.0, 27.3, 29.6), 57)
 import its_lamp
+
+g = np.zeros((64, 64, 4), np.uint8); g[...] = (212, 212, 210, 175); tl.write_dds(g, 'stms_plainwhite_diff')          # white finish for SEP's docking hardware
+g[...] = (0, 255, 0, 255); tl.write_dds(g, 'stms_plainmask_diff')                                                    # no metal, full AO
+
+g = np.zeros((4, 4, 4), np.uint8); g[...] = (128, 128, 128, 255)      # stand-ins for SEP's textures on the cut nose pieces (B9 swaps the real ones in)
+for n in ('Ship_Core_7_BASE', 'Ship_Core_7_NRM', 'Ship_Core_7_MASK', 'Ship_Core_11_BASE', 'Ship_Core_11_NRM', 'Ship_Core_11_MASK', 'Ship_Core_1_BASE', 'Ship_Core_1_NRM', 'Ship_Core_1_MASK', 'TILES_BASE', 'TILES_NRM'): tl.write_dds(g, 'SEP_B3_' + n)

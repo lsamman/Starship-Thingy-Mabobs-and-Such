@@ -14,6 +14,10 @@ if [ -z "$SKIP_MODELS" ]; then
         "$B" -b --factory-startup --python-exit-code 1 -P scripts/build_nosekit.py -- build/mu $v 2>&1 | grep -E "EXPORT|FACING|KIT|Error|Traceback"
     done
 fi
+if [ -z "$SKIP_MODELS" ] && [ -f "$SEP/Assets/BL3/SEP_26_SHIP_NOSECONE.mu" ]; then       # cut copies of SEP's nose, into the ITS build (they share its detail atlas)
+    mkdir -p ../its/build/mu
+    for v in crew crewcargo; do "$B" -b --factory-startup --python-exit-code 1 -P scripts/derive_nose.py -- "$SEP/Assets/BL3" ../its/build/mu $v 2>&1 | grep -E "EXPORT|FACING|Error|Traceback"; done
+fi
 if [ -z "$SKIP_TEX" ]; then
     python3 -I scripts/tex_winch.py | tail -1
     python3 -I scripts/tex_nosekit.py | tail -2

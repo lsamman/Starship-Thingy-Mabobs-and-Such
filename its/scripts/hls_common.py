@@ -3,6 +3,9 @@ import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *
 import hls_layout as HL
 V = Vector
+_start = start
+def start(name):
+    P = _start(name); P.mats.clear(); P.det = P.material('hls_det', nrm='its_det', spec=(1, 1, 1), shininess=.5); return P
 RINGS = [(0.0, HL.R), (HL.Z_OGIVE, HL.R)] + [(HL.Z_OGIVE + z, r) for z, r in HL.OGIVE[1:]] + [(HL.Z_OGIVE + z, r) for z, r in HL.CAP[1:]]
 
 
@@ -63,6 +66,21 @@ def skin(zs, sheet, z0=0.0, keep=None):
     return g
 
 
+def blister(zs, zone, inner=0.0, flip=False, n=18):
+    """Shell over a stowed leg, from HL.SHELL, in the hull frame at azimuth 0."""
+    H_ = lambda z: float(np.interp(z, *zip(*HL.SHELL))); W_ = lambda z: float(np.interp(z, *zip(*HL.SHELL_W))); g = Geo(); rows = []
+    for z in zs:
+        h, w = H_(z), W_(z) - inner; row = []
+        for k in range(n + 1):
+            u = -1 + 2 * k / n; lat = max(0.0, 1 - abs(u) ** 3.0) ** .6; x = u * w; y = -math.sqrt(HL.R ** 2 - x * x); out = max(0.0, h - inner) * lat - .012
+            row.append(len(g.v)); g.v.append(tuple(V((x, y, z)) + V((x, y, 0)).normalized() * out))
+        rows.append(row)
+    for j, (a, b) in enumerate(zip(rows, rows[1:])):
+        for k in range(n):
+            f = [a[k], a[k + 1], b[k + 1], b[k]]; u = [zone.uv(kk / n, (zs[jj] - zs[0]) / (zs[-1] - zs[0])) for kk, jj in ((k, j), (k + 1, j), (k + 1, j + 1), (k, j + 1))]; g.face(f[::-1] if flip else f, u[::-1] if flip else u)
+    return g
+
+
 def wrap(az): return (az + 180) % 360 - 180
 
 
@@ -110,4 +128,4 @@ def rcs(P, det, spots, z0=0.0):
 def glass_mat(P): return P.material('its_glass', shader='KSP/Emissive/Bumped Specular', spec=(1, 1, 1), shininess=.8, emissive='its_glass_emit')
 
 
-def lamp_mat(P): return P.material('its_det', shader='KSP/Emissive/Bumped Specular', spec=(.8, .8, .8), shininess=.4, emissive='hls_lamp_emit', name='hls_lamp')
+def lamp_mat(P): return P.material('hls_det', nrm='its_det', shader='KSP/Emissive/Bumped Specular', spec=(.8, .8, .8), shininess=.4, emissive='hls_lamp_emit', name='hls_lamp')

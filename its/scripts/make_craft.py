@@ -142,4 +142,5 @@ if __name__ == '__main__':
         for i, e in enumerate(sl + vac): stage(e, 0, i)
         sym([a.put(P('STMS_HLS_Leg'), f'leg{i + 1}', 'mount', yaw(-az)) for i, az in enumerate(HL.LEG_AZ)])
         f.put(P('STMS_HLS_Lift'), 'lift', 'mount')
+        sym([f.put(P('STMS_HLS_Solar'), f'solar{i + 1}', 'mount', yaw(-az)) for i, az in enumerate(HL.SOL_AZ)])
         write('Starship HLS', f, 'Starship HLS with SEP Raptors. Lands on the ring of thrusters on the core: shut the Raptors down and activate them. SEP Block 3 booster fits underneath.', 1)

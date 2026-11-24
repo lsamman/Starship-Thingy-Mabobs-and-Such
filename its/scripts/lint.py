@@ -68,6 +68,9 @@ for c in glob.glob(os.path.join(root, '**', '*.cfg'), recursive=True):
     for pt in re.finditer(r'^\s*PART\s*\{', s, re.M):
         pass
     models = [m_ for m_ in re.findall(r'model\s*=\s*(\S+)', s) if '*' not in m_]   # KAS renderer paths use * patterns
+    for src in re.findall(r'^\+PART\[(\w+)\]', s, re.M):      # a copy also keeps the models of the part it copies
+        for pc in glob.glob(os.path.join(gd, 'StarshipExpansionProject', 'Parts', '**', src + '.cfg'), recursive=True):
+            models += re.findall(r'model\s*=\s*(\S+)', open(pc, errors='replace').read())
     allnames = set(); allanims = set()
     for m_ in models:
         key = m_

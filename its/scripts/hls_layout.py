@@ -34,10 +34,12 @@ BAY_BACK = -1.25
 # ---- windows
 WIN_Z, WIN_N, WIN_SPAN, WIN = 25.48, 10, 36.0, (.31, .74)
 # ---- solar bays
-SOL_AZ = (48.75, 311.25); SOL_HW = 18.75; SOL_Z = (22.95, 23.8)
+SOL_AZ = (48.75, 101.25, 258.75, 311.25); SOL_HW = 18.75; SOL_DP = 1.38; SOL_Z = (22.95, 23.8)
 # ---- legs (plane of one leg: r outward, z)
 HINGE = (2.87, 4.35); SOLE = -1.0; FOOT_R = 5.35; FOOT_STOW = .52
-COLLAR = 1.15               # drag strut collar, up the strut from the ankle (deployed)
+SHELL = ((.26, .05), (.32, .30), (.46, .58), (.8, .74), (1.4, .80), (2.2, .78), (3.2, .74), (3.9, .72), (4.25, .70), (4.6, .60), (4.9, .42), (5.2, .21), (5.45, .03), (5.5, 0))   # blister over a stowed leg: (z, height off the hull)
+SHELL_W = ((.26, 1.18), (.8, 1.34), (1.6, 1.28), (2.6, .92), (4.2, .74), (4.9, .56), (5.3, .28), (5.5, .10))   # and half-width
+COLLAR = .72               # drag strut collar, up the strut from the ankle (deployed)
 LIFT_TRAVEL = 22.3
 SHEET = {'core': (0.0, Z_SKIN), 'crew': (Z_SKIN, Z_OGIVE + 7.40)}
 PAD = .003

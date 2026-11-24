@@ -1,7 +1,7 @@
 """HLS core: tanks, engine bay for SEP's Raptors, black leg panels, landing thruster band, elevator track."""
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hls_common import *
-P = start('STMS_HLS_Core'); MH = P.material('hls_core', spec=(.75, .75, .75), shininess=.5)
+P = start('STMS_HLS_Core'); MH = P.material('hls_core', spec=(1, 1, 1), shininess=.62)
 B0, B1 = HL.BAND; CELL = HL.PITCH
 bores = [g + k * CELL for g in HL.GROUPS for k in (-1, 0, 1)]
 inb = lambda az: any(abs(wrap(az - b)) < CELL / 2 for b in bores)
@@ -46,7 +46,7 @@ for b in bores:
     # thrust transform: KSP pushes along -forward; Unity forward is Blender local +Y here
     P.empty('landingThrust', None, P.model)
     e = bpy.data.objects[[o.name for o in P.coll.objects if o.name.startswith('landingThrust')][-1]]
-    y = ax.normalized(); x = V((math.cos(a), math.sin(a), 0)); z_ = x.cross(y); m = Matrix((x, y, z_)).transposed().to_4x4(); m.translation = c0 + ax * .02
+    y = ax.normalized(); x = V((math.cos(a), math.sin(a), 0)); z_ = x.cross(y); m = Matrix((x, y, z_)).transposed().to_4x4(); m.translation = c0 - ax * .44
     if 75 < b < 109 or 251 < b < 285: m = Rz(1.875 if b > 180 else -1.875) @ m      # the beam groups sit a half facet off; their thrust does not, so it balances
     P.place(e, m, P.model)
 ho = P.mesh('hull', hull, MH, smooth_angle=30)
@@ -110,8 +110,8 @@ for s in (-1, 1):                                        # base floodlights eith
     d.add(lay(box(.34, .13, .10, zone=Z.white, bevel=.02), s * 12.5, HL.PANEL_TOP + .05)); lamp.add(lay(box(.28, .02, .06, zone=Z.lamp), s * 12.5, HL.PANEL_TOP - .02, sink=-.04))
     add_spot(P, 'baseLight', hp(s * 12.5, HL.PANEL_TOP - .05, .12), (0, -.35, -1), power=260, angle=95, reach=14)
 for az in HL.LIGHT_AZ: (gr if az < 180 else rd).add(lay(box(.05, .28, .016, zone=Z.lamp), az, zm))
-P.mesh('lampglow', lamp, LM); P.mesh('navgreen', gr, P.material('its_det', shader='KSP/Emissive/Bumped Specular', spec=(.8, .8, .8), shininess=.4, emissive='hls_green_emit', name='hls_green'))
-P.mesh('navred', rd, P.material('its_det', shader='KSP/Emissive/Bumped Specular', spec=(.8, .8, .8), shininess=.4, emissive='hls_red_emit', name='hls_red'))
+P.mesh('lampglow', lamp, LM); P.mesh('navgreen', gr, P.material('hls_det', nrm='its_det', shader='KSP/Emissive/Bumped Specular', spec=(.8, .8, .8), shininess=.4, emissive='hls_green_emit', name='hls_green'))
+P.mesh('navred', rd, P.material('hls_det', nrm='its_det', shader='KSP/Emissive/Bumped Specular', spec=(.8, .8, .8), shininess=.4, emissive='hls_red_emit', name='hls_red'))
 f = Geo()                                                # quick-disconnect plate and refuelling interface on the docking side
 f.add(lay(box(.9, .6, .02, zone=Z.alu, bevel=.008), 180, 2.6)); [f.add(lay(cyl(.1, .05, 18, zone=Z.dark, bevel=.01), 180 + s * 4.5, 2.6)) for s in (-1, 0, 1)]
 d.add(f)
@@ -124,7 +124,7 @@ P.mesh('details', d, P.det, smooth_angle=40)
 P.node('top', (0, 0, HL.Z_TOP), (0, 0, 1), 5); P.node('bottom', (0, 0, 0), (0, 0, -1), 5)
 P.node('docking', (0, HL.R_DOCK, HL.Z_DOCK), (0, 1, 0), 2)
 for i, az in enumerate(HL.LEG_AZ):
-    p = on_cyl(az, HL.HINGE[1], HL.R); P.node(f'leg{i + 1}', p.translation, p.to_3x3() @ V((0, 0, 1)), 1)
+    p = on_cyl(az, HL.HINGE[1], HL.R); P.node(f'leg{i + 1}', p.translation, p.to_3x3() @ V((0, 0, 1)), 1); P.node(f'shroud{i + 1}', p.translation + p.to_3x3() @ V((0, 0, .0)), p.to_3x3() @ V((0, 0, 1)), 2)
 def arcs(a0, a1, r0, r1, z0, z1, n):
     return [tuple(hp(a0 + (a1 - a0) * i / n, z, r=r)) for i in range(n + 1) for r in (r0, r1) for z in (z0, z1)]
 # four convex quarters outside the track, so kerbals on the ladder are not pushed out of the channel

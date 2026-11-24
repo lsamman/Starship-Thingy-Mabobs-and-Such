@@ -31,7 +31,7 @@ def build(variant):
         if it.name == '_EmissiveColor': it.value = (1, 1, 1, 1)
     MG = P.material('stms_ivaglass', shader='KSP/Alpha/Translucent', name='iva_glass')
     ro = outer(variant); ri = lambda z: ro(z) - T_WALL
-    BREAKS = outer.breaks; PROPS, SEATS, CAMS, LIGHTS = [], [], [], []; SH = Geo()
+    HATCH = None; BREAKS = outer.breaks; PROPS, SEATS, CAMS, LIGHTS = [], [], [], []; SH = Geo()
 
     def pos(az, r, z): a = math.radians(az); return V((r * math.sin(a), -r * math.cos(a), z))
     def inw(az, z, r): return on_cyl(az, z, r) @ Ry(180)
@@ -75,6 +75,7 @@ def build(variant):
             B = outer.big; zc = B['z1'] + .25
         # ---- wall: columns by azimuth, rows by height, holes for the windows
         azs = {round(a, 4) for a in np.arange(-180, 180.01, 7.5)}; zs = {zf, zc}
+        if D.get('eva'): holes = [h for h in holes if abs(h[0]) > 12.8]
         rm = ri(win[0]) if holes else 0
         for az, z0, w, h in holes:
             ha = math.degrees(w / 2 / rm); azs |= {round(az - ha, 4), round(az + ha, 4)}; zs |= {z0 - h / 2, z0 + h / 2}
@@ -191,8 +192,14 @@ def build(variant):
             curved(fur, 126, 194, [(ri(zf) - .36, zf + .56), (ri(zf) - .36, zf + .59), (ri(zf) - .10, zf + .59), (ri(zf) - .10, zf + .56)], 'wood', 12); curved(led, 126, 194, [(ri(zf) - .30, zf + .668), (ri(zf) - .20, zf + .668)], 'led', 12)
             bz = ri(zf + .3); curved(soft, 205, 300, [(bz - .50, zf + .20), (bz - .50, zf + .27), (bz - .13, zf + .25), (bz - .09, zf + .64), (bz - .01, zf + .64), (bz - .01, zf + .20)], 'bench', 18); curved(fur, 205, 300, [(bz - .44, zf), (bz - .44, zf + .21), (bz, zf + .21)], 'white', 18); tr = bz - .98; curved(fur, 226, 280, [(tr - .16, zf + .40), (tr - .16, zf + .43), (tr + .18, zf + .43), (tr + .18, zf + .40), (tr - .16, zf + .40)], 'wood', 10); [fur.add(cyl(.03, .40, 12, zone=Z['metal'], center_z=False), T(*pos(a, tr, zf))) for a in (238, 268)]
             for k in range(D['seats']):
-                a = (-30, -10, 10, 30)[k]; d = pos(a, 1, 0); p = d * (ri(zf + .5) - .62); seat(p.x, p.y, zf, d, 'Observation Deck')
-            curved(fur, -44, 44, [(ri(zf + .5) - .24, zf + .42), (ri(zf + .5) - .24, zf + .46), (ri(zf + .5), zf + .46), (ri(zf + .5), zf + .42)], 'wood', 14)
+                a = (-50, -27, 27, 50)[k]; d = pos(a, 1, 0); p = d * (ri(zf + .5) - .62); seat(p.x, p.y, zf, d, 'Observation Deck')
+            for a0_, a1_ in ((-56, -13), (13, 56)): curved(fur, a0_, a1_, [(ri(zf + .5) - .24, zf + .42), (ri(zf + .5) - .24, zf + .46), (ri(zf + .5), zf + .46), (ri(zf + .5), zf + .42)], 'wood', 8)
+            e0, e1, ex, ey = IL.EVA; ex += .03; ey += .03; yo = -ri(zf + .5)            # the airlock chamber, with the hatch on its inner face
+            for s in (-1, 1): q4(fur, [(s * ex, yo, zf), (s * ex, ey, zf), (s * ex, ey, zc), (s * ex, yo, zc)], Z['hex'], (s * 9, ey, zf + .5))
+            q4(fur, [(-ex, ey, zf), (ex, ey, zf), (ex, ey, zc), (-ex, ey, zc)], Z['hex'], (0, 9, zf + .5))
+            Fh = Matrix(((-1, 0, 0, 0), (0, 0, 1, ey), (0, 1, 0, (e0 + e1) / 2), (0, 0, 0, 1))); fur.add(quad_patch(.52, .94, Z['door']), Fh @ T(0, 0, .012)); fur.add(rounded_rect_ring(.62, 1.04, .14, .07, .04, 6, zone=Z['white']), Fh)
+            fur.add(tube([tuple(Fh @ V((.10 * math.cos(t), .10 * math.sin(t), .05))) for t in np.linspace(0, TAU, 25)], .013, 8, zone=Z['metal'])); [fur.add(tube([tuple(Fh @ V((s * .30, y, z))) for y, z in ((-.2, 0), (-.2, .05), (.2, .05), (.2, 0))], .012, 6, zone=Z['black'])) for s in (-1, 1)]
+            HATCH = (0, ey + .03, (e0 + e1) / 2, 'stms_airlock')
             for k, a in enumerate((62, 78, 94)):           # hydroponics
                 F = inw(a, zf + .6, ri(zf + .6) - .02); fur.add(box(.58, 1.0, .12, zone=Z['white'], bevel=.01), F)
                 for y in (-.30, 0, .30):
@@ -219,7 +226,7 @@ def build(variant):
             for x0, x1, z0, z1 in ((-X, -dw, zf, zc), (dw, X, zf, zc), (-dw, dw, zf, dh0), (-dw, dw, dh1, zc)):
                 q4(wall_, [(x0, yb, z0), (x1, yb, z0), (x1, yb, z1), (x0, yb, z1)], None, (0, 0, z0), [Z['hex'].uv(min(1, max(0, (p[0] + X) / (2 * X))), (p[1] - zf) / (zc - zf)) for p in ((x0, z0), (x1, z0), (x1, z1), (x0, z1))])
             F = Matrix(((-1, 0, 0, 0), (0, 0, 1, yb), (0, 1, 0, (dh0 + dh1) / 2), (0, 0, 0, 1)))     # +Z toward the cabin
-            fur.add(quad_patch(2 * dw, dh1 - dh0, Z['door']), F @ T(0, 0, -.05)); fur.add(rounded_rect_ring(2 * dw + .14, dh1 - dh0 + .14, .18, .09, .06, 6, zone=Z['white'], base=-.05), F)
+            HATCH = (0, yb + .02, (dh0 + dh1) / 2, 'airlock'); fur.add(quad_patch(2 * dw, dh1 - dh0, Z['door']), F @ T(0, 0, -.05)); fur.add(rounded_rect_ring(2 * dw + .14, dh1 - dh0 + .14, .18, .09, .06, 6, zone=Z['white'], base=-.05), F)
             for s in (-1, 1): fur.add(tube([tuple(F @ V((s * (dw + .16), y, z))) for y, z in ((-.32, 0), (-.32, .06), (.32, .06), (.32, 0))], .016, 8, zone=Z['black']))
             fur.add(tube([tuple(F @ V((.12 * math.cos(t), .12 * math.sin(t), .02))) for t in np.linspace(0, TAU, 25)], .014, 8, zone=Z['metal'])); [fur.add(tube([tuple(F @ V((0, 0, .01))), tuple(F @ V((.12 * math.cos(t), .12 * math.sin(t), .02)))], .010, 6, zone=Z['metal'])) for t in (0, 2.09, 4.19)]
             Fp = F @ T(.86, .12, .02); fur.add(box(.34, .26, .04, zone=Z['black'], bevel=.01), Fp); scr.add(quad_patch(.30, .20, Zone(IL.ZONES['screen'][0] + 768, IL.ZONES['screen'][1], 256, 256, atlas=IL.ATLAS)), Fp @ T(0, 0, .0225)); light((0, yb + .35, zc - .12), 500, 2.4)
@@ -255,10 +262,35 @@ def build(variant):
         if o not in (P.root, P.model): o.muproperties.layer = 16
     P.export(out); tris = sum(P.meta['tris'].values())
     assert len(SEATS) == sum(d['seats'] for d in decks), (len(SEATS), name)
+    # ---- what FreeIva walks on: walls, floors and ceilings with the ladder well open, as one concave mesh
+    S2 = Part(name + '_shell'); w = Geo(); n = 40
+    for di, D in enumerate(decks):
+        zf = D['floor']; last = di == len(decks) - 1
+        zt = D['ceil'] if D['ceil'] else {'hls': 9.95}.get(variant, 5.75)
+        w.add(lathe([(ri(z), z) for z in np.linspace(zf, zt, 2 if D['ceil'] else 9)], n, flip=True)); w.add(lathe([(ri(zf) + .02, zf), (0 if last else WELL, zf)], n)); w.add(lathe([(ri(zt) + .02, zt), (0 if not D['ceil'] else WELL, zt)], n, flip=True))
+        if D['ceil']: w.add(lathe([(WELL, zt), (WELL, decks[di - 1]['floor'])], 24, flip=True))
+        if D['theme'] == 'airlock': X = 2.6; q4(w, [(-X, -1.02, zf), (X, -1.02, zf), (X, -1.02, zt), (-X, -1.02, zt)], Z['white'], (0, 9, zf))
+        if D.get('eva'):
+            ex, ey = IL.EVA[2] + .03, IL.EVA[3] + .03
+            for s_ in (-1, 1): q4(w, [(s_ * ex, -2.7, zf), (s_ * ex, ey, zf), (s_ * ex, ey, zt), (s_ * ex, -2.7, zt)], Z['white'], (s_ * 9, ey, zf))
+            q4(w, [(-ex, ey, zf), (ex, ey, zf), (ex, ey, zt), (-ex, ey, zt)], Z['white'], (0, 9, zf))
+    me = w.to_mesh('shellCollider'); o = bpy.data.objects.new('shellCollider', me); S2.coll.objects.link(o); S2.place(o, Matrix(), S2.model); o.muproperties.collider = 'MU_COL_MESH'; o.muproperties.isConvex = False; o.hide_render = True
+    S2.model.rotation_mode = 'QUATERNION'; S2.model.rotation_quaternion = R_IVA.to_quaternion(); bpy.context.view_layer.update()
+    for x_ in S2.coll.objects:
+        if x_ not in (S2.root, S2.model): x_.muproperties.layer = 16
+    S2.export(out)
     f = lambda v: ', '.join(('%.5f' % x).rstrip('0').rstrip('.') for x in v)
     L_ = ['// Generated by its/scripts/ivalib.py; edit there.', 'INTERNAL', '{', f'\tname = {name}', '\tMODEL', '\t{', f'\t\tmodel = StarshipThingyMabobsAndSuch/ITS/Parts/{name}', '\t}']
     for n, t in SEATS: L_ += ['\tMODULE', '\t{', '\t\tname = InternalSeat', f'\t\tseatTransformName = {n}', '\t\tallowCrewHelmet = false', f'\t\tdisplayseatName = {t}', '\t}']
     for c_, n in CAMS: L_ += ['\tMODULE', '\t{', '\t\tname = InternalCameraSwitch', f'\t\tcolliderTransformName = {c_}', f'\t\tcameraTransformName = {n}', '\t}']
     for n, p, q, sc in PROPS: L_ += ['\tPROP', '\t{', f'\t\tname = {n}', f'\t\tposition = {f(p)}', f'\t\trotation = {f(q)}', f'\t\tscale = {f((sc,) * 3)}', '\t}']
+    pos_ = lambda p: f([-c for c in p])
+    part_ = {'hls': 'STMS_HLS_Crew', 'crew': 'STMS_B3_NoseCrew', 'crewcargo': 'STMS_B3_NoseCrewCargo'}[variant]; PS = ':NEEDS[FreeIva]:LAST[StarshipThingyMabobsAndSuch]'
+    FI = [f'@PART[{part_}]:HAS[!MODULE[ModuleFreeIva]]' + PS, '{', '\tMODULE', '\t{', '\t\tname = ModuleFreeIva', '\t}', '}', f'@INTERNAL[{name}]:HAS[!MODULE[InternalModuleFreeIva]]' + PS, '{', '\tMODEL', '\t{', f'\t\tmodel = StarshipThingyMabobsAndSuch/ITS/Parts/{name}_shell', '\t}',
+          '\tMODULE', '\t{', '\t\tname = InternalModuleFreeIva', '\t\tshellColliderName = shellCollider', '\t\t// no depth mask mesh: the windows are real openings', '\t\tinternalDepthMaskName =', '\t\tShadows', '\t\t{', '\t\t\twall = TwoSided', '\t\t\tfloor = TwoSided', '\t\t\tceiling = TwoSided', '\t\t}', '\t}',
+          '\t@PROP[htProps_HatchCBM]', '\t{', '\t\tMODULE', '\t\t{', '\t\t\tname = HatchConfig', '\t\t\tattachNodeId = port', '\t\t\thideDoorWhenConnected = true', '\t\t}', '\t}',
+          '\tPROP', '\t{', '\t\tname = FreeIva_Hatch_Invisible_Handle', f'\t\tposition = {pos_(HATCH[:3])}', '\t\trotation = 1, 0, 0, 0', '\t\tscale = 0.34, 0.08, 0.34', '\t\tMODULE', '\t\t{', '\t\t\tname = HatchConfig', f'\t\t\tairlockName = {HATCH[3]}', '\t\t}', '\t}']
+    for z in np.arange(zlo + .16, zhi, .20): FI += ['\tPROP', '\t{', '\t\tname = HandRailInvisible', f'\t\tposition = {pos_((0, .37, float(z)))}', '\t\trotation = 0, 0, 0, 1', '\t\tscale = 0.3, 0.02, 0.02', '\t}']
+    pdir = os.path.join(out, '..', 'patches'); os.makedirs(pdir, exist_ok=True); open(os.path.join(pdir, name + '_FreeIva.cfg'), 'w').write('// Generated by its/scripts/ivalib.py; edit there. Walk about inside with FreeIva.\n' + '\n'.join(FI + ['}', '']))
     idir = os.path.join(out, '..', 'iva'); os.makedirs(idir, exist_ok=True); open(os.path.join(idir, name + '.cfg'), 'w').write('\n'.join(L_ + ['}', '']))
     print(f'EXPORT IVA {name}: {tris} tris, {len(SEATS)} seats, {len(PROPS)} props')
