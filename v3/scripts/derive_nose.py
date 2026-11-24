@@ -88,8 +88,19 @@ box_cut(-ha, ha, hz0, hz1); box_cut(da - dw, da + dw, dz0, dz1)
 indoor = lambda p: p.y < 0 and abs(az_of(p)) < ha and hz0 < p.z < hz1
 indock = lambda p: p.y < 0 and abs(az_of(p) - da) < dw and dz0 < p.z < dz1
 add('stms_nose', part_of(nose, lambda p: not indoor(p) and not indock(p)), mnose, src_=snose)
+def mend_tiles(bm):
+    """SEP's tile mesh steps at every ring seam, and all corners of a step share one UV that sits on the pale grout: thin dashes of light
+    grey, with no valid tangent. Give each such face a few texels inside a dark hex instead (dark whichever way up the sheet is)."""
+    L = bm.loops.layers.uv.active; U, W, S_ = 0.404297, 0.467773, 4 / 4096
+    bmesh.ops.triangulate(bm, faces=[f for f in bm.faces if len(f.verts) > 3]); n = 0
+    for f in bm.faces:
+        u = [l[L].uv for l in f.loops]
+        if abs((u[1] - u[0]).cross(u[2] - u[0])) > 2e-8: continue
+        for l, (du, dv) in zip(f.loops, ((-1, -1), (1, -1), (0, 1))): l[L].uv = (U + du * S_, W + dv * S_)
+        n += 1
+    print('mended', n)
 for k in ('Tiles∧', 'Tiles∧.001'):                          # the small patch that would sit on the docking door goes
-    bm, m, sn = src[k]; add('stms_tiles' + ('B' if k[-1] == '1' else 'A'), bm if k[-1] == '1' else part_of(bm, lambda p: p.x < 0), m, src_=sn)
+    bm, m, sn = src[k]; mend_tiles(bm); add('stms_tiles' + ('B' if k[-1] == '1' else 'A'), bm if k[-1] == '1' else part_of(bm, lambda p: p.x < 0), m, src_=sn)
 def hinge_frame(az, z0, z1, off):
     """On the hull edge at azimuth az, off outside it: X along the hull toward the door (smaller az), Y outward, Z up the edge. The
     nose tapers, so a door only swings true about this line, not about the vertical."""
