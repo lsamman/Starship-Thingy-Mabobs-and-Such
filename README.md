@@ -1,5 +1,15 @@
 # Starship Thingy Mabobs and Such (STMS)
 
+**I take no credit for anything in this mod, this is based off of other modders hard work and you should check out their stuff**
+
+BDB devs
+
+Benjee10
+
+SEP devs
+
+Modders Bible
+
 Add-ons for Kari's [Starship Expansion Project](https://github.com/Kari1407/Starship-Expansion-Project), in one folder: `GameData/StarshipThingyMabobsAndSuch`. 
 
 | | What it adds | Notes |
