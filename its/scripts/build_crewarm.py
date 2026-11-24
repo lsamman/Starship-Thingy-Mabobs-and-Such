@@ -1,53 +1,48 @@
-"""Crew access arm for SLE's launch tower: truss walkway, white room meeting the noses' EVA hatch. Origin at its node on the
-tower column, floor at z 0 (the hatch sill). Frame 0 is out to the ship; crewArm draws the room in, then swings the arm away."""
+"""Crew access arm in the manner of the ship quick disconnect arm: a tubular dog-leg round the other side of the tower, a
+walkway along it, and a white room at the noses' EVA hatch. Attaches radially to the rear column, facing straight out from
+the tower; frame: +x out of the column, the walkway floor at z 0 (the hatch sill)."""
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *
 import tower_layout as TL
 import numpy as np
-P = start('STMS_CrewArm'); V = Vector; QD = False
+P = start('STMS_CrewArm'); V = Vector
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'arm_common.py')).read())
-TX = TL.SHIP[0] + TL.HULL - .07 - TL.CREW[0]; TY = TL.SHIP[1] - TL.CREW[1]           # hatch, from the node
-H = V((-.60, -.85, 0)); ROOM = 2.1; W, HT = 1.36, 1.72                           # hinge; white room length; walkway section
-E_ = V((TX + ROOM + .25, TY, 0)); u = (E_ - H).normalized(); LEN = (E_ - H).length; yawA = math.atan2(u.y, u.x)
-A = Matrix((u, V((-u.y, u.x, 0)), V((0, 0, 1)))).transposed().to_4x4(); A.translation = H      # arm frame: x along, y left, z up
-bracket(90, H, -1.0, HT + .5)
-arm = P.empty('arm', A, P.model); g = Geo(); gl = Geo(); lp = Geo()
-x0, x1 = .55, LEN + .15
-truss(g, x0, x1, W, 0, HT, .07, 9)
-g.add(box(x1 - x0, W - .1, .05, zone=Z.deck, center=((x0 + x1) / 2, 0, -.03))); g.add(box(x1 - x0, W + .04, .05, zone=Z.white, center=((x0 + x1) / 2, 0, HT + .05)))
-for s in (-1, 1):
-    g.add(box(x1 - x0, .03, .52, zone=Z.white, center=((x0 + x1) / 2, s * (W / 2 - .05), .28))); g.add(box(x1 - x0, .03, .34, zone=Z.white, center=((x0 + x1) / 2, s * (W / 2 - .05), HT - .18)))
-    gl.add(quad_patch(x1 - x0, HT - .90, Zone(600, 600, 60, 60, atlas=1024)), T((x0 + x1) / 2, s * (W / 2 - .05), .54 + (HT - .88) / 2) @ Rx(90 if s < 0 else -90))
-    for x in np.linspace(x0 + .1, x1 - .1, 10): g.add(box(.05, .05, HT - .9, zone=Z.dark, center=(float(x), s * (W / 2 - .05), .54 + (HT - .9) / 2)))
-    g.add(tube([(x0, s * (W / 2 - .12), .62), (x1, s * (W / 2 - .12), .62)], .02, 8, zone=Z.alu))
-lp.add(box(x1 - x0 - .6, .10, .03, zone=Z.lamp, center=((x0 + x1) / 2, 0, HT - .01)))
-for x in np.linspace(x0 + .6, x1 - .6, 5): g.add(box(.5, .3, .22, zone=Z.grey, bevel=.02, center=(float(x), 0, -.16)))
-for y in (-.28, .28): g.add(tube([(x0, y, -.20), (x1, y, -.20)], .05, 8, zone=Z.alu))
-wk = Geo().add(g, A); P.mesh('walkway', wk, P.det, parent=arm, frame=A); P.mesh('walkglass', Geo().add(gl, A), P.material('its_glass', shader='KSP/Emissive/Bumped Specular', spec=(1, 1, 1), shininess=.8, emissive='its_glass_emit'), parent=arm, frame=A)
-LM = P.material('its_det', shader='KSP/Emissive/Bumped Specular', spec=(.8, .8, .8), shininess=.4, emissive='hls_lamp_emit', name='hls_lamp'); P.mesh('armlamps', Geo().add(lp, A), LM, parent=arm, frame=A)
-for x in (2.5, 6, 9.5): add_spot(P, 'armLight', A @ V((x, 0, HT - .1)), (0, 0, -1), parent=arm, power=90, angle=120, reach=4)
-# ---------------- white room, square to the ship
-RF = T(TX, TY, 0); room = P.empty('room', RF, arm); r = Geo(); RW, RH = 1.75, 1.9; a0, a1 = .42, .42 + ROOM                # x from the hull toward the tower
-xm = (a0 + a1) / 2
-r.add(box(a1 - a0, RW, .06, zone=Z.deck, center=(xm, 0, -.03))); r.add(box(a1 - a0, RW + .06, .08, zone=Z.white, bevel=.02, center=(xm, 0, RH)))
-for s in (-1, 1): r.add(box(a1 - a0, .06, RH, zone=Z.white, bevel=.01, center=(xm, s * RW / 2, RH / 2))); r.add(box(.5, .02, .42, zone=Z.black, bevel=.02, center=(xm, s * (RW / 2 + .03), 1.15))); r.add(box(.06, .42, RH, zone=Z.white, center=(a0 + .03, s * (RW / 2 - .21), RH / 2)))
-for s in (-1, 1): r.add(box(.05, .18, RH, zone=Z.white, center=(a1 - .03, s * (RW / 2 - .09), RH / 2)))
+ya = math.atan2(TL.NODE_N[1], TL.NODE_N[0]); R_ = Matrix.Rotation(-ya, 3, 'Z'); O_ = V((TL.NODE[0], TL.NODE[1], 0)); rel = lambda x, y, z=0: R_ @ (V((x, y, z)) - O_)
+N = V((1, 0, 0)); H = rel(6.9, -.5); E = rel(4.4, -9.2); TIP = rel(TL.SHIP[0] + TL.HULL - .10, TL.SHIP[1]); away = R_ @ V((1, 0, 0)); ROOM = 2.2
+END = TIP + away * (ROOM + .45); d2 = END - E; d2.z = 0; L2 = d2.length; u2 = d2.normalized(); u1 = (E - H).normalized(); um = (u1 + u2).normalized(); MID = E + u2 * (L2 * .45)
+hinge(N, H, (-2.0, .8), 1.1); arm = P.empty('arm', T(*H), P.model); HF = T(*H); g = Geo(); W = 1.5
+S0 = section(H + u1 * .35, u1, 1.1, -1.9, 1.7); S1 = section(E, um, 2.1, -2.0, 1.95); S2 = section(MID, u2, 1.75, -1.0, 1.95); S3 = section(END, u2, W + .1, -.35, 1.95)
+space_truss(g, S0, S1, 5, .13); space_truss(g, S1, S2, 6, .13); space_truss(g, S2, S3, 6, .08, .7); g.add(tube([(H.x, H.y, -1.9), (H.x, H.y, 1.8)], .2, 14, zone=Z.dark))
+deck(g, H + u1 * .5, E, 1.0, -.03, rail=.75); F2 = deck(g, E - u2 * .5, END, 1.25, -.03); gl = Geo(); lp = Geo()
+for s in (-1, 1):                                            # enclosed walkway along the outer leg: white below, glass band, white above
+    for z0, z1, zn in ((.0, .55, Z.white), (1.45, 1.80, Z.white)): g.add(box(L2, .03, z1 - z0, zone=zn), F2 @ T(0, s * .64, (z0 + z1) / 2 + .03))
+    gl.add(quad_patch(L2, .90, Zone(600, 600, 60, 60, atlas=1024)), F2 @ T(0, s * .64, 1.03) @ Rx(90 if s < 0 else -90))
+    for x in np.linspace(-L2 / 2, L2 / 2, 12): g.add(box(.05, .05, .9, zone=Z.dark), F2 @ T(float(x), s * .64, 1.03))
+    g.add(tube([tuple(F2 @ V((-L2 / 2, s * .54, .72))), tuple(F2 @ V((L2 / 2, s * .54, .72)))], .02, 6, zone=Z.alu))
+g.add(box(L2, 1.36, .05, zone=Z.white), F2 @ T(0, 0, 1.85)); lp.add(box(L2 - 1, .10, .03, zone=Z.lamp), F2 @ T(0, 0, 1.81))
+for k in range(5): g.add(box(.6, .5, .30, zone=Z.white, bevel=.03), F2 @ T(-L2 / 2 + 2 + k * 3.6, 0, 2.02)); add_spot(P, 'armLight', F2 @ V((-L2 / 2 + 2 + k * 3.6, 0, 1.75)), (0, 0, -1), parent=arm, power=90, angle=120, reach=4)
+for y in (-.4, .4): g.add(tube([tuple(F2 @ V((-L2 / 2, y, -.16))), tuple(F2 @ V((L2 / 2, y, -.16)))], .06, 8, zone=Z.alu))
+P.mesh('truss', g, P.det, parent=arm, frame=HF)
+P.mesh('walkglass', gl, P.material('its_glass', shader='KSP/Emissive/Bumped Specular', spec=(1, 1, 1), shininess=.8, emissive='its_glass_emit'), parent=arm, frame=HF)
+LM = P.material('its_det', shader='KSP/Emissive/Bumped Specular', spec=(.12, .12, .12), shininess=.4, emissive='hls_lamp_emit', name='hls_lamp'); P.mesh('armlamps', lp, LM, parent=arm, frame=HF)
+# ---------------- white room, square to the ship: x away from it
+RF = Matrix.Translation(TIP) @ Matrix.Rotation(math.atan2(away.y, away.x), 4, 'Z'); room = P.empty('room', RF, arm); r = Geo(); RW, RH = 1.9, 2.0; a0, a1 = .42, .42 + ROOM; xm = (a0 + a1) / 2
+r.add(box(ROOM, RW, .06, zone=Z.deck, center=(xm, 0, -.03))); r.add(box(ROOM, RW + .06, .08, zone=Z.white, bevel=.02, center=(xm, 0, RH)))
+for s in (-1, 1): r.add(box(ROOM, .06, RH, zone=Z.white, bevel=.01, center=(xm, s * RW / 2, RH / 2))); r.add(box(.6, .02, .45, zone=Z.black, bevel=.02, center=(xm, s * (RW / 2 + .03), 1.2))); r.add(box(.06, .48, RH, zone=Z.white, center=(a0 + .03, s * (RW / 2 - .24), RH / 2)))
 r.add(box(.06, RW, RH - 1.35, zone=Z.white, center=(a0 + .03, 0, (RH + 1.35) / 2)))
-for k in range(6):                                           # bellows to the hull, shaped to it
-    x = .04 + k * .075; w = .46 + (.03 if k % 2 else 0)
-    ring_ = [(x - (0 if abs(y) < .01 else .03 * (y / w) ** 2), y, z) for y, z in ((-w, -.04), (-w, 1.30), (w, 1.30), (w, -.04))]
-    for a, b in zip(ring_, ring_[1:] + ring_[:1]): r.add(tube([a, b], .05, 8, zone=Z.rubber))
+for k in range(6):
+    w = .46 + (.03 if k % 2 else 0); x = .04 + k * .075; rg = [(x, y, z) for y, z in ((-w, -.04), (-w, 1.30), (w, 1.30), (w, -.04))]
+    for a, b in zip(rg, rg[1:] + rg[:1]): r.add(tube([a, b], .05, 8, zone=Z.rubber))
 for s in (-1, 1): r.add(box(.46, .02, 1.34, zone=Z.rubber, center=(.22, s * .47, .64)))
 r.add(box(.46, .96, .02, zone=Z.rubber, center=(.22, 0, 1.31))); r.add(box(.46, .92, .04, zone=Z.deck, center=(.22, 0, -.03))); r.add(box(.10, .9, .03, zone=Z.stripe, center=(.02, 0, -.01)))
-rl = Geo(); rl.add(box(1.2, .12, .03, zone=Z.lamp, center=(xm, 0, RH - .055)))
+r.add(box(2.0, 1.1, .04, zone=Z.deck, center=(a1 + .5, 0, -.06)));  rl = Geo(); rl.add(box(1.2, .12, .03, zone=Z.lamp, center=(xm, 0, RH - .055)))
 P.mesh('roommesh', Geo().add(r, RF), P.det, parent=room, frame=RF); P.mesh('roomlamp', Geo().add(rl, RF), LM, parent=room, frame=RF); add_spot(P, 'armLight', RF @ V((xm, 0, RH - .1)), (0, 0, -1), parent=room, power=120, angle=130, reach=4)
-CL = 'crewArm'; N_ = 240; l0 = room.location.copy(); d_ = A.to_3x3().inverted() @ V((1.0, 0, 0)); d_.z = 0
-for f, l in ((0, l0), (50, l0 + d_ * 1.05), (N_, l0 + d_ * 1.05)): P.key(CL, room, f, location=l)
-q = P.rest_quat(arm); sw = math.radians(280) - yawA % (2 * math.pi)
-for f, a in ((0, 0), (50, 0), (N_, sw)): P.key(CL, arm, f, rotation_quaternion=q @ Quaternion((0, 0, 1), a))
-def bx(nm, M, c, s, par): P.hull_collider(nm, [tuple(M @ V((c[0] + i * s[0] / 2, c[1] + j * s[1] / 2, c[2] + k * s[2] / 2))) for i in (-1, 1) for j in (-1, 1) for k in (-1, 1)], parent=par)
-mx = (x0 + x1) / 2; L2 = x1 - x0
-bx('col_floor', A, (mx, 0, -.05), (L2, W, .1), arm); [bx('col_wall%d' % (s > 0), A, (mx, s * (W / 2 - .04), HT / 2), (L2, .06, HT), arm) for s in (-1, 1)]; bx('col_top', A, (mx, 0, HT + .05), (L2, W, .06), arm)
-bx('col_rfloor', RF, (xm - .2, 0, -.05), (a1 - a0 + .4, RW, .1), room); [bx('col_rwall%d' % (s > 0), RF, (xm, s * RW / 2, RH / 2), (a1 - a0, .06, RH), room) for s in (-1, 1)]
-print('crew arm: length %.2f, swing %.0f deg' % (LEN, math.degrees(sw)))
-P.node('mount', (0, 0, 0), (0, 1, 0), 2); P.bake_clips(0); finish(P)
+CL = 'crewArm'; NF = 240; l0 = room.location.copy(); q = P.rest_quat(arm)
+for f, l in ((0, l0), (50, l0 + away * 1.2), (NF, l0 + away * 1.2)): P.key(CL, room, f, location=l)
+for f, a in ((0, 0), (44, 0), (NF, 92)): P.key(CL, arm, f, rotation_quaternion=q @ Quaternion((0, 0, 1), math.radians(a)))
+seg_collider('col_low0', [p for p in section(H + u1 * .5, u1, 1.0, -.1, -.02)], [p for p in section(E, um, 1.2, -.1, -.02)], arm); seg_collider('col_low1', section(E, u2, 1.2, -.1, -.02), section(END, u2, 1.25, -.1, -.02), arm)
+for s in (-1, 1): k_ = V((-u2.y, u2.x, 0)) * s * .64; seg_collider('col_wall%d' % (s > 0), section(E + u2 * 1.0 + k_, u2, .06, 0, 1.8), section(END + k_, u2, .06, 0, 1.8), arm)
+def bx(nm, c, s): P.hull_collider(nm, [tuple(RF @ V((c[0] + i * s[0] / 2, c[1] + j * s[1] / 2, c[2] + k * s[2] / 2))) for i in (-1, 1) for j in (-1, 1) for k in (-1, 1)], parent=room)
+bx('col_rfloor', (xm, 0, -.05), (ROOM + .9, RW, .1)); [bx('col_rwall%d' % (s > 0), (xm, s * RW / 2, RH / 2), (ROOM, .06, RH)) for s in (-1, 1)]
+print('crew arm: legs %.1f + %.1f m' % ((E - H).length, L2))
+P.node('mount', (0, 0, 0), (-1, 0, 0), 3); P.bake_clips(0); finish(P)

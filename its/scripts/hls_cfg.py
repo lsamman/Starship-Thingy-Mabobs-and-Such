@@ -56,7 +56,7 @@ def write(G):
                   mod('ModuleWheelLock', 'maxTorque = 500'),
                   mod('ModuleWheelBogey', 'baseModuleIndex = 0', 'bogeyTransformName = foot', 'deployModuleIndex = 2', 'maxPitch = 20', 'minPitch = -20', 'restPitch = 0', 'pitchResponse = 100', 'bogeyAxis = 1, 0, 0', 'bogeyUpAxis = 0, 1, 0'),
                   mod('ModuleWheelDamage', 'baseModuleIndex = 0', 'stressTolerance = 99999999', 'impactTolerance = 1200', 'deflectionMagnitude = 1', 'deflectionSharpness = 2.0', 'slipMagnitude = 0', 'slipSharpness = 2.0', 'explodeMultiplier = 1.0')])
-    part('STMS_Ship_Leg', 'Block 3 Landing Leg (Aeroshielded)', '<#ef7b06>Goes on the four leg nodes this mod adds to SEP\'s Block 3 ship core, or anywhere on its barrel.</color> The HLS leg under a shell that rides out with it, bare steel for the leeward side and tiled for the windward side. For Mars, and anywhere else the tower has not been built yet.',
+    part('STMS_Ship_Leg', 'Block 3 Landing Leg (Aeroshielded)', '<#ef7b06>Goes on the four leg nodes this mod adds to SEP\'s Block 3 ship core, or anywhere on its barrel.</color> A telescoping leg under a slim shell that rides out with it: the ship\'s own steel for the leeward side, tiles for the windward side. For Mars, and anywhere else the tower has not been built yet.',
          'starship sep block3 v3 mars landing leg gear ground aeroshield heat shield', .85, 6500, 'Ground', 'veryHeavyRocketry', rules='1,1,0,0,0', node_attach='0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1', profiles='srf, size1', crash=30, tmax=2000, skin=2900, brk=3000,
          extra=[block('EFFECTS', block('deploy', SND('elev_start'), SND('elev_loop', True)), block('deployed', SND('elev_stop')), block('retract', SND('elev_start'), SND('elev_loop', True, .6)), block('retracted', SND('elev_stop', False, .75)))],
          modules=[mod('ModuleWheelBase', 'wheelColliderTransformName = wheelCollider', 'useNewFrictionModel = true', 'wheelType = LEG', 'adherentStart = 0.01', 'frictionAdherent = 0.1', 'peakStart = 2', 'frictionPeak = 1.0', 'limitStart = 7.0',
@@ -69,7 +69,10 @@ def write(G):
                   mod('ModuleWheelLock', 'maxTorque = 500'),
                   mod('ModuleWheelBogey', 'baseModuleIndex = 0', 'bogeyTransformName = foot', 'deployModuleIndex = 2', 'maxPitch = 20', 'minPitch = -20', 'restPitch = 0', 'pitchResponse = 100', 'bogeyAxis = 1, 0, 0', 'bogeyUpAxis = 0, 1, 0'),
                   mod('ModuleWheelDamage', 'baseModuleIndex = 0', 'stressTolerance = 99999999', 'impactTolerance = 1200', 'deflectionMagnitude = 1', 'deflectionSharpness = 2.0', 'slipMagnitude = 0', 'slipSharpness = 2.0', 'explodeMultiplier = 1.0'),
-                  G['livery']('STMS_LegShell', 'Shell', [('Steel', 'Bare steel', '#b8b8bc', ['shell_steel', 'nose_steel']), ('Tiles', 'Heat shield tiles', 'black', ['shell_tile', 'nose_tile'])])])
+                  G['livery']('STMS_LegShell', 'Shell', [('Steel', 'Bare steel', '#b8b8bc', ['shell_steel', 'nose_steel']), ('Tiles', 'Heat shield tiles', 'black', ['shell_tile', 'nose_tile'])]),
+                  mod('ModuleB9PartSwitch', 'moduleID = STMS_LegTex', 'switcherDescription = Tile texture', 'affectDragCubes = false', block('SUBTYPE', 'name = SEP', 'title = SEP tiles',
+                      block('TEXTURE', 'texture = StarshipExpansionProject/Assets/BL3/SEP_B3_TILES_BASE', 'shaderProperty = _MainTex', 'transform = shell_tile', 'transform = nose_tile'),
+                      block('TEXTURE', 'texture = StarshipExpansionProject/Assets/BL3/SEP_B3_TILES_NRM', 'shaderProperty = _BumpMap', 'isNormalMap = true', 'transform = shell_tile', 'transform = nose_tile')))])
     part('STMS_HLS_LegShroud', 'Starship HLS Leg Shroud', 'Keeps the airstream off a folded leg on the way up and leaves when it is no longer wanted. One per leg, on the shroud nodes of the HLS core; stage it or jettison it once out of the atmosphere, before the leg comes down.',
          T + ' leg shroud fairing jettison decoupler', .15, 900, 'Aero', 'veryHeavyRocketry', rules='1,0,0,0,0', profiles='srf, size1', crash=9, skin=2200, brk=800,
          extra=['stagingIcon = DECOUPLER_HOR', 'stageOffset = 1', 'childStageOffset = 1', 'sound_decoupler_fire = decouple'],
@@ -83,12 +86,23 @@ def write(G):
          modules=[mod('ModuleDeployableSolarPanel', 'animationName = solarDeploy', 'pivotName = sunPivot', 'raycastTransformName = suncatcher', 'secondaryTransformName = suncatcher', 'isTracking = true', 'sunAlignFactor = 1',
                       'retractable = true', 'isBreakable = false', 'resourceName = ElectricCharge', 'chargeRate = 10', 'showStatus = true', 'bypassAnimations = false', 'trackingSpeed = 0.2')])
     if have('STMS_CrewArm'):
-        kw = dict(rules='1,0,1,1,0', profiles='size2', crash=80, tmax=3000, skin=3000, brk=200000)
-        part('STMS_CrewArm', 'Crew Access Arm', '<#ef7b06>Goes on the upper arm node of the Starship Launch Tower Core (Arm Nodes).</color> Meets the EVA hatch of the Block 3 crew and crew-cargo noses, with the ship\'s windows toward the tower. Retract it before launch; the ship will not wait.',
-             'starship sep sle launch tower crew access arm swing walkway white room', 8, 12000, 'Structural', 'specializedConstruction',
+        kw = dict(profiles='size2, srf', crash=80, tmax=3000, skin=3000, brk=200000)
+        part('STMS_CrewArm', 'Crew Access Arm', '<#ef7b06>Attach radially to the rear column of SLE\'s tower core, the one facing straight away from the ship, with the walkway level with the nose\'s EVA hatch.</color> Reaches round the chopstick carriage to the Block 3 crew noses. Retract it before launch; the ship will not wait.',
+             'starship sep sle launch tower crew access arm swing walkway white room', 8, 12000, 'Structural', 'specializedConstruction', rules='1,1,1,1,0', node_attach='0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 2',
              modules=[mod('ModuleAnimateGeneric', 'animationName = crewArm', 'actionGUIName = Toggle Arm', 'startEventGUIName = Retract Arm', 'endEventGUIName = Extend Arm', 'allowDeployLimit = true', 'evaDistance = 30'), light('armLight'), cc(['armlamps', 'roomlamp'], 'Arm Lights: On', 'Arm Lights: Off', 'Arm Lights')], **kw)
-        part('STMS_QDArm', 'Ship Quick Disconnect Arm', '<#ef7b06>Goes on the lower arm node of the Starship Launch Tower Core (Arm Nodes).</color> Holds the propellant lines against the Block 3 ship\'s quick disconnect plate, steadies the booster with a claw, and can top the tanks up. Put it in the launch stage and it lets go and swings clear in three and a half seconds; or retract it by hand.',
-             'starship sep sle launch tower ship quick disconnect qd arm booster claw fueling propellant', 10, 14000, 'Structural', 'specializedConstruction',
+        part('STMS_QDArm', 'Ship Quick Disconnect Arm', '<#ef7b06>Goes on the free rear node of SLE\'s tower core (five segments or more).</color> A dog-leg of black tube that reaches round the chopstick carriage to the Block 3 ship\'s quick disconnect plate, after the real one. Put it in the launch stage and it lets go and swings clear in three and a half seconds; or retract it by hand. Can top the tanks up.',
+             'starship sep sle launch tower ship quick disconnect sqd qd arm fueling propellant', 10, 14000, 'Structural', 'specializedConstruction', rules='1,1,1,1,0', node_attach='0.0, 0.0, 0.0, -0.99027, 0.0, -0.13917, 2',
              extra=['stagingIcon = DECOUPLER_HOR', 'stageOffset = 1', 'childStageOffset = 1'],
              modules=[mod('ModuleAnimateGeneric', 'animationName = qdArm', 'actionGUIName = Toggle Arm', 'startEventGUIName = Retract Arm', 'endEventGUIName = Connect Arm', 'allowDeployLimit = true', 'evaDistance = 30'),
                       mod('ModuleGenerator', 'isAlwaysActive = false', 'requiresAllInputs = false', 'resourceThreshold = 0.001', 'activateGUIName = Start Propellant Load', 'shutdownGUIName = Stop Propellant Load', block('OUTPUT_RESOURCE', 'name = LqdMethane', 'rate = 1500'), block('OUTPUT_RESOURCE', 'name = Oxidizer', 'rate = 500'))], **kw)
+    if have('STMS_B3_FairingBase'):
+        import fairing_layout as F
+        half = lambda nm, t, m, y, h, r: block(nm, f'transformName = {t}', f'mass = {m}', f'CoM = {r:.3f}, {y + h / 2:.3f}, 0', f'rootOffset = 0, {y:.4f}, 0')
+        zw = F.Z0 + F.WB
+        part('STMS_B3_FairingBase', 'Block 3 Payload Plate and Fairing', 'Closes off the top of the Expendable Block 3 Core with a payload plate and a two-piece fairing that grows a segment at a time. White, smooth, and gone by the time anyone asks for it back.',
+             'starship sep block3 v3 fairing payload plate adapter base SAF simple adjustable expendable', 2.4, 4200, 'Payload', 'veryHeavyRocketry', profiles='size4p5', crash=12, tmax=2000, skin=2400, brk=5000,
+             extra=['stagingIcon = FUEL_TANK', 'fuelCrossFeed = True', 'stageOffset = 1', 'childStageOffset = 1', 'fx_gasBurst_white = 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, deploy', 'sound_vent_large = deploy'],
+             modules=[mod('ModuleSimpleAdjustableFairing', f'segmentLength = {F.WALL}', f'maxSegments = {F.SEGS}', 'numSlices = 2', 'deploySpeed = 12', f'shieldingCenter = 0, {zw / 2 + F.CONE / 2:.2f}, 0', f'shieldingBaseRadius = {(zw + F.CONE) / 2 + 1.0:.2f}', 'editorOpenOffset = 9, 0, 0', 'stagingToggleEnabledEditor = true',
+                          half('WALL_BASE', 'FWallBase', .35, F.Z0, F.WB, 1.8), half('WALL', 'FWall', .38, zw, F.WALL, 1.8), half('CONE', 'FCone', .55, zw, F.CONE, 1.3),
+                          block('CAP', 'transformName = FCap', 'mass = 0.03', f'CoM = 0, {zw + F.CONE + .2:.3f}, 0', f'rootOffset = 0, {zw + F.CONE:.4f}, 0')),
+                      mod('ModuleCargoBay', 'DeployModuleIndex = 0', 'closedPosition = 0', f'lookupRadius = {F.R - .06:.3f}')])

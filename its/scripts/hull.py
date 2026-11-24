@@ -125,6 +125,8 @@ def paint_d(az, z):
     a = np.abs((np.asarray(az, float) + 180) % 360 - 180); z = np.asarray(z, float)
     r = np.maximum(np.where(z > Z_TAN, body_r(z), RB), .3)
     d1 = np.radians(tps_az(z) - a) * r
+    z0 = 45.2; y0 = float(body_r(np.array(z0)) * np.cos(np.radians(tps_az(np.array(z0)))))     # over the tip the edge runs straight across, instead of following the meridian into the pole
+    d1 = np.where(z > z0, (body_r(np.clip(z, z0, Z_TIP)) * np.cos(np.radians(a)) - y0), d1)
     d2 = (z - 6.7)
     x = np.radians(a) * RB                          # pod: edge from (1.0, 14.0) to (3.9, 6.7)
     nx, nz = 7.3, 2.9

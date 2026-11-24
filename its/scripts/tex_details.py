@@ -67,9 +67,12 @@ c.save('its_det', nstrength=.55)
 tl.write_dds((np.dstack([metal, metal, metal, np.ones_like(metal)]) * 255).astype(np.uint8), 'its_det_metal')
 # the HLS copy: glossier whites, matte blacks
 keep_g = c.gloss.copy()
-for k, g_ in (('white', .62), ('hatch', .60), ('alu', .60), ('black', .07), ('dark', .12), ('rubber', .05)):
-    s, _, _ = zone(k); c.gloss[s] = g_ + (c.gloss[s] - c.gloss[s].mean())
-c.save('hls_det', nstrength=.55, nrm=False); c.gloss[:] = keep_g
+keep_a = c.albedo.copy()
+for k, g_, al_ in (('white', .52, .885), ('hatch', .50, .87), ('alu', .62, None), ('steel', .68, None), ('black', .16, .050), ('dark', .20, .075), ('rubber', .08, None)):
+    s, _, _ = zone(k); c.gloss[s] = g_ + .5 * (c.gloss[s] - c.gloss[s].mean())
+    if al_: c.albedo[s] *= al_ / c.albedo[s].mean()
+c.save('hls_det', nstrength=.55, nrm=False); c.gloss[:] = keep_g; c.albedo[:] = keep_a
+tl.write_dds((np.dstack([metal, np.ones_like(metal), np.zeros_like(metal), np.ones_like(metal)]) * 255).astype(np.uint8), 'hls_det_mask_diff')
 # bare-carbon livery (B9 subtype Carbon on the hull parts): white trim and hatches become carbon; diffuse only, same normals
 cs, _, _ = zone('carbon')
 for k in ('white', 'hatch'):

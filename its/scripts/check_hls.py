@@ -42,6 +42,7 @@ core = load(mu('STMS_HLS_Core')); crew = load(mu('STMS_HLS_Crew')); tc, _ = tree
 so = load(mu('STMS_HLS_Solar'), 'solarDeploy'); so1 = load(mu('STMS_HLS_Solar'), 'solarDeploy', True); ZS = sum(HL.SOL_Z) / 2
 for az in HL.SOL_AZ:
     MS = Matrix.Rotation(math.radians(az), 4, 'Z') @ Matrix.Translation((0, -HL.R, ZS)); hh = ('hatchskin', 'hatchin'); tp, _ = tree(so, [n for n in so if n not in hh + ('rails',)], MS); t2, _ = tree(so, hh, MS); t3, _ = tree(so1, [n for n in so1 if n not in ('rails',)], MS)
+    pv = tree(so, None, MS)[1]; ok(not any(abs(q.x) < .93 and q.y < -1.2 and HL.DOOR[0] - .05 < q.z < HL.DOOR[1] + .05 for q in pv), f'solar {az}: nothing in the airlock bay'); ok(all(abs(math.degrees(math.atan2(q.x, -q.y)) - (az if az < 180 else az - 360)) < HL.SOL_HW + .4 for q in pv if math.hypot(q.x, q.y) < 2.7), f'solar {az}: inside its pocket')
     ok(not tp.overlap(t2), f'solar {az}: package clear of the shut hatch'); n = {k: len(tp.overlap(tree(crew, (k,), Tz(HL.Z_TOP))[0])) for k in crew}; print('      package touches', {k: c for k, c in n.items() if c}); n = {k: len(t3.overlap(tree(crew, (k,), Tz(HL.Z_TOP))[0])) for k in crew}; print('      deployed touches', {k: c for k, c in n.items() if c})
 L0 = Matrix.Translation((0, -HL.TRACK_R, HL.DOOR[0])); l0, l1 = load(mu('STMS_HLS_Lift'), 'deckFold'), load(mu('STMS_HLS_Lift'), 'deckFold', True)
 t, v = tree(l0, ('carriage', 'deckmesh'), L0); ok(not t.overlap(td), 'folded elevator clear of the shut door (%d hits)' % len(t.overlap(td))); ok(not t.overlap(tb), 'folded elevator clear of the bay (%d hits)' % len(t.overlap(tb)))
@@ -88,7 +89,8 @@ for tag, q in (('stowed', q0), ('deployed', q1)):
     sx, _ = tree(q, ('shell_steel', 'shell_in'), W); print('      ship leg', tag, 'shell touches', [n for n in q if n[:5] not in ('shell', 'nose_') and sx.overlap(tree(q, (n,), W)[0])])
 if SEP and os.path.exists(SEP):
     co = load(os.path.join(SEP, 'SEP_26_SHIP_CORE.mu')); M0 = Tz(12.5993)
-    for az in HL.LEG_AZ:
+    dh = load(os.path.join(SEP, 'SEP_26_SHIP_DOCKING_HARDWARE.mu'))
+    for az in HL.SHIP_LEG_AZ:
         for tag, q in (('stowed', q0), ('deployed', q1)):
-            tt_, _ = tree(q, [n for n in q if n not in ('bracket', 'nose_steel', 'nose_tile')], Matrix.Rotation(math.radians(az), 4, 'Z') @ W); h = {n: len(tt_.overlap(tree(co, (n,), M0)[0])) for n in co if n != 'atmofx_envelope'}; h = {n: c for n, c in h.items() if c}; print('      ship leg', az, tag, 'on SEP core touches', h)
+            tt_, _ = tree(q, [n for n in q if n not in ('bracket', 'nose_steel', 'nose_tile')], Matrix.Rotation(math.radians(az), 4, 'Z') @ W); h = {n: len(tt_.overlap(tree(co, (n,), M0)[0])) for n in co if n != 'atmofx_envelope'}; h = {n: c for n, c in h.items() if c}; bad_ = [n for n in h if n in ('Hatch', 'Cam_EXT', 'Vent', 'Flap Pipes', 'Cube', 'raceways', 'QD ')]; ok(not bad_ and not any(tt_.overlap(tree(dh, (n,), M0)[0]) for n in dh), f'ship leg {az} {tag} clear of vents, camera, flap fairing and docking hardware {bad_}'); print('      ship leg', az, tag, 'on SEP core touches', h)
 print('check_hls:', bad, 'failures')

@@ -5,7 +5,7 @@ import hls_layout as HL
 V = Vector
 _start = start
 def start(name):
-    P = _start(name); P.mats.clear(); P.det = P.material('hls_det', nrm='its_det', spec=(1, 1, 1), shininess=.5); return P
+    P = _start(name); P.mats.clear(); P.det = sep_mat(P, 'hls_det', 'hls_det_diff', 'its_det_nrm', 'hls_det_mask_diff'); return P
 RINGS = [(0.0, HL.R), (HL.Z_OGIVE, HL.R)] + [(HL.Z_OGIVE + z, r) for z, r in HL.OGIVE[1:]] + [(HL.Z_OGIVE + z, r) for z, r in HL.CAP[1:]]
 
 
@@ -66,9 +66,9 @@ def skin(zs, sheet, z0=0.0, keep=None):
     return g
 
 
-def blister(zs, zone, inner=0.0, flip=False, n=18):
+def blister(zs, zone, inner=0.0, flip=False, n=18, shell=None, width=None, scale=None):
     """Shell over a stowed leg, from HL.SHELL, in the hull frame at azimuth 0."""
-    H_ = lambda z: float(np.interp(z, *zip(*HL.SHELL))); W_ = lambda z: float(np.interp(z, *zip(*HL.SHELL_W))); g = Geo(); rows = []
+    H_ = lambda z: float(np.interp(z, *zip(*(shell or HL.SHELL)))); W_ = lambda z: float(np.interp(z, *zip(*(width or HL.SHELL_W)))); g = Geo(); rows = []
     for z in zs:
         h, w = H_(z), W_(z) - inner; row = []
         for k in range(n + 1):
@@ -77,7 +77,7 @@ def blister(zs, zone, inner=0.0, flip=False, n=18):
         rows.append(row)
     for j, (a, b) in enumerate(zip(rows, rows[1:])):
         for k in range(n):
-            f = [a[k], a[k + 1], b[k + 1], b[k]]; u = [zone.uv(kk / n, (zs[jj] - zs[0]) / (zs[-1] - zs[0])) for kk, jj in ((k, j), (k + 1, j), (k + 1, j + 1), (k, j + 1))]; g.face(f[::-1] if flip else f, u[::-1] if flip else u)
+            f = [a[k], a[k + 1], b[k + 1], b[k]]; u = [tuple(scale * c_ for c_ in (g.v[i][0] * 1.15, g.v[i][2])) for i in f] if scale else [zone.uv(kk / n, (zs[jj] - zs[0]) / (zs[-1] - zs[0])) for kk, jj in ((k, j), (k + 1, j), (k + 1, j + 1), (k, j + 1))]; g.face(f[::-1] if flip else f, u[::-1] if flip else u)
     return g
 
 
@@ -125,7 +125,21 @@ def rcs(P, det, spots, z0=0.0):
         P.empty('RCSthruster', frame_axes(fr.translation + fr.to_3x3() @ V((0, 0, .03)), dd), P.model)
 
 
+def sep_mat(P, name, base, nrm, mask=None, tiles=False):
+    """SEP's own shader with its settings (Resurfaced, the numbers of its steel and tile materials), so the metal matches."""
+    m = bpy.data.materials.new(name); mp = m.mumatprop; mp.shaderName = 'Resurfaced/PackedMetalAO'
+    for k, t, n in (('_MainTex', base, False), ('_BumpMap', nrm, False), ('_MetalMap', mask, False), ('_AOMap', mask, False)):
+        if t: it = mp.texture.properties.add(); it.name = k; it.tex = t; it.type = n; it.scale = (1, 1); it.offset = (0, 0)
+    for k, v in (('_Color', (1, 1, 1, 1)), ('_EmissiveColor', (0, 0, 0, 0)), ('_RimColor', (0, 0, 0, 0)), ('_TemperatureColor', (0, 0, 0, 0))): it = mp.color.properties.add(); it.name = k; it.value = v
+    for k, v in (('_Smoothness', 1), ('_MetalAlbedoMultiplier', 1), ('_Metalness', 0 if tiles else 1), ('_MetalRedMult', 0 if tiles else 1), ('_MetalGreenMult', 0), ('_MetalBlueMult', 0), ('_AORedMult', 1 if tiles else 0), ('_AOGreenMult', 1), ('_AOBlueMult', 1 if tiles else 0)):
+        it = mp.float3.properties.add(); it.name = k; it.value = v
+    return m
+
+
+def hull_mat(P, sheet): return sep_mat(P, sheet, sheet + '_diff', sheet + '_nrm', None, True)          # paint: no metal, smoothness in the alpha
+
+
 def glass_mat(P): return P.material('its_glass', shader='KSP/Emissive/Bumped Specular', spec=(1, 1, 1), shininess=.8, emissive='its_glass_emit')
 
 
-def lamp_mat(P): return P.material('hls_det', nrm='its_det', shader='KSP/Emissive/Bumped Specular', spec=(.8, .8, .8), shininess=.4, emissive='hls_lamp_emit', name='hls_lamp')
+def lamp_mat(P): return P.material('hls_det', nrm='its_det', shader='KSP/Emissive/Bumped Specular', spec=(.12, .12, .12), shininess=.4, emissive='hls_lamp_emit', name='hls_lamp')

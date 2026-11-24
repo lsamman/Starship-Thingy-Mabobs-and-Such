@@ -48,7 +48,7 @@ NOSE_BIG = dict(z0=2.65, z1=4.60, ha=2.1, side=.4875)     # side: the ITS lattic
 # (0.83-1.34) and the welds; each variant takes the first N rows: for two rows on the crew-cargo nose, make its 1 a 2.
 SMALL = (.3125, .2625)
 NOSE_SMALL_ROWS = ((1.70, 10, 41), (0.40, 9, 40), (-0.90, 11, 48))   # the first row leaves its middle to the EVA hatch
-CAP_Z = 7.2794               # the tip above this ring is a hinged cap over the docking seat
+DOCK = dict(az=30.0, hw=13.9, z=(.63, 1.97), plate=2.55, bulge=.13)   # side docking bay on the steel: azimuth, half-width (deg), heights, radius of the seat, how far its door stands proud over the port
 EVA_Z, EVA_HW = (.96, 2.04), 6.8   # EVA hatch at az 0: heights, half-width in degrees; the access arm on the tower meets it
 NOSE_SMALL_COUNT = {'crew': 3, 'crewcargo': 1}
 NOSE_FRAME = .035           # frame border around a pane

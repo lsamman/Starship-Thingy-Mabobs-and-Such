@@ -1,13 +1,13 @@
 """Bare-metal masks for the expendable V3 core. The hull under the tiles is painted black in the ambient occlusion
 channel of SEP's masks because it never shows, so with the tiles gone the belly would render nearly black. This
-whitens exactly the texels the windward hull triangles use and leaves the rest of each sheet as SEP made it.
+whitens the texels of the windward hull and leaves the rest of each sheet as SEP made it.
 usage: python3 -I bake_masks.py <SEP dir> <uvt.npz> <outdir>"""
 import os, subprocess, sys
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image
 
 sep, npz, out = sys.argv[1:4]
-WINDWARD_Y = -0.6       # hull faces with y above this were under tiles or the ablative strip
+EDGE = 66               # degrees from leeward: past this the hull was under tiles, the ablative strip or the aerocovers
 d = np.load(npz)
 sheets = {}
 for key in d.files:
@@ -17,15 +17,21 @@ for n, parts in sorted(sheets.items()):
     src = f'{sep}/Assets/BL3/SEP_B3_Ship_{n}_MASK.dds'
     im = np.array(Image.open(src).convert('RGBA'))
     H = im.shape[0]
-    mask = Image.new('L', (H, H), 0); dr = ImageDraw.Draw(mask)
-    ntri = 0
+    m = np.zeros((H, H), bool); ntri = 0
     for R in parts:
-        R = R[((R[:, 3] * R[:, 0] + R[:, 4] * R[:, 1]) > 0) & (R[:, 1] > WINDWARD_Y)]
-        for t in R:
-            # DDS rows run with v: row 0 is v = 0, checked against where the black hull rows fall
-            dr.polygon([(u * H, v * H) for u, v in t[6:12].reshape(3, 2)], fill=255)
-            ntri += 1
-    m = np.asarray(mask) > 0
+        R = R[(R[:, 3] * R[:, 0] + R[:, 4] * R[:, 1]) > 0]
+        az = np.degrees(np.abs(np.arctan2(R[:, [12, 14, 16]], -R[:, [13, 15, 17]])))
+        for t, a in zip(R[az.max(1) > EDGE], az[az.max(1) > EDGE]):
+            # per texel, by the azimuth under it: whole triangles straddle the tile line and left black corners behind
+            p = t[6:12].reshape(3, 2) * H; lo = np.floor(p.min(0) - 2).astype(int).clip(0, H - 1); hi = np.ceil(p.max(0) + 2).astype(int).clip(0, H - 1)
+            xx, yy = np.meshgrid(np.arange(lo[0], hi[0] + 1) + .5, np.arange(lo[1], hi[1] + 1) + .5)
+            d0, d1 = p[1] - p[0], p[2] - p[0]; den = d0[0] * d1[1] - d0[1] * d1[0]
+            if abs(den) < 1e-9: continue
+            qx, qy = xx - p[0][0], yy - p[0][1]; u = (qx * d1[1] - qy * d1[0]) / den; v = (d0[0] * qy - d0[1] * qx) / den
+            e = 1.5 / max(1.0, min(np.hypot(*d0), np.hypot(*d1)))      # a texel and a half past the edge, for filtering
+            ins = (u > -e) & (v > -e) & (u + v < 1 + e); A = a[0] + (a[1] - a[0]) * u + (a[2] - a[0]) * v
+            m[lo[1]:hi[1] + 1, lo[0]:hi[0] + 1] |= ins & (A > EDGE); ntri += 1
+    mask = Image.fromarray((m * 255).astype(np.uint8))
     before = im[..., 1][m].mean() / 255
     has_b = im[..., 2].max() > 0
     im[..., 1][m] = 255

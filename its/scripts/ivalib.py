@@ -75,7 +75,7 @@ def build(variant):
             B = outer.big; zc = B['z1'] + .25
         # ---- wall: columns by azimuth, rows by height, holes for the windows
         azs = {round(a, 4) for a in np.arange(-180, 180.01, 7.5)}; zs = {zf, zc}
-        if D.get('eva'): holes = [h for h in holes if abs(h[0]) > 12.8]
+        if D.get('eva'): holes = [h for h in holes if abs(h[0]) > 12.8 and not 9 < h[0] < 51]
         rm = ri(win[0]) if holes else 0
         for az, z0, w, h in holes:
             ha = math.degrees(w / 2 / rm); azs |= {round(az - ha, 4), round(az + ha, 4)}; zs |= {z0 - h / 2, z0 + h / 2}
@@ -145,7 +145,8 @@ def build(variant):
             # ceiling: tapered gores up to the docking tunnel
             ztop = {'hls': 9.95}.get(variant, 5.75); prof = [(ri(z), z) for z in np.linspace(zc, ztop, 8)]; ceil_.add(lathe(prof, 48, zone=Z['ceil'], flip=True)); rt = ri(ztop)
             ceil_.add(lathe([(rt, ztop), (.5 if rt > .6 else rt, ztop + .02), (0, ztop + .02)], 48, zone=Z['white'], flip=True)); zl = zc + (ztop - zc) * .55; curved(led, 0, 360, [(ri(zl) - .06, zl + .0), (ri(zl) - .06, zl - .03), (ri(zl) + .02, zl - .03)][::-1], 'led', 60)
-            prop('htProps_HatchCBM', (0, 0, ztop + .012), (0, 0, -1), (0, 1, 0), 1.25 if rt > .5 else .9); light((0, 0, zl - .5), 900, 4.0)
+            if variant == 'hls': prop('htProps_HatchCBM', (0, 0, ztop + .012), (0, 0, -1), (0, 1, 0), 1.25 if rt > .5 else .9)
+            light((0, 0, zl - .5), 900, 4.0)
             # console: flat stations under the windows
             zb = (B['z0'] if big else win[0] - win[4] / 2); nS = 4; sp_ = 44 if big else 37; zt = min(zb - .03, zf + .74); rT, rB = ri(zt) - .10, ri(zt) - .46; zB = zf + .46
             for i in range(nS):
@@ -192,13 +193,17 @@ def build(variant):
             curved(fur, 126, 194, [(ri(zf) - .36, zf + .56), (ri(zf) - .36, zf + .59), (ri(zf) - .10, zf + .59), (ri(zf) - .10, zf + .56)], 'wood', 12); curved(led, 126, 194, [(ri(zf) - .30, zf + .668), (ri(zf) - .20, zf + .668)], 'led', 12)
             bz = ri(zf + .3); curved(soft, 205, 300, [(bz - .50, zf + .20), (bz - .50, zf + .27), (bz - .13, zf + .25), (bz - .09, zf + .64), (bz - .01, zf + .64), (bz - .01, zf + .20)], 'bench', 18); curved(fur, 205, 300, [(bz - .44, zf), (bz - .44, zf + .21), (bz, zf + .21)], 'white', 18); tr = bz - .98; curved(fur, 226, 280, [(tr - .16, zf + .40), (tr - .16, zf + .43), (tr + .18, zf + .43), (tr + .18, zf + .40), (tr - .16, zf + .40)], 'wood', 10); [fur.add(cyl(.03, .40, 12, zone=Z['metal'], center_z=False), T(*pos(a, tr, zf))) for a in (238, 268)]
             for k in range(D['seats']):
-                a = (-50, -27, 27, 50)[k]; d = pos(a, 1, 0); p = d * (ri(zf + .5) - .62); seat(p.x, p.y, zf, d, 'Observation Deck')
-            for a0_, a1_ in ((-56, -13), (13, 56)): curved(fur, a0_, a1_, [(ri(zf + .5) - .24, zf + .42), (ri(zf + .5) - .24, zf + .46), (ri(zf + .5), zf + .46), (ri(zf + .5), zf + .42)], 'wood', 8)
+                a = (-52, -38, -24, 62)[k]; d = pos(a, 1, 0); p = d * (ri(zf + .5) - .62); seat(p.x, p.y, zf, d, 'Observation Deck')
+            for a0_, a1_ in ((-58, -13),): curved(fur, a0_, a1_, [(ri(zf + .5) - .24, zf + .42), (ri(zf + .5) - .24, zf + .46), (ri(zf + .5), zf + .46), (ri(zf + .5), zf + .42)], 'wood', 8)
             e0, e1, ex, ey = IL.EVA; ex += .03; ey += .03; yo = -ri(zf + .5)            # the airlock chamber, with the hatch on its inner face
             for s in (-1, 1): q4(fur, [(s * ex, yo, zf), (s * ex, ey, zf), (s * ex, ey, zc), (s * ex, yo, zc)], Z['hex'], (s * 9, ey, zf + .5))
             q4(fur, [(-ex, ey, zf), (ex, ey, zf), (ex, ey, zc), (-ex, ey, zc)], Z['hex'], (0, 9, zf + .5))
             Fh = Matrix(((-1, 0, 0, 0), (0, 0, 1, ey), (0, 1, 0, (e0 + e1) / 2), (0, 0, 0, 1))); fur.add(quad_patch(.52, .94, Z['door']), Fh @ T(0, 0, .012)); fur.add(rounded_rect_ring(.62, 1.04, .14, .07, .04, 6, zone=Z['white']), Fh)
             fur.add(tube([tuple(Fh @ V((.10 * math.cos(t), .10 * math.sin(t), .05))) for t in np.linspace(0, TAU, 25)], .013, 8, zone=Z['metal'])); [fur.add(tube([tuple(Fh @ V((s * .30, y, z))) for y, z in ((-.2, 0), (-.2, .05), (.2, .05), (.2, 0))], .012, 6, zone=Z['black'])) for s in (-1, 1)]
+            ad = math.radians(30); o3, t3 = V((math.sin(ad), -math.cos(ad), 0)), V((math.cos(ad), math.sin(ad), 0)); rb_ = 2.30; hw_ = .50; bb = lambda x, r_, z: o3 * r_ + t3 * x + V((0, 0, z))      # the docking tunnel's inner end
+            for s in (-1, 1): q4(fur, [bb(s * hw_, 2.75, zf), bb(s * hw_, rb_, zf), bb(s * hw_, rb_, zc), bb(s * hw_, 2.75, zc)], Z['white'], bb(s * 9, rb_, zf + .5))
+            q4(fur, [bb(-hw_, rb_, zf), bb(hw_, rb_, zf), bb(hw_, rb_, zc), bb(-hw_, rb_, zc)], Z['panel'], (0, 0, zf + .5)); prop('htProps_HatchCBM', bb(0, rb_ - .004, 1.32), -o3, (0, 0, 1), 1.15)
+            fur.add(tube([tuple(bb(s_ * .43, rb_ - .02, z_)) for s_, z_ in ((-1, 1.0), (-1, 1.7))], .014, 6, zone=Z['black'])); fur.add(tube([tuple(bb(s_ * .43, rb_ - .02, z_)) for s_, z_ in ((1, 1.0), (1, 1.7))], .014, 6, zone=Z['black']))
             HATCH = (0, ey + .03, (e0 + e1) / 2, 'stms_airlock')
             for k, a in enumerate((62, 78, 94)):           # hydroponics
                 F = inw(a, zf + .6, ri(zf + .6) - .02); fur.add(box(.58, 1.0, .12, zone=Z['white'], bevel=.01), F)
@@ -274,6 +279,9 @@ def build(variant):
             ex, ey = IL.EVA[2] + .03, IL.EVA[3] + .03
             for s_ in (-1, 1): q4(w, [(s_ * ex, -2.7, zf), (s_ * ex, ey, zf), (s_ * ex, ey, zt), (s_ * ex, -2.7, zt)], Z['white'], (s_ * 9, ey, zf))
             q4(w, [(-ex, ey, zf), (ex, ey, zf), (ex, ey, zt), (-ex, ey, zt)], Z['white'], (0, 9, zf))
+            ad = math.radians(30); o3, t3 = V((math.sin(ad), -math.cos(ad), 0)), V((math.cos(ad), math.sin(ad), 0)); bb = lambda x, r_, z: o3 * r_ + t3 * x + V((0, 0, z))
+            for s_ in (-1, 1): q4(w, [bb(s_ * .5, 2.7, zf), bb(s_ * .5, 2.3, zf), bb(s_ * .5, 2.3, zt), bb(s_ * .5, 2.7, zt)], Z['white'], bb(s_ * 9, 2.3, zf))
+            q4(w, [bb(-.5, 2.3, zf), bb(.5, 2.3, zf), bb(.5, 2.3, zt), bb(-.5, 2.3, zt)], Z['white'], (0, 0, zf))
     me = w.to_mesh('shellCollider'); o = bpy.data.objects.new('shellCollider', me); S2.coll.objects.link(o); S2.place(o, Matrix(), S2.model); o.muproperties.collider = 'MU_COL_MESH'; o.muproperties.isConvex = False; o.hide_render = True
     S2.model.rotation_mode = 'QUATERNION'; S2.model.rotation_quaternion = R_IVA.to_quaternion(); bpy.context.view_layer.update()
     for x_ in S2.coll.objects:

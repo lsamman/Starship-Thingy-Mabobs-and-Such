@@ -69,8 +69,8 @@ DOOR_Z = (28.7, 40.3)
 LINER = .30
 
 # crane, KSP metres: the boom runs along azimuth CR_AZ, so the platform comes down beside the leeward foot
-CR_AZ = 25
-CR_RAIL_X, CR_RAIL_Y, CR_MID_Y, CR_ARM_Y = 1.0, (-2.45, 2.35), (-2.35, 2.30), (-.95, 2.25)
-CR_SHARE, CR_C, CR_TRAVEL = .55, -.40, 6.8
+CR_AZ = 28
+CR_RAIL_X, CR_RAIL_Y, CR_MID_Y, CR_ARM_Y = 1.30, (-2.45, 2.35), (-2.35, 2.30), (-.95, 2.25)
+CR_SHARE, CR_C, CR_TRAVEL = .55, -.40, 7.4
 CR_Z = dict(tie=(-.17, -.07), rail=(-.37, -.17), beam=(-.59, -.43))
-CR_CABLE, CR_DECK, CR_APEX, CR_DECK_W, CR_DECK_D, CR_HOIST = -.95, -3.05, 1.95, 2.6, 2.5, 25.6
+CR_CABLE, CR_DECK, CR_APEX, CR_DECK_W, CR_DECK_D, CR_HOIST = -.95, -4.10, 3.00, 3.4, 3.8, 24.55

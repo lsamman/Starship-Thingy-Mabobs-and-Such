@@ -14,6 +14,7 @@ for name in ('Cylinder1','Rings_4','Rings_3','Rings_1','WeldLines'):
         c=mw@p.center; n=(mw.to_3x3()@p.normal).normalized(); ids=list(p.loop_indices)
         for k in range(1,len(ids)-1):
             t=[uv[ids[0]].uv,uv[ids[k]].uv,uv[ids[k+1]].uv]
-            R.append((c.x,c.y,c.z,n.x,n.y,n.z,*t[0],*t[1],*t[2]))
+            q=[mw@me.vertices[p.vertices[i]].co for i in (0,k,k+1)]
+            R.append((c.x,c.y,c.z,n.x,n.y,n.z,*t[0],*t[1],*t[2],*[w for v in q for w in (v.x,v.y)]))
     out[name+'|'+tn]=np.array(R)
 np.savez(S+'/uvt.npz',**out)

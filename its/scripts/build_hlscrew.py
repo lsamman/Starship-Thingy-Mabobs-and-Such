@@ -2,7 +2,7 @@
 and an opening nose cap over a docking port for Orion. Origin at the joint's stack node."""
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hls_common import *
-P = start('STMS_HLS_Crew'); MH = P.material('hls_crew', spec=(1, 1, 1), shininess=.62); MG = glass_mat(P); LM = lamp_mat(P)
+P = start('STMS_HLS_Crew'); MH = hull_mat(P, 'hls_crew'); MG = glass_mat(P); LM = lamp_mat(P)
 O = HL.Z_TOP; dz = V((0, 0, O)); D0, D1 = HL.DOOR; S0, S1 = HL.SOL_Z; ZC = HL.Z_OGIVE + 7.40
 zs = sorted({HL.Z_SKIN, D0, D1, S0, S1, HL.Z_OGIVE, *[HL.Z_OGIVE + z for z, _ in HL.OGIVE], *[HL.Z_OGIVE + z for z in (.42, 1.33, 2.2, 2.97, 3.75, 4.97, 6.0)]})
 insol = lambda a: any(abs(wrap(a - s)) < HL.SOL_HW for s in HL.SOL_AZ)
@@ -94,18 +94,18 @@ d.add(wf)
 P.mesh('windows', wg, MG, smooth_angle=60)
 # ---------------- solar bays: four pockets with a node each; the array part brings its own hatch
 for k, az0 in enumerate(HL.SOL_AZ):
-    F = on_cyl(az0, (S0 + S1) / 2 - O, 0); HWx = HL.R * math.sin(math.radians(HL.SOL_HW)); Hh = (S1 - S0) / 2; DP = HL.SOL_DP   # local +Z out, +Y up
+    F = on_cyl(az0, (S0 + S1) / 2 - O, 0); HWx = HL.R * math.sin(math.radians(HL.SOL_HW)); Hh = (S1 - S0) / 2; DP = HL.SOL_DP; HWb = DP * math.sin(math.radians(HL.SOL_HW))   # local +Z out, +Y up
     loc = lambda x, y, r: F @ V((x, y, r))
     aa = [az0 - HL.SOL_HW + 3.75 * i for i in range(11)]
     for z, flip in ((S0, False), (S1, True)):
         ar = [hp(a, z) for a in aa]
         for i, (p, q) in enumerate(zip(ar, ar[1:])):
-            b0 = loc(-HWx + 2 * HWx * i / 10, 0, DP); b1 = loc(-HWx + 2 * HWx * (i + 1) / 10, 0, DP); b0.z = b1.z = z - O
+            b0 = loc(-HWb + 2 * HWb * i / 10, 0, DP); b1 = loc(-HWb + 2 * HWb * (i + 1) / 10, 0, DP); b0.z = b1.z = z - O
             f = [p - dz, q - dz, b1, b0]; quad(f[::-1] if flip else f, Z.wall, d)
     for s in (-1, 1):
-        e = [hp(az0 + s * HL.SOL_HW, z) - dz for z in (S0, S1)]; b = [loc(s * HWx, -Hh, DP), loc(s * HWx, Hh, DP)]
+        e = [hp(az0 + s * HL.SOL_HW, z) - dz for z in (S0, S1)]; b = [loc(s * HWb, -Hh, DP), loc(s * HWb, Hh, DP)]
         f = [e[0], b[0], b[1], e[1]]; quad(f if s < 0 else f[::-1], Z.wall, d)
-    quad([loc(-HWx, -Hh, DP), loc(HWx, -Hh, DP), loc(HWx, Hh, DP), loc(-HWx, Hh, DP)], Z.wall, d)
+    quad([loc(-HWb, -Hh, DP), loc(HWb, -Hh, DP), loc(HWb, Hh, DP), loc(-HWb, Hh, DP)], Z.wall, d)
     P.node(f'solar{k + 1}', F @ V((0, 0, HL.R)), F.to_3x3() @ V((0, 0, 1)), 1)
 # ---------------- nose cap, docking port
 g = Geo(); CR = [(HL.Z_OGIVE + z, r) for z, r in HL.CAP]

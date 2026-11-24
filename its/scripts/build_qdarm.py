@@ -1,64 +1,53 @@
-"""Ship quick disconnect arm for SLE's launch tower: truss, propellant lines, a hooded plate that meets SEP's QD plate, and a claw
-that holds the booster. Origin at its node on the tower column; the plate's middle is at z 0. Frame 0 is connected."""
+"""Ship quick disconnect arm after the real one (2022-25 photographs): a dog-leg of heavy black tube from the rear column, up to
+a box platform full of pipework, and a boom on top with the X-shaped plate. It reaches round the chopstick carriage. Origin is
+SLE's free node; the frame is the tower's. Frame 0 is connected."""
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *
 import tower_layout as TL
 import numpy as np
 P = start('STMS_QDArm'); V = Vector
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'arm_common.py')).read())
-TX = TL.SHIP[0] + TL.HULL + .03 - TL.QD[0]; TY = TL.SHIP[1] - TL.QD[1]; H = V((-.60, .85, 0)); W, Z0, Z1 = 1.5, -.95, 1.25
-E_ = V((TX + 1.9, TY, 0)); u = (E_ - H).normalized(); LEN = (E_ - H).length; A = Matrix((u, V((-u.y, u.x, 0)), V((0, 0, 1)))).transposed().to_4x4(); A.translation = H
-bracket(-90, H, Z0 - .1, Z1 + .1); arm = P.empty('arm', A, P.model); g = Geo(); x0, x1 = .45, LEN + .1
-truss(g, x0, x1, W, Z0, Z1, .10, 10); g.add(box(x1 - x0, W - .2, .05, zone=Z.deck, center=((x0 + x1) / 2, 0, Z0 - .02)))
-for y, z, r, zn in ((-.42, -.35, .17, Z.white), (.05, -.38, .17, Z.white), (.45, -.45, .10, Z.alu), (-.45, .35, .09, Z.alu), (-.2, .4, .06, Z.copper), (.35, .35, .12, Z.dark)):
-    g.add(tube([(x0 - .2, y, z), (x1 + .1, y, z)], r, 14, zone=zn))
-    for x in np.linspace(x0 + .5, x1 - .3, 7): g.add(tube([(float(x) - .05, y, z), (float(x) + .05, y, z)], r + .03, 14, zone=Z.grey)); g.add(box(.06, .05, .5, zone=Z.dark, center=(float(x), y, z - .30)))
-for s in (-1, 1):                                            # walkway rail on top
-    g.add(tube([(x0, s * W / 2, Z1 + .65), (x1, s * W / 2, Z1 + .65)], .025, 8, zone=Z.white)); [g.add(tube([(float(x), s * W / 2, Z1), (float(x), s * W / 2, Z1 + .65)], .02, 6, zone=Z.white)) for x in np.linspace(x0, x1, 9)]
-g.add(box(x1 - x0, W - .1, .04, zone=Z.deck, center=((x0 + x1) / 2, 0, Z1 + .12)))
-for p_ in ((x0 + 1.2, -.75), (x0 + 5, .75)): g.add(box(.9, .28, .7, zone=Z.white, bevel=.03, center=(p_[0], p_[1], Z1 - .5)))
-P.mesh('truss', Geo().add(g, A), P.det, parent=arm, frame=A)
-PF = T(TX, TY, 0); plate = P.empty('plate', PF, arm); r = Geo()
-r.add(box(.16, 1.06, 1.16, zone=Z.grey, bevel=.03, center=(.10, 0, 0))); r.add(box(.06, .90, 1.0, zone=Z.alu, bevel=.015, center=(.02, 0, 0)))
-for y, z, rr in ((-.24, -.2, .15), (.24, -.2, .15), (-.26, .28, .08), (0, .30, .07), (.26, .28, .08)): r.add(cyl(rr, .10, 20, zone=Z.steel, bevel=.012), T(.0, y, z) @ Ry(90)); r.add(cyl(rr * .7, .06, 16, zone=Z.rubber), T(-.03, y, z) @ Ry(90)); r.add(tube([(.18, y, z), (.7, y, z * .9), (1.5, y * 1.2, z * .6 - .1), (2.4, y * 1.2, z * .6 - .1)], rr * .8, 12, zone=Z.alu))
-for s in (-1, 1): r.add(box(1.5, .06, 1.5, zone=Z.white, bevel=.02, center=(.95, s * .72, .05))); r.add(tube([(.2, s * .5, -.5), (2.5, s * .5, -.6)], .07, 10, zone=Z.steel)); r.add(tube([(.2, s * .5, .5), (2.5, s * .5, .55)], .07, 10, zone=Z.steel))
-r.add(box(1.5, 1.5, .06, zone=Z.white, bevel=.02, center=(.95, 0, .80))); r.add(box(.9, 1.2, .9, zone=Z.dark, bevel=.04, center=(1.7, 0, 0))); r.add(box(.06, 1.5, .12, zone=Z.stripe, center=(.20, 0, .80)))
-P.mesh('platemesh', Geo().add(r, PF), P.det, parent=plate, frame=PF)
-# ---------------- booster claw on a mast under the arm's end: a crosshead that slides back, two jaws with pads
-CZ = TL.CLAW_Z - TL.QD_Z; m_ = Geo(); mx0, mx1 = LEN - 2.3, LEN - .3
-for x in (mx0, mx1):
-    for y in (-.6, .6): m_.add(tube([(x, y, Z0), (x, y, CZ - .55)], .09, 8, zone=Z.dark))
-zs_ = np.linspace(Z0, CZ - .5, 5)
-for a_, b_ in zip(zs_, zs_[1:]):
-    for y in (-.6, .6): m_.add(tube([(mx0, y, float(a_)), (mx1, y, float(b_))], .055, 6, zone=Z.dark)); m_.add(tube([(mx0, y, float(b_)), (mx1, y, float(b_))], .055, 6, zone=Z.dark))
-    for x in (mx0, mx1): m_.add(tube([(x, -.6, float(a_)), (x, .6, float(b_))], .055, 6, zone=Z.dark)); m_.add(tube([(x, -.6, float(b_)), (x, .6, float(b_))], .055, 6, zone=Z.dark))
-for y in (-.45, .45): m_.add(box(mx1 - mx0 + .4, .16, .22, zone=Z.alu, bevel=.02, center=((mx0 + mx1) / 2, y, CZ - .42))); m_.add(tube([(mx0 - 4.2, y, Z0), (mx0, y, CZ * .62)], .09, 8, zone=Z.dark))
-m_.add(box(.7, .5, .5, zone=Z.white, bevel=.03, center=(mx0 + .5, 0, CZ - .25)))
-P.mesh('mast', Geo().add(m_, A), P.det, parent=arm, frame=A)
-CF = T(TX, TY, CZ); claw = P.empty('claw', CF, arm); AX = V((TL.SHIP[0] - TL.QD[0] - TX, 0, 0)); c = Geo()
-c.add(box(.75, 1.9, .62, zone=Z.grey, bevel=.05, center=(1.28, 0, 0))); c.add(box(2.4, .9, .42, zone=Z.dark, bevel=.03, center=(2.75, 0, -.02)))
-for s in (-1, 1): c.add(cyl(.19, .80, 18, zone=Z.alu, bevel=.02), T(1.0, s * .75, 0)); c.add(tube([(1.5, s * .2, .12), (2.9, s * .2, .12)], .08, 10, zone=Z.steel)); c.add(box(.3, .3, .72, zone=Z.white, bevel=.03, center=(1.55, s * .62, .0)))
-c.add(box(.06, 1.7, .12, zone=Z.stripe, center=(.90, 0, .12))); P.mesh('crosshead', Geo().add(c, CF), P.det, parent=claw, frame=CF)
-pol = lambda r, a, z=0: V((AX.x + r * math.cos(math.radians(a)), r * math.sin(math.radians(a)), z)); jaws = []
-for s in (-1, 1):
-    JF = CF @ T(1.0, s * .75, 0); jw = P.empty('jaw%d' % (s > 0), JF, claw); g_ = Geo(); path = [V((1.0, s * .75, 0)), pol(3.36, s * 20), pol(3.22, s * 28), pol(3.16, s * 36), pol(3.14, s * 44), pol(3.14, s * 51)]
-    for z in (-.20, .20): g_.add(tube([tuple(p + V((0, 0, z))) for p in path], .11, 8, zone=Z.dark))
-    for p in path[1:]: g_.add(tube([tuple(p + V((0, 0, -.2))), tuple(p + V((0, 0, .2)))], .07, 8, zone=Z.dark))
-    g_.add(cyl(.16, .62, 16, zone=Z.steel, bevel=.015), T(1.0, s * .75, 0))
-    for a in (33, 48): g_.add(box(.20, .46, .56, zone=Z.grey, bevel=.03), T(*pol(3.0, s * a)) @ Rz(s * a)); g_.add(box(.08, .42, .52, zone=Z.rubber, bevel=.02), T(*pol(2.885, s * a)) @ Rz(s * a))
-    P.mesh('jawmesh%d' % (s > 0), Geo().add(g_, CF), P.det, parent=jw, frame=JF); jaws.append((s, jw))
-# ---------------- retraction: jaws snap open, plate and claw pull back together, then the swing
-CL = 'qdArm'; N_ = 104; back = A.to_3x3().inverted() @ V((1, 0, 0))
-for o, d in ((plate, 1.2), (claw, 1.75)):
-    l0 = o.location.copy()
-    for f, l in ((0, l0), (8, l0), (28, l0 + back * d), (N_, l0 + back * d)): P.key(CL, o, f, location=l)
-for s, jw in jaws:
-    q = P.rest_quat(jw)
-    for f, a in ((0, 0), (16, -72 * s), (N_, -72 * s)): P.key(CL, jw, f, rotation_quaternion=q @ Quaternion((0, 0, 1), math.radians(a)))
-q = P.rest_quat(arm); yawA = math.atan2(u.y, u.x) % (2 * math.pi); sw = math.radians(68) - yawA
-for f, a in ((0, 0), (24, 0), (N_, sw)): P.key(CL, arm, f, rotation_quaternion=q @ Quaternion((0, 0, 1), a))
-P.clips['qdArmStage'] = {k: list(v) for k, v in P.clips[CL].items()}      # StagedAnimation plays its own copy
-def bx(nm, M, c, s, par): P.hull_collider(nm, [tuple(M @ V((c[0] + i * s[0] / 2, c[1] + j * s[1] / 2, c[2] + k * s[2] / 2))) for i in (-1, 1) for j in (-1, 1) for k in (-1, 1)], parent=par)
-bx('col_arm', A, ((x0 + x1) / 2, 0, (Z0 + Z1) / 2), (x1 - x0, W, Z1 - Z0 + .2), arm); bx('col_plate', PF, (1.2, 0, 0), (1.9, 1.4, 1.4), plate); bx('col_mast', A, ((mx0 + mx1) / 2, 0, (Z0 + CZ) / 2), (mx1 - mx0, 1.3, Z0 - CZ), arm)
-print('qd arm: length %.2f, swing %.0f deg' % (LEN, math.degrees(sw)))
-P.node('mount', (0, 0, 0), (0, -1, 0), 2); P.bake_clips(0); finish(P)
+O_ = V(TL.NODE); N = V((TL.NODE_N[0], TL.NODE_N[1], 0)).normalized(); rel = lambda x, y, z=0: V((x, y, z)) - V((O_.x, O_.y, 0))
+H = rel(7.0, 1.6); E = rel(4.2, 9.9); PZ = TL.QD_Z - O_.z                    # hinge, elbow, plate height
+TIP = rel(TL.SHIP[0] + TL.HULL + .03, TL.SHIP[1]); END = TIP + V((2.6, 0, 0)); d2 = (END - E); d2.z = 0; L2 = d2.length; u2 = d2.normalized(); u1 = (E - H).normalized(); MID = E + u2 * (L2 * .52); ZB, ZT = PZ - 2.35, PZ - .75   # platform floor and top chord
+hinge(N, H, (-2.2, 1.6), 1.1); arm = P.empty('arm', T(*H), P.model); HF = T(*H); g = Geo()
+um = (u1 + u2).normalized(); S0 = section(H + u1 * .35, u1, 1.2, -2.4, 1.7); S1 = section(E, um, 2.3, -2.7, .9); S2 = section(MID, u2, 2.0, ZB - .9, ZT); S3 = section(END - u2 * .2, u2, 1.9, ZB, ZT)
+space_truss(g, S0, S1, 5, .16); space_truss(g, S1, S2, 6, .17); space_truss(g, S2, S3, 5, .10, .7)
+g.add(tube([(H.x, H.y, -2.5), (H.x, H.y, 1.8)], .24, 14, zone=Z.dark))
+for s in (0, 1): g.add(tube([tuple(S1[s]), tuple(S2[s] + V((0, 0, .0)))], .2, 12, zone=Z.dark))
+PLT = deck(g, MID - u2 * .6, END, 1.9, ZB + .08, rail=None); deck(g, E, MID, 1.0, -.6, rail=.6); deck(g, H + u1 * .4, E, .9, -.6, rail=.6)
+g.add(box(1.5, 1.0, .5, zone=Z.white, bevel=.03), PLT @ T(-2.2, .35, .5)); [g.add(box(.5, .4, 1.0, zone=Z.grey, bevel=.03), PLT @ T(x, -.6, .6)) for x in (-3.4, -1.0, 1.2)]
+# pipework: two lagged mains that snake down the dog-leg, smaller lines beside them, runs of cable on the side
+def pipe(off, z, r, zn, up=.0):
+    q = lambda c, dr, k, zz: c + V((-dr.y, dr.x, 0)) * k + V((0, 0, zz)); pts = [q(H + u1 * .9, u1, off, z), q(E - u1 * 1.2, u1, off, z), q(E, um, off, z), q(E + u2 * 1.2, u2, off, z), q(MID - u2 * 1.5, u2, off, z), q(MID - u2 * .6, u2, off, ZB + .55 + up), q(END - u2 * 3.2, u2, off, ZB + .55 + up)]
+    g.add(tube([tuple(p) for p in pts], r, 12, zone=zn)); [g.add(tube([tuple(a.lerp(b, t)), tuple(a.lerp(b, t) + (b - a).normalized() * .08)], r + .035, 12, zone=Z.grey)) for a, b in zip(pts, pts[1:]) if (b - a).length > 2 for t in (.25, .5, .75)]
+pipe(.35, -.1, .20, Z.white); pipe(-.15, -.15, .20, Z.white, .1); pipe(-.55, .0, .10, Z.alu); pipe(.68, -.2, .08, Z.copper, -.2)
+for k in range(5): g.add(tube([tuple(p + V((0, 0, -.12 * k - .5))) for p in (S2[3] + u2 * .5, S3[3] - u2 * 1.0)], .018, 5, zone=Z.steel))
+for k in range(3): c = MID + u2 * (1.2 + 1.5 * k); g.add(tube([tuple(c + V((0, 0, ZB + .4))), tuple(c + V((0, 0, ZB + .9)) + u2 * .4), tuple(c + V((0, 0, ZT - .1)) + u2 * .5)], .12, 10, zone=Z.white))
+# tan stabiliser plates under the platform, and the access cage by the plate
+for s in (-1, 1): g.add(box(1.8, .5, .14, zone=Z.invar, bevel=.02), PLT @ T(-1.2, s * .6, -.55) @ Rz(s * 24)); g.add(box(.3, .3, .5, zone=Z.invar, bevel=.02), PLT @ T(-1.9, s * .5, -.35))
+for x in (.0, .9):
+    for s in (-1, 1): g.add(tube([tuple(PLT @ V((L2 * .24 - x, s * .85, ZT - ZB))), tuple(PLT @ V((L2 * .24 - x, s * .85, ZT - ZB + 1.1)))], .03, 6, zone=Z.dark))
+for zz in (.55, 1.1):
+    for s in (-1, 1): g.add(tube([tuple(PLT @ V((L2 * .24, s * .85, ZT - ZB + zz))), tuple(PLT @ V((L2 * .24 - 2.6, s * .85, ZT - ZB + zz)))], .028, 6, zone=Z.dark))
+deck(g, END - u2 * 3.4, END, 1.8, ZT + .06)
+P.mesh('truss', Geo().add(g), P.det, parent=arm, frame=HF)
+for nm, a, b in (('col_a', S0, S1), ('col_b', S1, S2), ('col_c', S2, S3)): seg_collider(nm, a, b, arm)
+# ---------------- boom with the X plate; frame: x away from the ship
+PF = T(TIP.x, TIP.y, PZ); plate = P.empty('plate', PF, arm); r = Geo()
+for s1 in (-1, 1):
+    for s2 in (-1, 1): r.add(box(.16, .16, .82, zone=Z.invar, bevel=.02), T(.16, s1 * .30, s2 * .36) @ Rx(-s1 * s2 * 34)); r.add(box(.12, .24, .16, zone=Z.alu, bevel=.02), T(.08, s1 * .52, s2 * .70)); r.add(cyl(.05, .16, 10, zone=Z.steel), T(.04, s1 * .52, s2 * .70) @ Ry(90))
+r.add(box(.14, .62, .86, zone=Z.alu, bevel=.03, center=(.10, 0, 0))); r.add(box(.08, .5, .7, zone=Z.grey, bevel=.02, center=(.04, 0, 0)))
+for y, z, rr in ((-.13, .16, .11), (.13, .16, .11), (-.13, -.14, .09), (.13, -.14, .09), (0, -.28, .05)):
+    r.add(cyl(rr, .12, 18, zone=Z.steel, bevel=.012), T(.0, y, z) @ Ry(90)); r.add(tube([(.16, y, z), (.8, y * 1.2, z), (2.0, y * 1.6, z * .6 - .05), (3.4, y * 2.0, -.25), (4.2, y * 2.2, -.55)], rr * .85, 10, zone=Z.white if rr > .08 else Z.copper))
+for s in (-1, 1): r.add(tube([(.2, s * .3, .0), (4.4, s * .42, .0)], .07, 10, zone=Z.dark)); r.add(tube([(.2, s * .3, -.34), (4.4, s * .42, -.40)], .06, 10, zone=Z.dark)); [r.add(tube([(x, s * .34, 0), (x + .5, s * .36, -.37)], .04, 6, zone=Z.dark)) for x in (.5, 1.2, 1.9, 2.6, 3.3)]
+r.add(box(.6, 1.0, .34, zone=Z.dark, bevel=.03, center=(3.3, 0, -.55))); r.add(box(1.9, .3, .16, zone=Z.alu, bevel=.02, center=(3.6, 0, -.66))); r.add(tube([(2.6, 0, .35), (6.5, 0, .05)], .09, 10, zone=Z.dark)); r.add(box(.5, .7, .4, zone=Z.dark, bevel=.04, center=(2.6, 0, .18))); r.add(box(.06, 1.0, .10, zone=Z.stripe, center=(.30, 0, .56)))
+P.mesh('boom', Geo().add(r, PF), P.det, parent=plate, frame=PF)
+P.hull_collider('col_boom', [(TIP.x + x, TIP.y + y, PZ + z) for x in (.1, 4.2) for y in (-.45, .45) for z in (-.6, .5)], parent=plate)
+CL = 'qdArm'; NF = 108; l0 = plate.location.copy()
+for f, l in ((0, l0), (20, l0 + V((1.5, 0, 0))), (NF, l0 + V((1.5, 0, 0)))): P.key(CL, plate, f, location=l)
+q = P.rest_quat(arm); SW = -92
+for f, a in ((0, 0), (14, 0), (NF, SW)): P.key(CL, arm, f, rotation_quaternion=q @ Quaternion((0, 0, 1), math.radians(a)))
+P.clips['qdArmStage'] = {k: list(v) for k, v in P.clips[CL].items()}         # StagedAnimation plays its own copy
+print('QD arm: legs %.1f + %.1f m' % ((E - H).length, L2))
+P.node('mount', (0, 0, 0), (-N.x, -N.y, 0), 3); P.bake_clips(0); finish(P)

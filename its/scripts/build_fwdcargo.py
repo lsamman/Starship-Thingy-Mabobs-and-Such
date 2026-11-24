@@ -91,7 +91,20 @@ for k in range(8):
     inn.add(box(.10, .34, .10, zone=Z.white, bevel=.015), Rz(45 * k) @ T(0, -1.45, fz + .05))
 # ceiling: dome bulkhead with beams and the crane's mounting plate
 cz = zk(L.BAY_TOP); rc = float(H.body_r(L.BAY_TOP) + LN) * K; dy = float(H.droop(L.BAY_TOP)) * K
-inn.add(disc(cz + .10, rc + .12, Z.dome, up=False), T(0, dy, 0))
+ce = Geo(); CZ_ = L.BAY_TOP + .10 / K; pc_ = H.point(0, L.BAY_TOP, 0); ce.v.append((0, dy, cz + .10))          # the section isn't round, so the ceiling takes its outline from the hull
+for a in fa: p = H.point(a, min(CZ_, H.Z_TIP), LN + .10); ce.v.append((float(p[0]) * K, float(p[1]) * K, cz + .10))
+for i in range(len(fa)):
+    q = [0, 1 + (i + 1) % len(fa), 1 + i]; ce.face(q, [Z.dome.uv(.5 + ce.v[k][0] / 9, .5 + ce.v[k][1] / 9) for k in q])
+inn.add(ce)
+def closeout(z0_, o0, z1_, o1):
+    """Strip between the liner's end and the floor or ceiling, so no daylight shows round the edge."""
+    g = Geo(); aa_ = np.arange(DA, 360 - DA + .1, 4)
+    for a in aa_:
+        for z_, o_ in ((z0_, o0), (z1_, o1)): p = H.point(a, z_, o_); g.v.append((float(p[0]) * K, float(p[1]) * K, zk(z_)))
+    for i in range(len(aa_) - 1): q = [2 * i, 2 * i + 1, 2 * i + 3, 2 * i + 2]; g.face(q, [Z.wall.uv(t, u) for t, u in ((.1, .1), (.1, .2), (.2, .2), (.2, .1))])
+    return g
+for st in (closeout(L.BAY_FLOOR - .02, LN + .03, D0 + .02, LN + .0), closeout(D1 - .02, LN, CZ_, LN + .09)):
+    st.f = [f[::-1] for f in st.f] + list(st.f); st.uv = st.uv + st.uv; st.smooth = st.smooth + st.smooth; inn.add(st)
 cm = Rz(L.CR_AZ)
 for x in (-1.0, 0, 1.0):
     ln = 2 * math.sqrt(rc * rc - x * x) - .25

@@ -11,20 +11,23 @@ PAD_Z = HL.FOOT_STOW + .47 - OZ; LSTOW = H0.z - PAD_Z        # stowed ankle heig
 NST = 2; IN = .40; OUT_L = LSTOW - .35; STEP = (SLEN - LSTOW) / NST
 R1, RS = .19, (.155, .125); SW = TILT
 print(f'strut {SLEN:.2f} stowed {LSTOW:.2f} step {STEP:.2f} tilt {math.degrees(TILT):.1f}')
+if SHIP: MS_ = sep_mat(P, 'stms_steel', 'stms_steel_diff', 'stms_steel_nrm', 'stms_steelmask_diff'); MT_ = sep_mat(P, 'stms_tiles', 'SEP_B3_TILES_BASE', 'SEP_B3_TILES_NRM', None, True)
+PIV = .56 if SHIP else 1.08; PADS = .86 if SHIP else 1.0
 leg = P.empty('leg', None, P.model)
 b = Geo()
 for s in (-1, 1):
     b.add(box(.08, .30, .50, zone=Z.black, bevel=.02), T(s * .27, -.12, 0)); b.add(cyl(.11, .05, 16, zone=Z.steel, bevel=.01), T(s * .325, H0.y, 0) @ Ry(90))
 b.add(tube([(-.33, H0.y, 0), (.33, H0.y, 0)], .06, 12, zone=Z.steel)); b.add(box(.5, .06, .62, zone=Z.dark, bevel=.015), T(0, -.02, 0))
 # side strut pivots on the skirt
-D = [V((s * 1.08, 0, .62 - OZ)) for s in (-1, 1)]
+D = [V((s * PIV, 0, .62 - OZ)) for s in (-1, 1)]
 for s, p in zip((-1, 1), D):
     az = math.degrees(math.asin(p.x / HL.R)); q = on_cyl(az, p.z, HL.R); q.translation += V((0, HL.R, 0)); p.y = (q @ V((0, 0, .11))).y; p.x = (q @ V((0, 0, .11))).x
-    b.add(box(.34, .26, .08, zone=Z.black, bevel=.02), q @ T(0, 0, .02)); b.add(cyl(.10, .22, 14, zone=Z.dark, bevel=.015), T(*p))
+    b.add(box(.24 if SHIP else .34, .26, .08, zone=Z.black, bevel=.02), q @ T(0, 0, .02)); b.add(cyl(.10, .22, 14, zone=Z.dark, bevel=.015), T(*p))
 P.mesh('bracket', b, P.det, parent=leg)
 wc = P.empty('wheelCollider', T(*AN), leg); wc.muproperties.layer = 27
 at = lambda d_: H0 + U * d_
-g = Geo(); g.add(tube([at(.05), at(OUT_L)], R1, 20, zone=Z.dark))
+g = Geo(); tb = tube([at(.05), at(OUT_L)], R1, 20, zone=Z.dark); steel_ = {}
+if not SHIP: g.add(tb)
 for q, w, r in ((.25, .10, .025), (1.3, .05, .012), (2.4, .05, .012), (OUT_L - .12, .13, .03)): g.add(tube([at(q), at(q + w)], R1 + r, 20, zone=Z.black))
 g.add(cyl(.16, .44, 18, zone=Z.black, bevel=.02), T(*H0) @ Ry(90)); g.add(tube([at(.6) + V((0, -.2, .03)), at(2.6) + V((0, -.2, .03))], .03, 6, zone=Z.grey))
 [g.add(box(.08, .10, .08, zone=Z.grey), T(*(at(x) + V((0, -.18, .02))))) for x in (.65, 1.6, 2.55)]
@@ -34,21 +37,27 @@ if (UNSW @ U - V((0, 0, -1))).length > .01: UNSW = Quaternion((1, 0, 0), -SW)
 assert (UNSW @ U - V((0, 0, -1))).length < .01
 for f, t in ((0, 0), (F_SWING, 1), (N, 1)): P.key('legDeploy', pb, f, rotation_quaternion=UNSW if t == 0 else Quaternion())
 if SHIP:                                                 # shell that swings out with the strut; its nose stays on the hull
+    P.mesh('tube0', tb, MS_, parent=pb, frame=pf)
+    KW = dict(shell=HL.SHIP_SHELL, width=HL.SHIP_SHELL_W)
     OFFS = T(0, HL.R, -OZ); sw = T(*H0) @ UNSW.inverted().to_matrix().to_4x4() @ T(*-H0) @ OFFS
-    zs = [.26, .30, .36, .46, .62, .8, 1.1, 1.5, 2.0, 2.6, 3.2, 3.7, 4.02]
-    for nm, zn in (('shell_steel', Z.steel), ('shell_tile', Z.pica)):
-        P.mesh(nm, Geo().add(blister(zs, zn), sw), P.det, parent=pb, frame=pf, smooth_angle=50)
-        P.mesh(nm.replace('shell', 'nose'), Geo().add(blister([4.06, 4.2, 4.35, 4.6, 4.75, 4.9, 5.05, 5.2, 5.33, 5.45, 5.5], zn), OFFS), P.det, parent=leg, smooth_angle=50)
-    li = Geo().add(recolor(blister(zs[1:], Z.dark, inner=.05, flip=True), Z.dark), sw)
-    for z in (1.5, 2.4, 3.3): li.add(box(1.0, .07, .06, zone=Z.alu, bevel=.01), sw @ T(0, -HL.R - .34, z))
+    zs = [.30, .33, .38, .46, .56, .72, .95, 1.3, 1.7, 2.0, 2.2, 2.5, 2.9, 3.3, 3.7, 4.02]; zn_ = [4.06, 4.2, 4.4, 4.6, 4.8, 5.0, 5.15, 5.3, 5.4, 5.45]
+    for nm, mt, sc_ in (('shell_steel', MS_, .25), ('shell_tile', MT_, .0781)):
+        P.mesh(nm, Geo().add(blister(zs, Z.steel, scale=sc_, **KW), sw), mt, parent=pb, frame=pf, smooth_angle=50)
+        P.mesh(nm.replace('shell', 'nose'), Geo().add(blister(zn_, Z.steel, scale=sc_, **KW), OFFS), mt, parent=leg, smooth_angle=50)
+    li = Geo().add(recolor(blister(zs[1:], Z.dark, inner=.04, flip=True, **KW), Z.dark), sw)
+    for z in (1.4, 2.6, 3.5): li.add(box(.5 if z > 2 else .9, .07, .06, zone=Z.alu, bevel=.01), sw @ T(0, -HL.R - .40, z))
     P.mesh('shell_in', li, P.det, parent=pb, frame=pf, smooth_angle=50)
     P.variants = ({'shell_steel', 'nose_steel'}, {'shell_tile', 'nose_tile'})
-    P.hull_collider('col_shell', [tuple(sw @ V((x, -math.sqrt(HL.R ** 2 - x * x) - h, z))) for x, h in ((-.9, .1), (-.6, .45), (.6, .45), (.9, .1)) for z in (.8, 3.9)], parent=pb, frame=pf)
+    P.hull_collider('col_shell', [tuple(sw @ V((x, -math.sqrt(HL.R ** 2 - x * x) - h, z))) for x, h in ((-.5, .1), (-.3, .4), (.3, .4), (.5, .1)) for z in (.8, 3.9)], parent=pb, frame=pf)
 parent = pb; prev = OUT_L
 for k, r in enumerate(RS):
-    s0 = at(STEP * (k + 1)); end = OUT_L + STEP * (k + 1); g = Geo(); g.add(tube([at(end - STEP - .35), at(end + (0 if k < NST - 1 else .35))], r, 18, zone=Z.grey if k else Z.alu)); g.add(tube([at(end - .11), at(end + .02)], r + .03, 18, zone=Z.black))
+    s0 = at(STEP * (k + 1)); end = OUT_L + STEP * (k + 1); g = Geo(); t_ = tube([at(end - STEP - .35), at(end + (0 if k < NST - 1 else .35))], r, 18, zone=Z.grey if k else Z.alu)
+    if not SHIP: g.add(t_)
+    if True: g.add(tube([at(end - .11), at(end + .02)], r + .03, 18, zone=Z.black))
     if k == NST - 1: g.add(cyl(.17, .30, 16, zone=Z.black, bevel=.02), T(*AN) @ Ry(90))
-    o = P.mesh(f'strut{k + 2}', g, P.det, parent=parent, frame=T(*s0)); rest = o.location.copy(); st = rest - U * STEP
+    o = P.mesh(f'strut{k + 2}', g, P.det, parent=parent, frame=T(*s0))
+    if SHIP: P.mesh(f'tube{k + 1}', t_, MS_, parent=o, frame=T(*s0))
+    rest = o.location.copy(); st = rest - U * STEP
     for f, l in ((0, st), (F_SLIDE, st), (F_DONE, rest), (N, rest)): P.key('legDeploy', o, f, location=l)
     parent = o
 last = parent
@@ -57,7 +66,7 @@ g = Geo(); g.add(tube([AN + V((0, 0, .04)), AN + V((0, 0, -SUSP))], .085, 12, zo
 for f, l, q in ((0, l0, UNSW.inverted()), (F_SLIDE, l0, UNSW.inverted()), (F_DONE, l1, Quaternion()), (N, l1, Quaternion())): P.key('legDeploy', pi, f, location=l, rotation_quaternion=Quaternion())
 FC = AN + V((0, 0, -SUSP)); ft = T(*FC); s_ = Geo()
 OCT = lambda r: [(r * math.cos(math.radians(22.5 + 45 * i)), r * math.sin(math.radians(22.5 + 45 * i))) for i in range(8)]
-rows = [(.36, -RAD), (.50, -RAD + .03), (.56, -RAD + .11), (.54, -RAD + .14), (.24, -RAD + .22), (.16, -.02)]
+rows = [(r_ * PADS, z_) for r_, z_ in ((.36, -RAD), (.50, -RAD + .03), (.56, -RAD + .11), (.54, -RAD + .14), (.24, -RAD + .22), (.16, -.02))]
 for r, z in rows: s_.v += [(x, y, z) for x, y in OCT(r)]
 for j in range(len(rows) - 1):
     for i in range(8):
@@ -65,7 +74,7 @@ for j in range(len(rows) - 1):
 for j, rev in ((0, True), (len(rows) - 1, False)):
     c = len(s_.v); s_.v.append((0, 0, rows[j][1]))
     for i in range(8): t = [c, j * 8 + i, j * 8 + (i + 1) % 8]; s_.face(t[::-1] if rev else t, [Z.rubber.uv(.5, .5), Z.rubber.uv(.2, .3), Z.rubber.uv(.3, .2)])
-for i in range(8): s_.add(box(.03, .34, .10, zone=Z.dark, bevel=.008), Rz(45 * i) @ T(0, -.34, -RAD + .17) @ Rx(-18))
+for i in range(8): s_.add(box(.03, .34, .10, zone=Z.dark, bevel=.008), Rz(45 * i) @ T(0, -.34 * PADS, -RAD + .17) @ Rx(-18))
 s_.add(cyl(.12, .28, 14, zone=Z.steel, bevel=.015), Ry(90))
 shoe = Geo(); shoe.add(s_, ft); fo = P.mesh('foot', shoe, P.det, parent=pi, frame=ft, smooth_angle=30); fl = fo.location.copy()
 QF = Quaternion((1, 0, 0), math.radians(90 - math.degrees(0)))    # stowed: pad flat against the hull, sole outboard

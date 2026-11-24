@@ -28,7 +28,7 @@ Ready-made craft are in `Ships/VAB`.
 
 - **Entry:** black side to the wind. The gyros can hold the ship broadside and swing it upright against the airstream for the landing burn; turn the reaction wheel's authority down if it feels twitchy in space.
 - **Refuelling:** bring two ships side by side, bellies outward, and dock the transfer ports on the flank above the skirt.
-- **Crane:** doors open, boom to -6.8, then lower the hoist. Keep autostrut off on the crane and its cargo. The platform comes down beside the leeward foot.
+- **Crane:** doors open, boom to -7.4, then lower the hoist. Keep autostrut off on the crane and its cargo. The platform comes down beside the leeward foot.
 - **Solar fans:** they stow inside the skirt. Don't open them with the engines running.
 
 ## PBR materials (untested)

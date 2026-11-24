@@ -34,11 +34,16 @@ BAY_BACK = -1.25
 # ---- windows
 WIN_Z, WIN_N, WIN_SPAN, WIN = 25.48, 10, 36.0, (.31, .74)
 # ---- solar bays
-SOL_AZ = (48.75, 101.25, 258.75, 311.25); SOL_HW = 18.75; SOL_DP = 1.38; SOL_Z = (22.95, 23.8)
+SOL_AZ = (56.25, 101.25, 258.75, 303.75); SOL_HW = 18.75; SOL_DP = 1.62; SOL_Z = (22.95, 23.8)
 # ---- legs (plane of one leg: r outward, z)
 HINGE = (2.87, 4.35); SOLE = -1.0; FOOT_R = 5.35; FOOT_STOW = .52
 SHELL = ((.26, .05), (.32, .30), (.46, .58), (.8, .74), (1.4, .80), (2.2, .78), (3.2, .74), (3.9, .72), (4.25, .70), (4.6, .60), (4.9, .42), (5.2, .21), (5.45, .03), (5.5, 0))   # blister over a stowed leg: (z, height off the hull)
 SHELL_W = ((.26, 1.18), (.8, 1.34), (1.6, 1.28), (2.6, .92), (4.2, .74), (4.9, .56), (5.3, .28), (5.5, .10))   # and half-width
+# the aeroshielded leg for SEP's ship: slimmer, and placed clear of SEP's vent (az 29-47, z 4.7-5.4), docking cone
+# (29-44, z 1.9-2.4), camera (51-55, z 2.6-2.9) and flap fairing (80 on)
+SHIP_LEG_AZ = (63, 150, 210, 297)
+SHIP_SHELL = ((.30, .03), (.36, .28), (.50, .52), (.8, .64), (1.4, .66), (2.2, .60), (3.2, .56), (4.0, .56), (4.4, .54), (4.75, .42), (5.1, .22), (5.4, .03), (5.45, 0))
+SHIP_SHELL_W = ((.30, .50), (.5, .60), (.8, .66), (1.5, .64), (2.1, .42), (2.5, .345), (3.2, .345), (3.9, .42), (4.5, .42), (5.0, .28), (5.45, .06))
 COLLAR = .72               # drag strut collar, up the strut from the ankle (deployed)
 LIFT_TRAVEL = 22.3
 SHEET = {'core': (0.0, Z_SKIN), 'crew': (Z_SKIN, Z_OGIVE + 7.40)}

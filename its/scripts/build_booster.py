@@ -211,7 +211,7 @@ for a in L.GF_AZ:
     det.add(g, f)
     for x in (-.62, .62):                              # stowage latches for the fin
         det.add(stick_cyl(box(.16, .24, .16, zone=Z.grey, bevel=.02, center=(x, 0, 0)), a, zk(L.GF_Z) - 3.2, R))
-    P.node('fin%d' % (L.GF_AZ.index(a) + 1), f @ Vector((0, 0, .0)), f.to_3x3() @ Vector((0, 0, 1)), 1)
+    P.node('fin%d' % (L.GF_AZ.index(a) + 1), f @ Vector((0, -.24, .0)), f.to_3x3() @ Vector((0, 0, 1)), 1)     # below the fairing's lip by half the fin's chord
 # attitude thrusters: four pods under the interstage, three by the base
 rcs = []
 for a in (30, 90, 150, 210, 270, 330):

@@ -218,6 +218,7 @@ def windows(variant, zone):
     for row, (z, n, span) in enumerate(L.NOSE_SMALL_ROWS[:L.NOSE_SMALL_COUNT[variant]]):
         for i in range(n):
             az = -span + 2 * span * i / (n - 1) if n > 1 else 0.0
+            if L.DOCK['az'] - L.DOCK['hw'] - 7 < az < L.DOCK['az'] + L.DOCK['hw'] + 7 and z - .2 < L.DOCK['z'][1] and z + .17 > L.DOCK['z'][0]: continue          # the docking bay
             if abs(az) < L.EVA_HW + 6 and z - .3 < L.EVA_Z[1] and z + .3 > L.EVA_Z[0]: continue          # the EVA hatch is here
             fw, fh = w + 2 * F, h + 2 * F
             frames.add(stick(rounded_rect_ring(fw, fh, fh * .42, F + .004, L.NOSE_FRAME_H, 4, zone=zone), az, z))
