@@ -76,7 +76,7 @@ def part(name, title, desc, tags, mass, cost, cat, tech, extra=(), modules=(), r
     if stackSym:
         L.append(f'stackSymmetry = {stackSym}')
     L += [f'TechRequired = {tech}', f'entryCost = {cost}', f'cost = {cost}', f'category = {cat}', 'subcategory = 0', f'title = {title}', f'manufacturer = {MFR}',
-          f'description = {desc}', f'tags = ITS interplanetary starship {tags}', f'attachRules = {rules}', f'mass = {mass}', 'dragModelType = default', 'maximum_drag = 0.2',
+          f'description = {desc}', f'tags = {tags}' if name.startswith('STMS_') else f'tags = ITS interplanetary starship {tags}', f'attachRules = {rules}', f'mass = {mass}', 'dragModelType = default', 'maximum_drag = 0.2',
           'minimum_drag = 0.2', 'angularDrag = 2', f'crashTolerance = {crash}', f'breakingForce = {brk}', f'breakingTorque = {brk}', f'maxTemp = {tmax}',
           f'skinMaxTemp = {skin}', 'emissiveConstant = 0.85', f'bulkheadProfiles = {profiles}']
     L += list(extra)

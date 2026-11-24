@@ -14,6 +14,8 @@ Download the zip from Releases and copy its `GameData/StarshipThingyMabobsAndSuc
 
 Needs SEP, ModuleManager and B9PartSwitch. The winch and crane need Breaking Ground.
 
+With Community Category Kit installed, all parts are also under **Starship Thingy Mabobs** in the editor's Filter by Function list.
+
 ## Build
 
 `./build_all.sh` builds both halves (Blender 3.6 with io_object_mu; Python with numpy and Pillow; SEP installed, for the V3 masks). `SKIP_MODELS=1` and `SKIP_TEX=1` reuse the last build. `./deploy.sh` copies it into the Sol install.

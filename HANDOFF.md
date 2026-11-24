@@ -89,6 +89,7 @@ What can't be done in the cloud: run KSP, deploy, read KSP.log, bake the V3 mask
 | `its/scripts/make_craft.py` | `Ships/VAB/*.craft` |
 | `its/scripts/photo.py` | Renders a .craft; `--pose ITS_Leg:legDeploy`, `--only`, `--sky day/space/studio`, `--lit` for windows |
 | `its/scripts/check_fit.py`, `check_float.py`, `check_balance.py`, `check_rings.py`, `lint.py` | Clearances; pieces touching nothing; TWR and delta-v; engine overlap; cfg/model/texture checks |
+| `common/`, `tools/make_icon.py`, `tools/check_cck.py` | CCK part filter (`cck-stms`) and its icons; the check fails the build if a part isn't listed |
 | `its/extras/ITS_PBR.cfg.txt` | Opt-in PBR material swap, untested |
 | `v3/` | Winch, expendable V3 and the Block 3 crew nosecones' window kits: `build.sh`, `cfg/`, `patches/`, `scripts/` (`nose.py` lays pieces on SEP's nose from the measured rings in `layout.py`) |
 
@@ -129,7 +130,7 @@ What can't be done in the cloud: run KSP, deploy, read KSP.log, bake the V3 mask
 
 **Waiting for a verdict:** bare-carbon livery, an optional B9 switch (Livery: White / Bare carbon, White default) on branch `claude/carbon-livery`; +54 MB of textures, no carbon normal maps. In game: the switch on all five hull parts, switching back, the old save loading, weave shimmer.
 
-**Not built:** a real crew interior (uses `MK3_CrewCab_Int`; FreeIva logs hatch errors for it), RealFuels volumes, a custom category icon.
+**Not built:** a real crew interior (uses `MK3_CrewCab_Int`; FreeIva logs hatch errors for it), RealFuels volumes.
 
 **Known and left alone:** `check_float.py` still lists joint rings, bolts and hinge brackets hidden inside the hull, the lettering (7 mm proud) and the leg shells (they rest on the ship, not on the leg). Fan packages show slightly under the skirt rim when stowed. SEP's own `ModuleSEPRaptor` throws an exception on the SL_C engine in the editor; not ours. `lint.py` warns about `ModuleDeployableAero` (Kerbal Reusability Expansion's DLL isn't scanned).
 
