@@ -90,21 +90,28 @@ indock = lambda p: p.y < 0 and abs(az_of(p) - da) < dw and dz0 < p.z < dz1
 add('stms_nose', part_of(nose, lambda p: not indoor(p) and not indock(p)), mnose, src_=snose)
 for k in ('Tiles∧', 'Tiles∧.001'):                          # the small patch that would sit on the docking door goes
     bm, m, sn = src[k]; add('stms_tiles' + ('B' if k[-1] == '1' else 'A'), bm if k[-1] == '1' else part_of(bm, lambda p: p.x < 0), m, src_=sn)
-# EVA hatch: swung aside on its arms
-hx = math.sin(math.radians(ha)) * N.ring_r(sum(L.EVA_Z) / 2); hh = T(hx + .04, -N.ring_r(sum(L.EVA_Z) / 2) * math.cos(math.radians(ha)) - .03, sum(L.EVA_Z) / 2); door = P.empty('stms_evahatch', hh, P.model)
+def hinge_frame(az, z0, z1, off):
+    """On the hull edge at azimuth az, off outside it: X along the hull toward the door (smaller az), Y outward, Z up the edge. The
+    nose tapers, so a door only swings true about this line, not about the vertical."""
+    p0, p1 = N.point(az - .01, z0), N.point(az - .01, z1); a_ = (p1 - p0).normalized(); t = math.radians(az); n_ = V((math.sin(t), -math.cos(t), 0)); n_ = (n_ - a_ * n_.dot(a_)).normalized(); x_ = n_.cross(a_)
+    m = Matrix((x_, n_, a_)).transposed().to_4x4(); m.translation = (p0 + p1) / 2 + n_ * off; return m
+def bar_path(g_, pts, z, w, t_, zn):
+    for (u0, n0), (u1, n1) in zip(pts, pts[1:]): du, dn = u1 - u0, n1 - n0; g_.add(box(math.hypot(du, dn) + t_ * .6, t_, w, zone=zn, bevel=min(.008, t_ * .2)), T((u0 + u1) / 2, (n0 + n1) / 2, z) @ Rz(math.degrees(math.atan2(dn, du))))
+# EVA hatch: swung aside on two hinges
+EOFF = .055; hh = hinge_frame(ha, hz0, hz1, EOFF); door = P.empty('stms_evahatch', hh, P.model)
 add('stms_evaskin', part_of(nose, indoor), mnose, door, hh, src_=snose)
-# docking door: the skin itself, pressed outward over the port so the port fits behind it; it moves out, then slides round the hull
+# docking door: the skin itself, pressed outward over the port so the port fits behind it, on powered hinges along its far edge; it folds back over the hull
 DF = N.surf(da, dzm); out_ = V((math.sin(math.radians(da)), -math.cos(math.radians(da)), 0)); tan_ = V((math.cos(math.radians(da)), math.sin(math.radians(da)), 0)); HWm = 2.755 * math.sin(math.radians(dw)); HHm = (dz1 - dz0) / 2
 sm = lambda t: max(0, min(1, t)) ** 2 * (3 - 2 * max(0, min(1, t)))
 bump = lambda p: D['bulge'] * sm((HWm - abs(p.dot(tan_))) / .20) * sm((HHm - abs(p.z - dzm)) / .20)
-press = lambda p: p + out_ * bump(p); dslide = P.empty('stms_dockturn', None, P.model); dpanel = P.empty('stms_dockdoor', None, dslide)
+press = lambda p: p + out_ * bump(p); HOFF = .10; HX = hinge_frame(da + dw, dz0, dz1, HOFF); dpanel = P.empty('stms_dockdoor', HX, P.model)      # hinge axis, HOFF outside the hull: the bulge clears the hull when folded back
 dk = part_of(nose, indock)
 for a in [da - dw + 2 * dw * k / 24 for k in range(1, 24)]: t = math.radians(a); cut(dk, (0, 0, 0), (math.cos(t), math.sin(t), 0))
 for k in range(1, 24): cut(dk, (0, 0, dz0 + (dz1 - dz0) * k / 24), (0, 0, 1))
 def bent(p, n):                                              # the hull's normal, tilted by the slope of the bulge
     e = .002; return (n - tan_ * ((bump(p + tan_ * e) - bump(p - tan_ * e)) / (2 * e)) - V((0, 0, (bump(p + V((0, 0, e))) - bump(p - V((0, 0, e)))) / (2 * e)))).normalized()
 # SEP's texture is black under the tile patch removed here, so the door borrows the bare steel at az 0 (a whole number of facets away)
-add('stms_dockskin', dk, mnose, dpanel, src_=snose, move=press, bend=bent, uv_from=lambda p: Matrix.Rotation(math.radians(-da), 3, 'Z') @ p)
+add('stms_dockskin', dk, mnose, dpanel, HX, src_=snose, move=press, bend=bent, uv_from=lambda p: Matrix.Rotation(math.radians(-da), 3, 'Z') @ p)
 MD = P.material('its_det', spec=(.8, .8, .8), shininess=.45); 
 DET = dict(white=(0, 0, 512, 512), grey=(512, 0, 512, 512), steel=(1536, 0, 512, 512), dark=(0, 512, 512, 512), alu=(512, 512, 512, 512), black=(1024, 512, 512, 512), wall=(0, 1024, 1024, 512), deck=(1024, 1024, 512, 512), hatch=(1536, 1280, 512, 256), stripe=(1536, 1024, 512, 256), lamp=(1024, 1920, 256, 128))
 Z = {k: Zone(*v, atlas=2048, ppm=170) for k, v in DET.items()}
@@ -123,8 +130,6 @@ d.add(lathe([(.62, -.002), (.60, .016), (.50, .016), (.48, .006), (0, .006)][::-
 bl = cyl(.014, .012, 6, zone=Z['steel'], center_z=False); [d.add(bl, SF @ T(.55 * math.cos(TAU * k / 24), .55 * math.sin(TAU * k / 24), .015)) for k in range(24)]
 for sx in (-1, 1):
     for sy in (-1, 1): d.add(box(.12, .10, .06, zone=Z['dark'], bevel=.012), SF @ T(sx * .56, sy * .56, .03)); d.add(box(.07, .05, .02, zone=Z['lamp']), SF @ T(sx * .56, sy * .56, .065))
-for z in (dz0 + .06, dz1 - .06):                            # tracks the door rides on
-    d.add(tube([tuple(N.point(a, z, .012)) for a in np.linspace(da + dw + .6, da + dw * 3 + .4, 16)], .016, 6, zone=Z['dark']))
 fr_e = [N.point(a, z, .008) for a, z in edge]; d.add(tube([tuple(p) for p in fr_e], .020, 6, zone=Z['alu'], closed=True, caps=False))
 di2 = Geo(); gx, gy = 12, 12; grid = {}
 for i_ in range(gx + 1):
@@ -134,7 +139,19 @@ for i_ in range(gx):
 rim_i = [(i_, 0) for i_ in range(gx)] + [(gx, j_) for j_ in range(gy)] + [(i_, gy) for i_ in range(gx, 0, -1)] + [(0, j_) for j_ in range(gy, 0, -1)]
 rp_ = lambda i_, j_: N.point(da - dw + 2 * dw * i_ / gx, dz0 + (dz1 - dz0) * j_ / gy, 0)
 for (a_, b_), (c_, e_) in zip(rim_i, rim_i[1:] + rim_i[:1]): quad(di2, [rp_(a_, b_), rp_(c_, e_), V(di2.v[grid[c_, e_]]), V(di2.v[grid[a_, b_]])], Z['alu'], (rp_(a_, b_) - out_ * .02) * 2 - (out_ * 2.7 + V((0, 0, dzm))))
-P.mesh('stms_dockin', di2, MD, parent=dpanel)
+# powered hinges: hull lugs and geared motors outside the sill, door arms round the same shaft
+dh, dl, ds = Geo(), Geo(), Geo()                            # door arms and hull side in the hinge frame; latches in the model's
+for zc_ in (-.44, .44):
+    bar_path(dl, [(0, 0), (.055, -.015), (.095, -.080), (.30, -.092)], zc_, .13, .035, Z['dark']); dl.add(box(.20, .02, .20, zone=Z['alu'], bevel=.005), T(.27, -.082, zc_)); dl.add(cyl(.05, .15, 20, zone=Z['alu'], bevel=.006), T(0, 0, zc_))
+    for q in (-.06, .06): dl.add(cyl(.013, .014, 8, zone=Z['steel']), T(.31, -.068, zc_ + q) @ Rx(90))
+    for k in (-1, 1): bar_path(ds, [(0, 0), (-.045, -.02), (-.075, -.095), (-.24, -.112)], zc_ + k * .125, .07, .04, Z['dark']); ds.add(cyl(.052, .075, 20, zone=Z['steel'], bevel=.006), T(0, 0, zc_ + k * .125))
+    ks = -1 if zc_ > 0 else 1                               # motor between the hinge and the middle, gearbox down to the hull
+    ds.add(cyl(.072, .17, 24, zone=Z['white'], bevel=.012), T(0, 0, zc_ + ks * .26)); ds.add(cyl(.060, .03, 24, zone=Z['steel'], bevel=.006), T(0, 0, zc_ + ks * .36)); ds.add(box(.14, .15, .13, zone=Z['grey'], bevel=.015), T(-.08, -.055, zc_ + ks * .26)); ds.add(tube([(-.10, -.02, zc_ + ks * .30), (-.17, -.06, zc_ + ks * .30), (-.24, -.12, zc_ + ks * .30)], .012, 6, zone=Z['black']))
+ds.add(cyl(.028, 1.16, 16, zone=Z['steel'])); d.add(ds, HX); dh.add(dl, HX)
+for az in (da - dw + 1.3,):                                 # latches on the free edge: claws on the sill, strikers on the door
+    for q in (-.40, 0, .40): d.add(box(.05, .09, .07, zone=Z['dark'], bevel=.008), N.surf(az, dzm + q) @ T(0, 0, -.10)); d.add(cyl(.014, .07, 10, zone=Z['steel']), N.surf(az, dzm + q) @ T(.02, 0, -.075) @ Rx(90)); dh.add(box(.03, .05, .05, zone=Z['steel'], bevel=.005), N.surf(az + .9, dzm + q) @ T(0, 0, -.05))
+P.mesh('stms_dockhinge', dh, MD, parent=dpanel, frame=HX)
+P.mesh('stms_dockin', di2, MD, parent=dpanel, frame=HX)
 NP_ = SF @ V((0, 0, .016)); P.node('port', NP_, out_, 1); print('NODE %.4f %.4f %.4f dir %.4f %.4f %.4f' % (NP_.x, NP_.z, NP_.y, out_.x, out_.z, out_.y))
 # ---------------- EVA airlock: a real recess with an inner hatch
 zm_ = 0; yf = -N.ring_r(hz0) + .02; yb = -1.95; X = math.sin(math.radians(ha)) * 2.70; zm = (hz0 + hz1) / 2
@@ -150,15 +167,29 @@ di = Geo(); ea = [(-ha, hz0), (ha, hz0), (ha, hz1), (-ha, hz1)]; nE = 6; ring_ =
 for (a0, z0), (a1, z1) in zip(ea, ea[1:] + ea[:1]): ring_ += [(a0 + (a1 - a0) * k / nE, z0 + (z1 - z0) * k / nE) for k in range(nE)]
 cI = N.point(0, zm, -.09)
 for p, q in zip(ring_, ring_[1:] + ring_[:1]):              # rim and back of the door
-    A_, B_ = N.point(*p), N.point(*q); C_, E_ = [N.point(a * .94, zm + (z - zm) * .97, -.09) for a, z in (q, p)]; quad(di, [A_, B_, C_, E_], Z['white'], (A_ - N.point(0, zm, -.04)) * 3 + N.point(0, zm, -.04)); n = len(di.v); di.v += [tuple(E_), tuple(C_), tuple(cI)]; di.face([n, n + 1, n + 2] if (C_ - E_).cross(cI - E_).y > 0 else [n + 1, n, n + 2], [Z['white'].uv(*t) for t in ((0, 0), (.1, 0), (.05, .1))])
-for q in (-.36, .36): di.add(box(.15, .09, .07, zone=Z['dark'], bevel=.012), T(hx - .01, -2.695, zm + q))
+    A_, B_ = N.point(*p), N.point(*q); C_, E_ = [N.point(a * .94, zm + (z - zm) * .97, -.09) for a, z in (q, p)]; quad(di, [A_, B_, C_, E_], Z['white'], (A_ - N.point(0, zm, -.04)) * 3 + N.point(0, zm, -.04))
+def inner(u, v, k, off): return N.point(-ha * .94 * k + 2 * ha * .94 * k * u, zm + (hz1 - hz0) * .97 * k * (v - .5), off)      # on the door's inner face
+def sheet(k, off, zn, nu=6, nv=10):
+    n = len(di.v); di.v += [tuple(inner(i / nu, j / nv, k, off)) for j in range(nv + 1) for i in range(nu + 1)]
+    for j in range(nv):
+        for i in range(nu):
+            q = [n + j * (nu + 1) + i, n + j * (nu + 1) + i + 1, n + (j + 1) * (nu + 1) + i + 1, n + (j + 1) * (nu + 1) + i]; uv = [Z[zn].uv(a / nu, b / nv) for a, b in ((i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1))]
+            if (V(di.v[q[1]]) - V(di.v[q[0]])).cross(V(di.v[q[3]]) - V(di.v[q[0]])).y < 0: q, uv = q[::-1], uv[::-1]
+            di.face(q, uv)
+sheet(1, -.09, 'white'); sheet(.80, -.094, 'grey')           # back of the door: one curved sheet with an inset panel
+di.add(tube([tuple(inner(u, v, .80, -.095)) for (u0, v0), (u1, v1) in (((0, 0), (1, 0)), ((1, 0), (1, 1)), ((1, 1), (0, 1)), ((0, 1), (0, 0))) for t in range(6) for u, v in ((u0 + (u1 - u0) * t / 6, v0 + (v1 - v0) * t / 6),)], .014, 6, zone=Z['alu'], closed=True, caps=False))
+eh, es = Geo(), Geo()                                       # in the hinge frame: door arms, hull lugs, pin
+for q in (-.33, .33):
+    bar_path(eh, [(0, 0), (.035, -.008), (.06, -EOFF + .012), (.20, -EOFF + .010)], q, .08, .024, Z['dark']); eh.add(cyl(.030, .085, 16, zone=Z['alu'], bevel=.004), T(0, 0, q))
+    for k in (-1, 1): bar_path(es, [(0, 0), (-.03, -.010), (-.05, -EOFF + .008), (-.15, -EOFF - .002)], q + k * .072, .045, .026, Z['dark']); es.add(cyl(.031, .05, 16, zone=Z['steel'], bevel=.004), T(0, 0, q + k * .072))
+    es.add(cyl(.015, .24, 12, zone=Z['steel']), T(0, 0, q))
+P.mesh('stms_evahinge', Geo().add(eh, hh), MD, parent=door, frame=hh); d.add(es, hh)
 di.add(tube([tuple(N.point(-ha + 1.3, zm + q, .03)) for q in (-.12, 0, .12)], .014, 6, zone=Z['black'])); di.add(tube([(.10 * math.cos(t), cI.y + .012, zm + .10 * math.sin(t)) for t in np.linspace(0, TAU, 21)], .012, 6, zone=Z['steel']))
 P.mesh('stms_evain', di, MD, parent=door, frame=hh)
-q1, q2 = P.rest_quat(door), P.rest_quat(dslide); END = 100
-for f, a in ((0, 0), (60, 130)): P.key('stmsEva', door, f, rotation_quaternion=q1 @ Quaternion((0, 0, 1), math.radians(a)))
-for f, l in ((0, V()), (30, out_ * .15), (END, out_ * .15)): P.key('stmsDock', dpanel, f, location=l)
-for f, a in ((0, 0), (30, 0), (END, 2 * dw + 1.2)): P.key('stmsDock', dslide, f, rotation_quaternion=q2 @ Quaternion((0, 0, 1), math.radians(a)))
-P.box_trigger('stms_airlock', climb_frame((0, yb - .22, zm), (0, -1, 0)), (.5, .4, .9), 'Airlock').muproperties.layer = 21
+q1, q2 = P.rest_quat(door), P.rest_quat(dpanel); END = 100
+for f, a in ((0, 0), (30, 58), (60, 115)): P.key('stmsEva', door, f, rotation_quaternion=q1 @ Quaternion((0, 0, 1), math.radians(a)))
+for f in range(0, END + 1, 10): P.key('stmsDock', dpanel, f, rotation_quaternion=q2 @ Quaternion((0, 0, 1), math.radians(178 * sm(f / END))))
+P.box_trigger('stms_airlock', climb_frame((0, -2.55, hz0 + .34), (0, -1, 0)), (.5, .4, .6), 'Airlock')      # KSP looks for obstructions from .5 m behind this, along the line from the part's origin, and our own colliders count.muproperties.layer = 21
 # ---------------- cargo bay: the cargo section's barrel and lower clamshells
 if CARGO:
     for nm, k in (('stms_barrel', 'Cylinder∧'), ('stms_barrelin', 'Cylinder∧.001')): bm, m, sn = car[k]; add(nm, bm, m, src_=sn)
@@ -169,6 +200,15 @@ if CARGO:
         g = Geo()                                        # stiffeners, and the top edge the cargo section's upper door used to close
         for z in (-2.3, -1.7, -1.1, -.5): g.add(tube([(2.765 * math.sin(t), -2.765 * math.cos(t), z) for t in np.linspace(s * .03, s * .76, 14)], .03, 6, zone=Z['alu']))
         P.mesh('stms_doorrib%d' % (s > 0), g, MD, parent=dr, frame=fr)
+        hu, hn = V((-s, -1, 0)).normalized(), V((s, -1, 0)).normalized()          # hinges: toward the door, outward
+        HM = lambda u, z, n: fr @ Matrix.Translation(hu * u + hn * n + V((0, 0, z))) @ Matrix((hu, V((0, 0, 1)), hn)).transposed().to_4x4()
+        hd, hh_ = Geo(), Geo()
+        for z in (-.92, 0, .92):
+            hd.add(cyl(.05, .16, 16, zone=Z['alu'], bevel=.006), fr @ T(0, 0, z)); hd.add(box(.24, .14, .07, zone=Z['dark'], bevel=.012), HM(.145, z, -.02))
+            for k in (-1, 1):
+                hh_.add(cyl(.05, .13, 16, zone=Z['steel'], bevel=.006), fr @ T(0, 0, z + k * .15)); hh_.add(box(.24, .12, .07, zone=Z['dark'], bevel=.012), HM(-.145, z + k * .15, -.02))
+            hh_.add(cyl(.026, .52, 12, zone=Z['steel']), fr @ T(0, 0, z))
+        P.mesh('stms_doorhinge%d' % (s > 0), hd, MD, parent=dr, frame=fr); d.add(hh_)
         q = P.rest_quat(dr)
         for f, a in ((0, 0), (120, 118 * s)): P.key('stmsDoors', dr, f, rotation_quaternion=q @ Quaternion((0, 0, 1), math.radians(a)))
         P.hull_collider('col_door%d' % (s > 0), [(r * math.sin(t), -r * math.cos(t), z) for r in (2.72, 2.81) for t in (s * .02, s * .26, s * .5, s * .76) for z in (-2.5, -.02)], parent=dr, frame=fr)
@@ -185,7 +225,7 @@ A0, A1 = da - dw, da + dw
 for j, (a0, a1) in enumerate(((ha, A0), (A1, 90), (90, 140), (140, 190), (190, 240), (240, 300), (300, 360 - ha))):
     for i, (z0, z1) in enumerate(((zlo, dz0), (dz0, dz1), (dz1, 2.581))): P.hull_collider(f'col_{j}{i}', [p for z in (z0, z1) for p in rp(z, a0, a1, 4) + rp(z, a0, a1, 4, 1.9)])
 for i, (z0, z1) in enumerate(((zlo, dz0), (dz1, 2.581))): P.hull_collider(f'col_dock{i}', [p for z in (z0, z1) for p in rp(z, A0, A1, 4) + rp(z, A0, A1, 4, 1.9)])
-P.hull_collider('col_seat', [tuple(SF @ V((x, y, z))) for x in (-PX, PX) for y in (-PY, PY) for z in (0, -.12)]); P.hull_collider('col_dockdoor', [tuple(press(N.point(a, z, 0)) - out_ * o) for a in (A0, da - 4, da + 4, A1) for z in (dz0, dzm - .25, dzm + .25, dz1) for o in (0, .045)], parent=dpanel)
+P.hull_collider('col_seat', [tuple(SF @ V((x, y, z))) for x in (-PX, PX) for y in (-PY, PY) for z in (0, -.12)]); P.hull_collider('col_dockdoor', [tuple(press(N.point(a, z, 0)) - out_ * o) for a in (A0, da - 4, da + 4, A1) for z in (dz0, dzm - .25, dzm + .25, dz1) for o in (0, .045)], parent=dpanel, frame=HX)
 P.hull_collider('col_sill', [p for z in (zlo, hz0) for p in rp(z, -ha, ha, 2) + rp(z, -ha, ha, 2, 1.9)]); P.hull_collider('col_lintel', [p for z in (hz1, 2.581) for p in rp(z, -ha, ha, 2) + rp(z, -ha, ha, 2, 1.9)]); P.hull_collider('col_back', [(x, y, z) for x in (-X, X) for y in (yb, yb + .1) for z in (hz0, hz1)])
 for i, (z0, z1) in enumerate(((2.581, 4.132), (4.132, 5.307), (5.307, 6.234), (6.234, 7.2794), (7.2794, 8.5528))): P.hull_collider(f'col_n{i}', rp(z0, 0, 345, 23) + rp(z1, 0, 345, 23))
 P.hull_collider('col_evahatch', [tuple(N.point(a, z, o)) for a in (-ha, ha) for z in (hz0, hz1) for o in (0, -.05)], parent=door, frame=hh)
