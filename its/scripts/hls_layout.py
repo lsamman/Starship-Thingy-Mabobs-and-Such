@@ -52,7 +52,7 @@ LIFT_TRAVEL = 22.3
 # ---- the original style (NASA/SpaceX renders 11-2024): black base and leg panels, tall band. Same thruster centres.
 O_BAND, O_BORE = (19.0, 20.25), (.262, .415)
 O_PANEL_TOP, O_PANEL_W = 4.85, (1.02, .62)
-SHEET = {'core': (0.0, Z_SKIN), 'crew': (Z_SKIN, Z_OGIVE + 7.40), 'cargo': (Z_SKIN, Z_OGIVE + 7.40), 'core_o': (0.0, Z_SKIN), 'crew_o': (Z_SKIN, Z_OGIVE + 7.40)}
+SHEET = {'core': (0.0, Z_SKIN), 'core_d_o': (0.0, Z_SKIN), 'crew': (Z_SKIN, Z_OGIVE + 7.40), 'cargo': (Z_SKIN, Z_OGIVE + 7.40), 'core_o': (0.0, Z_SKIN), 'crew_o': (Z_SKIN, Z_OGIVE + 7.40)}
 # ---- cargo section, in its own frame (z = 0 at Z_OGIVE): door, bay, crane frame
 CG_SILL, CG_HEAD, CG_AZ = -2.70, 2.70, 52.5
 CG_FLOOR, CG_CEIL, CG_TOP = -2.80, 2.24, 4.64      # floor, winch mount, bulkhead under the header tank

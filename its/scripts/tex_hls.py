@@ -51,7 +51,7 @@ def build(sheet, seams, seed):
                 d_ = np.abs(az - (b + k * HL.PITCH)); ee = np.hypot(np.radians(d_) * HL.R / HL.BORE[0], (z - bm) / HL.BORE[1]); rg = line((ee - 1.06) * .3, .016, aa)
                 c.albedo[:] = c.albedo * (1 - rg[..., None]) + .085 * rg[..., None]; h += .5 * rg
         _, ea = cells(az, 60, .0); k = line(np.radians(ea) * HL.R, .004, aa) * (np.abs(z - bm) < bh); h -= .7 * k
-    elif sheet == 'core_o':
+    elif sheet in ('core_o', 'core_d_o'):                     # the depot's core is the original's without the band
         da = np.minimum(np.abs(az - 45), np.abs(az - 135)); s_ = np.radians(da) * HL.R
         t = np.clip((z - HL.Z_BLACK) / (HL.O_PANEL_TOP - HL.Z_BLACK), 0, 1); half = HL.O_PANEL_W[0] + (HL.O_PANEL_W[1] - HL.O_PANEL_W[0]) * t
         # signed distance, rounded at the top and flared into the base with a fillet
@@ -63,16 +63,17 @@ def build(sheet, seams, seed):
         bm = (HL.O_BAND[0] + HL.O_BAND[1]) / 2; bh = (HL.O_BAND[1] - HL.O_BAND[0]) / 2; R_ = .13
         xe = np.radians(np.maximum(0, 12.0 - az)) * HL.R; qx = R_ - np.radians(az - 11.2) * HL.R; qy = np.abs(z - bm) - (bh - .02 - R_)
         u2 = np.hypot(np.maximum(qx, 0), np.maximum(qy, 0)) + np.minimum(np.maximum(qx, qy), 0) - R_
+        if sheet == 'core_d_o': u2 = np.full_like(u2, 9)
         black = np.maximum(black, np.clip(.5 - u2 / (2 * aa), 0, 1)); ub = np.minimum(u, u2)
         edge = line(ub, .010, aa); h -= .9 * edge
         pal = .050 + .004 * cloud + .002 * fine
         c.albedo[:] = c.albedo * (1 - black[..., None]) + np.dstack([pal, pal, pal * 1.03]) * black[..., None]
         c.gloss[:] = c.gloss * (1 - black) + (.16 + .012 * cloud + .008 * fine) * black
-        for b in HL.GROUPS:                                     # frames round each group of ports, and a ring round each port
+        for b in HL.GROUPS if sheet == 'core_o' else ():        # frames round each group of ports, and a ring round each port
             for k in (-1, 0, 1):
                 d_ = np.abs(az - (b + k * HL.PITCH)); ee = np.hypot(np.radians(d_) * HL.R / HL.O_BORE[0], (z - bm) / HL.O_BORE[1]); rg = line((ee - 1.06) * .3, .016, aa)
                 c.albedo[:] = c.albedo * (1 - rg[..., None]) + .085 * rg[..., None]; h += .5 * rg
-        _, ea = cells(az, 60, .0); k = line(np.radians(ea) * HL.R, .004, aa) * (np.abs(z - bm) < bh); h -= .7 * k
+        _, ea = cells(az, 60, .0); k = line(np.radians(ea) * HL.R, .004, aa) * (np.abs(z - bm) < bh); h -= .7 * k * (sheet == 'core_o')
     elif sheet in ('crew', 'crew_o'):
         for a0, hw, zc, hh_ in ((56.25, 18.9, sum(HL.SOL_Z) / 2, .44), (101.25, 18.9, sum(HL.SOL_Z) / 2, .44), (180, 9, 26.2, .5)):
             q = np.maximum(np.abs(np.radians(az - a0)) * r - np.radians(hw) * HL.R, np.abs(z - zc) - hh_); k = line(q, .009, aa); c.albedo *= (1 - .45 * k)[..., None]; h -= 1.0 * k
@@ -85,6 +86,7 @@ build('crew', (21.3, 24.0, 27.3, 29.6), 57)
 W = W // 2
 build('cargo', (24.0, 27.3, 29.6), 61)
 build('core_o', (2.2, 4.85, 7.4, 10.1, 12.8, 15.5, 18.2), 51)
+build('core_d_o', (2.2, 4.85, 7.4, 10.1, 12.8, 15.5, 18.2), 51)
 build('crew_o', (21.3, 24.0, 27.3, 29.6), 57)
 import its_lamp
 

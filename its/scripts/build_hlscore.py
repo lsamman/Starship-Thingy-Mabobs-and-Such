@@ -56,6 +56,7 @@ for SH_, SX, (B0, B1), BORE_ in (('core', '', HL.BAND, HL.BORE), ('core_o', '_o'
     bm = bmesh.new(); bm.from_mesh(ho.data); bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=2e-4); bm.to_mesh(ho.data); bm.free()
     P.mesh('bells' + SX, bell, P.det, smooth_angle=60); P.mesh('ducts' + SX, dk, P.det, smooth_angle=40)
 B0, B1 = HL.BAND; zm = (B0 + B1) / 2
+P.mesh('hull_d', skin([0, .30, HL.Z_BLACK, 2.2, 3.5, 4.85, 8, 12, 16, HL.Z_SKIN], 'core_d_o'), hull_mat(P, 'hls_core_d_o'), smooth_angle=30)      # the depot's: no thrusters
 # ---------------- elevator track: rails, rungs and stiles on the outside of the tank wall, a mesh of their own so they can be left off
 TR = HL.TRACK; RR = HL.R; ZT = HL.Z_SKIN; tk = Geo()
 for s in (-1, 1):
@@ -200,4 +201,4 @@ for k in range(16):
     a0, a1 = 22.5 * k, 22.5 * (k + 1); P.hull_collider(f'col_skirt{k}', arcs(a0, a1, HL.R, RI, 0, ZC, 2))
 P.hull_collider('col_dome', [tuple(hp(a, z, r=r)) for a in range(0, 360, 30) for z, r in ((20.5, 2.6), (20.95, 1.6))])
 P.box_trigger('ladder', climb_frame((0, -RR - .14, HL.Z_SKIN / 2 + .3), (0, -1, 0)), (.5, .3, HL.Z_SKIN - .3), 'Ladder')
-finish(P, ({'hull', 'bells', 'ducts', 'legpods', 'legpods_in'}, {'hull_o', 'bells_o', 'ducts_o'}))
+finish(P, ({'hull', 'bells', 'ducts', 'legpods', 'legpods_in'}, {'hull_o', 'bells_o', 'ducts_o'}, {'hull_d'}))

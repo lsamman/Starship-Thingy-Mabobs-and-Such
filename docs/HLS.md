@@ -12,6 +12,10 @@ The parts and a craft file (`Ships/VAB/Starship HLS.craft`), modelled on the NAS
 | **Landing Leg** (`STMS_HLS_Leg`) | Use four |
 | **Elevator** (`STMS_HLS_Lift`) | Goes on the `lift` node in the airlock; a Breaking Ground piston, 22.3 m |
 
+## White depot
+
+**Depot Nose (White)** (`STMS_HLS_Depot`) on the HLS core: set the core's **Style** to Depot (no band, landing thrusters off) and **Elevator track** to None. Solar arrays go in its four bays; tankers and the HLS dock to the core's docking node.
+
 ## Two elevators
 
 **Elevator** rides the rails on the hull. **Elevator (Cable)** (`STMS_HLS_LiftCable`), after the NASA/SpaceX render, is an open cage on four cables: it goes on the same `lift` node, and the **Elevator track** switches on the core and the crew section go to None. Run Cage Out, then Target Extension -22.3. Without the rails there is no ladder either.
