@@ -6,7 +6,7 @@ from mathutils import Vector as V, Matrix
 from mathutils.bvhtree import BVHTree
 import hls_layout as HL
 addon_utils.enable('io_object_mu', default_set=True)
-MU = sys.argv[sys.argv.index('--') + 1]; SEP = (sys.argv[sys.argv.index('--') + 2:] + [''])[0]; sc = bpy.context.scene; bad = 0
+CREW = os.environ.get('HLS_CREW', 'STMS_HLS_Crew'); MU = sys.argv[sys.argv.index('--') + 1]; SEP = (sys.argv[sys.argv.index('--') + 2:] + [''])[0]; sc = bpy.context.scene; bad = 0
 def ok(c, m):
     global bad; bad += not c; print('ok   ' if c else 'FAIL ', m)
 base = lambda o: o.name.split('∧')[0].split('.')[0]
@@ -38,7 +38,7 @@ t, v = tree(leg0, mov, W); ok(min(p.z for p in v) > .02, 'stowed leg lowest poin
 gap = min(math.hypot(p.x, p.y) for p in v) - HL.R; print('      by piece', {n: round(min(math.hypot(p.x, p.y) for p in tree(leg0, (n,), W)[1]) - HL.R, 3) for n in mov}); ok(gap > -.03, 'stowed leg innermost %.3f m off the hull radius' % gap); print('      stowed leg reaches r %.2f' % max(math.hypot(p.x, p.y) for p in v))
 half = max(abs(math.degrees(math.atan2(p.x, -p.y))) for p in v if p.y < 0); ok(half < 37.5, 'stowed leg half-width %.1f deg (track starts 37.5 away)' % half)
 t, v = tree(leg1, None, W); ok(abs(min(p.z for p in v) - HL.SOLE) < .06, 'deployed sole at %.3f (want %.2f)' % (min(p.z for p in v), HL.SOLE))
-core = load(mu('STMS_HLS_Core')); core_o = {k: v for k, v in core.items() if k not in ('hull', 'bells', 'ducts', 'legpods', 'legpods_in')}; ok(not any(tree(core_o, None)[0].overlap(tree(leg1, ('foot', 'strut2', 'strut3'), Matrix.Rotation(math.radians(a), 4, 'Z') @ W)[0]) for a in HL.LEG_AZ), 'original style: deployed legs clear of the hull'); crew = load(mu('STMS_HLS_Crew')); tc, _ = tree(core); tw, _ = tree(crew, None, Tz(HL.Z_TOP)); td, _ = tree(crew, ('doorskin', 'doorframe', 'flag'), Tz(HL.Z_TOP)); tb, _ = tree(crew, ('hull', 'windows', 'details'), Tz(HL.Z_TOP))
+core = load(mu('STMS_HLS_Core')); core_o = {k: v for k, v in core.items() if k not in ('hull', 'bells', 'ducts', 'legpods', 'legpods_in')}; ok(not any(tree(core_o, None)[0].overlap(tree(leg1, ('foot', 'strut2', 'strut3'), Matrix.Rotation(math.radians(a), 4, 'Z') @ W)[0]) for a in HL.LEG_AZ), 'original style: deployed legs clear of the hull'); crew = load(mu(CREW)); tc, _ = tree(core); tw, _ = tree(crew, None, Tz(HL.Z_TOP)); td, _ = tree(crew, ('doorskin', 'doorframe', 'flag'), Tz(HL.Z_TOP)); tb, _ = tree(crew, ('hull', 'windows', 'details'), Tz(HL.Z_TOP))
 lf0 = load(mu('STMS_HLS_LegFaired'), 'legDeploy'); cv = load(mu('STMS_HLS_PodCover')); pods = {k: v for k, v in core.items() if k in ('legpods', 'legpods_in', 'hull')}
 MP = lambda a, out=0: Matrix.Rotation(math.radians(a), 4, 'Z') @ W @ Matrix.Translation((0, -out, 0)); t = tree(cv, None, MP(45))[0]
 ok(not t.overlap(tree(lf0, None, MP(45))[0]), 'pod cover clear of the stowed faired leg %d' % len(t.overlap(tree(lf0, None, MP(45))[0]))); ok(not t.overlap(tree(pods)[0]), 'pod cover clear of the pod %d' % len(t.overlap(tree(pods)[0])))
@@ -63,7 +63,7 @@ for i, a in enumerate(HL.SOL_AZ):
     for b in HL.SOL_AZ[i + 1:]: ok(not hangs[a].overlap(hangs[b]), f'hanging arrays {a} and {b} apart') if hangs[a].overlap(hangs[b]) else None
 L0 = Matrix.Translation((0, -HL.TRACK_R, HL.DOOR[0])); l0, l1 = load(mu('STMS_HLS_Lift'), 'deckFold'), load(mu('STMS_HLS_Lift'), 'deckFold', True)
 t, v = tree(l0, ('carriage', 'deckmesh'), L0); ok(not t.overlap(td), 'folded elevator clear of the shut door (%d hits)' % len(t.overlap(td))); ok(not t.overlap(tb), 'folded elevator clear of the bay (%d hits)' % len(t.overlap(tb)))
-crew1 = load(mu('STMS_HLS_Crew'), 'doorOpen', True); DM = ('strutcyl', 'strutrod', 'doorhinge', 'doorlug', 'doorskin', 'doorframe'); to_ = tree(crew1, DM, Tz(HL.Z_TOP))[0]; tst = tree(crew, DM, Tz(HL.Z_TOP))[0]
+crew1 = load(mu(CREW), 'doorOpen', True); DM = ('strutcyl', 'strutrod', 'doorhinge', 'doorlug', 'doorskin', 'doorframe'); to_ = tree(crew1, DM, Tz(HL.Z_TOP))[0]; tst = tree(crew, DM, Tz(HL.Z_TOP))[0]
 ok(not tree(l0, None, L0)[0].overlap(tst), 'stowed elevator and guide clear of the shut door, its hinges and struts'); ok(not tree(l1, None, L0)[0].overlap(to_), 'extended elevator clear of the open door and struts')
 gs, ge = tree(l0, ('guidemesh',), L0)[0], tree(l1, ('guidemesh',), L0)[0]; wheels = ('carriage', 'deckmesh')
 ok(not gs.overlap(tb) and not ge.overlap(tb) and not ge.overlap(tc), 'guide clear of bay, sill and rails, in and out %d %d %d' % (len(gs.overlap(tb)), len(ge.overlap(tb)), len(ge.overlap(tc))))
@@ -105,7 +105,7 @@ tt = [o.matrix_world.copy() for o in bpy.data.objects if base(o) == 'landingThru
 ok(len(tt) == 18 and len({tuple(round(x, 2) for x in m.translation) for m in tt}) == 18, '%d distinct landing thrust transforms' % len(tt))
 f = [(m.translation, (m.to_3x3() @ V((0, 1, 0))).normalized()) for m in tt]
 ok(all(HL.BAND[0] < p.z < HL.BAND[1] and d.z < -.7 and d.x * p.x + d.y * p.y > 0 for p, d in f), 'exhaust down and outward, z %.3f' % max(d.z for _, d in f)); s = sum((d for _, d in f), V()); ok(abs(s.x) + abs(s.y) < .01, 'sideways thrust cancels')
-for pn, tn in (('STMS_HLS_Core', 'RCSthruster'), ('STMS_HLS_Crew', 'RCSthruster')):
+for pn, tn in (('STMS_HLS_Core', 'RCSthruster'), (CREW, 'RCSthruster')):
     load(mu(pn)); q = [((o.matrix_world.to_3x3() @ V((0, 0, 1))).normalized(), o.matrix_world.translation.copy()) for o in bpy.data.objects if base(o) == tn]
     ok(len(q) == 16 and all(d.x * p.x + d.y * p.y > 0 for d, p in q), f'{pn}: {len(q)} RCS, all outward')
 if SEP and os.path.exists(SEP):

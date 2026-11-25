@@ -2,7 +2,7 @@
 and an opening nose cap over a docking port for Orion. Origin at the joint's stack node."""
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hls_common import *
-P = start('STMS_HLS_Crew'); MH = hull_mat(P, 'hls_crew'); MG = glass_mat(P); LM = lamp_mat(P)
+TALL = globals().get('TALL', False); P = start('STMS_HLS_CrewTall' if TALL else 'STMS_HLS_Crew'); MH = hull_mat(P, 'hls_crew'); MG = glass_mat(P); LM = lamp_mat(P)
 O = HL.Z_TOP; dz = V((0, 0, O)); D0, D1 = HL.DOOR; S0, S1 = HL.SOL_Z; ZC = HL.Z_OGIVE + 7.40
 zs = sorted({HL.Z_SKIN, D0, D1, S0, S1, HL.Z_OGIVE, *[HL.Z_OGIVE + z for z, _ in HL.OGIVE], *[HL.Z_OGIVE + z for z in (.42, 1.33, 2.2, 2.97, 3.75, 4.97, 6.0)]})
 insol = lambda a: any(abs(wrap(a - s)) < HL.SOL_HW for s in HL.SOL_AZ)
@@ -108,6 +108,9 @@ for i in range(HL.WIN_N):
     wf.add(lay(rounded_rect_ring(fr_w, fr_h, .105, .045, .024, 5, zone=Z.black), az, HL.WIN_Z, O))
     wf.add(lay(box(WW + .01, .03, .016, zone=Z.black), az, HL.WIN_Z - .05, O))
     wg.add(lay(pane(WW, WHt, .075, (i * 3 + 1) % 8), az, HL.WIN_Z, O, .08, -.004))
+for rz, rn, rs_, rw, rh in HL.ROWS_TALL if TALL else ():
+    for i in range(rn):
+        az = -rs_ + 2 * rs_ * i / (rn - 1); wf.add(lay(rounded_rect_ring(rw + .05, rh + .05, min(rw, rh) * .34, .034, .018, 4, zone=Z.black), az, rz, O)); wg.add(lay(pane(rw, rh, min(rw, rh) * .28, (i * 5 + int(rz * 7)) % 8), az, rz, O, .06, -.004))
 d.add(wf)
 P.mesh('windows', wg, MG, smooth_angle=60)
 # ---------------- solar bays: four pockets with a node each; the array part brings its own hatch
@@ -152,7 +155,7 @@ for s in (-1, 1):
     add_spot(P, 'doorLight', hp(s * 14, D1 + .12, .12) - dz, (0, -.35, -1), power=260, angle=95, reach=26)
 P.mesh('lampglow', lamp, LM)
 for az in (95, 265): d.add(lay(cyl(.11, .03, 20, zone=Z.white, bevel=.008), az, 27.2, O)); d.add(lay(box(.34, .34, .02, zone=Z.white, bevel=.008), az, 26.2, O))
-d.add(lay(cyl(.05, .05, 14, zone=Z.dark, bevel=.01), 0, 26.35, O)); d.add(lay(rounded_rect_ring(.2, .14, .04, .03, .03, 4, zone=Z.white), 0, 26.35, O))
+d.add(lay(cyl(.05, .05, 14, zone=Z.dark, bevel=.01), 0, 24.6 if TALL else 26.35, O)); d.add(lay(rounded_rect_ring(.2, .14, .04, .03, .03, 4, zone=Z.white), 0, 24.6 if TALL else 26.35, O))
 spots = []
 for az in (80, 100, 260, 280):
     z = 25.1; spots += [(az, z, (1, 0, .35)), (az, z + .28, (-1, 0, .35)), (az, z + .56, (0, 1, .35)), (az, z - .28, (0, -1, .35))]

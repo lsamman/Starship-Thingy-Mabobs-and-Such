@@ -36,6 +36,8 @@ DOOR = (21.75, 23.25); DOOR_AZ = 18.75
 BAY_BACK = -1.25
 # ---- windows
 WIN_Z, WIN_N, WIN_SPAN, WIN = 25.48, 10, 36.0, (.31, .74)
+# the tall-cabin nose: rows of (z, count, half-span, w, h) above the same main row, after SpaceX's render of a many-windowed HLS
+ROWS_TALL = ((26.50, 10, 45.0, .20, .28), (27.06, 10, 45.0, .20, .28), (28.06, 9, 44.0, .19, .27), (28.60, 9, 44.0, .18, .27), (29.72, 7, 42.0, .27, .48), (30.27, 5, 28.0, .22, .46))
 # ---- solar bays
 SOL_AZ = (56.25, 101.25, 258.75, 303.75); SOL_HW = 18.75; SOL_DP = 1.62; SOL_Z = (22.95, 23.8); SOL_OUT, SOL_HATCH = 1.27, 150     # how far the carriage runs out, how far the hatch swings up
 # ---- legs (plane of one leg: r outward, z)

@@ -12,7 +12,7 @@ T_WALL = .11; WELL = .44
 
 def outer(variant):
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'v3', 'scripts'))
-    if variant == 'hls':
+    if variant in ('hls', 'hlstall'):
         zs = [-5] + [HL.Z_OGIVE - HL.Z_TOP + z for z, _ in HL.OGIVE] + [HL.Z_OGIVE - HL.Z_TOP + 8.5]; rs = [HL.R] + [r for _, r in HL.OGIVE] + [.3]
     else:
         import importlib.util
@@ -23,7 +23,7 @@ def outer(variant):
 
 
 def build(variant):
-    S_ = IL.VARIANTS[variant]; name = 'STMS_IVA_' + {'hls': 'HLS', 'crew': 'Crew', 'crewcargo': 'CrewCargo'}[variant]
+    S_ = IL.VARIANTS[variant]; HLS = variant in ('hls', 'hlstall'); name = 'STMS_IVA_' + {'hls': 'HLS', 'hlstall': 'HLSTall', 'crew': 'Crew', 'crewcargo': 'CrewCargo'}[variant]
     out = sys.argv[sys.argv.index('--') + 1]; enable_addon(); clean_scene(); np.random.seed(5)
     P = Part(name); M = P.material('stms_iva', spec=(.25, .25, .25), shininess=.3)
     ML = P.material('stms_iva', shader='KSP/Emissive/Bumped Specular', spec=(.2, .2, .2), shininess=.3, emissive='stms_iva_emit', name='iva_lit')
@@ -70,15 +70,14 @@ def build(variant):
 
     for di, D in enumerate(decks):
         zf = D['floor']; zc = D['ceil'] if D['ceil'] else zf + 1.46; win = D['win']; big = win == 'big'; holes = []
-        if win and not big: wz, wn, span, ww, wh = win; holes = [(-span + 2 * span * i / (wn - 1), wz, ww, wh) for i in range(wn)]
+        if win and not big: wz, wn, span, ww, wh = win; holes = [(-s_ + 2 * s_ * i / (n_ - 1), z_, w_, h_) for z_, n_, s_, w_, h_ in (win, *D.get('rows', ())) for i in range(n_)]
         if big:
             B = outer.big; zc = B['z1'] + .25
         # ---- wall: columns by azimuth, rows by height, holes for the windows
         azs = {round(a, 4) for a in np.arange(-180, 180.01, 7.5)}; zs = {zf, zc}
         if D.get('eva'): holes = [h for h in holes if abs(h[0]) > 12.8 and not 9 < h[0] < 51]
-        rm = ri(win[0]) if holes else 0
         for az, z0, w, h in holes:
-            ha = math.degrees(w / 2 / rm); azs |= {round(az - ha, 4), round(az + ha, 4)}; zs |= {z0 - h / 2, z0 + h / 2}
+            ha = math.degrees(w / 2 / ri(z0)); azs |= {round(az - ha, 4), round(az + ha, 4)}; zs |= {z0 - h / 2, z0 + h / 2}
         if big: WA = math.degrees(B["ha"] / ri(B["z0"])) - .01; azs |= {round(a, 4) for a in np.linspace(-WA, WA, 65)}; zs |= {B['z0'], 3.36}
         zs |= {z for z in BREAKS if zf + .02 < z < zc - .02 and not any(abs(z - q) < .02 for q in zs)}
         azs, zs = sorted(azs), sorted(zs); zs2 = [z for z in zs]
@@ -99,10 +98,10 @@ def build(variant):
                 continue
             for z0, z1 in zip(zs2, zs2[1:]):
                 zm = (z0 + z1) / 2
-                if any(abs(am - az) < math.degrees(w / 2 / rm) and abs(zm - hz) < h / 2 for az, hz, w, h in holes): continue
+                if any(abs(am - az) < math.degrees(w / 2 / ri(hz)) and abs(zm - hz) < h / 2 for az, hz, w, h in holes): continue
                 cell(a0, a1, [(a0, z0), (a1, z0), (a1, z1), (a0, z1)])
         for az, hz, w, h in holes:
-            ha = math.degrees(w / 2 / rm); zl, zh = hz - h / 2, hz + h / 2; rr = lambda z: ro(z) - .012
+            ha = math.degrees(w / 2 / ri(hz)); zl, zh = hz - h / 2, hz + h / 2; rr = lambda z: ro(z) - .012
             for z, tw in ((zl, 1), (zh, -1)): q4(fur, [pos(az - ha, ri(z), z), pos(az + ha, ri(z), z), pos(az + ha, rr(z), z), pos(az - ha, rr(z), z)], Z['black'], pos(az, ri(z), z + tw))
             for a, tw in ((az - ha, 2), (az + ha, -2)): q4(fur, [pos(a, ri(zl), zl), pos(a, ri(zh), zh), pos(a, rr(zh), zh), pos(a, rr(zl), zl)], Z['black'], pos(a + tw, ri(hz), hz))
             q4(glass, [pos(az - ha, rr(zl) - .01, zl), pos(az + ha, rr(zl) - .01, zl), pos(az + ha, rr(zh) - .01, zh), pos(az - ha, rr(zh) - .01, zh)], Zone(0, 0, 64, 64, atlas=64), (0, 0, hz))
@@ -142,11 +141,14 @@ def build(variant):
         # ================================================================== themes
         th = D['theme']; rw = ri(zf + .5)
         if th == 'flight':
+            pass
+        if D['ceil'] is None and th in ('flight', 'lounge'):
             # ceiling: tapered gores up to the docking tunnel
-            ztop = {'hls': 9.95}.get(variant, 5.75); prof = [(ri(z), z) for z in np.linspace(zc, ztop, 8)]; ceil_.add(lathe(prof, 48, zone=Z['ceil'], flip=True)); rt = ri(ztop)
+            ztop = {'hls': 9.95, 'hlstall': 9.95}.get(variant, 5.75); prof = [(ri(z), z) for z in np.linspace(zc, ztop, 8)]; ceil_.add(lathe(prof, 48, zone=Z['ceil'], flip=True)); rt = ri(ztop)
             ceil_.add(lathe([(rt, ztop), (.5 if rt > .6 else rt, ztop + .02), (0, ztop + .02)], 48, zone=Z['white'], flip=True)); zl = zc + (ztop - zc) * .55; curved(led, 0, 360, [(ri(zl) - .06, zl + .0), (ri(zl) - .06, zl - .03), (ri(zl) + .02, zl - .03)][::-1], 'led', 60)
-            if variant == 'hls': prop('htProps_HatchCBM', (0, 0, ztop + .012), (0, 0, -1), (0, 1, 0), 1.25 if rt > .5 else .9)
+            if HLS: prop('htProps_HatchCBM', (0, 0, ztop + .012), (0, 0, -1), (0, 1, 0), 1.25 if rt > .5 else .9)
             light((0, 0, zl - .5), 900, 4.0)
+        if th == 'flight':
             # console: flat stations under the windows
             zb = (B['z0'] if big else win[0] - win[4] / 2); nS = 4; sp_ = 44 if big else 37; zt = min(zb - .03, zf + .74); rT, rB = ri(zt) - .10, ri(zt) - .46; zB = zf + .46
             for i in range(nS):
@@ -169,12 +171,12 @@ def build(variant):
                 am = -sp_ + 2 * sp_ * (k + .5) / nS; d = V((math.sin(math.radians(am)), -math.cos(math.radians(am)), 0)); p = d * (rB - .42); seat(p.x, p.y, zf, d, names[k])
             # overhead nav display
             for a_, s0 in ((-24, 0), (0, 1), (24, 3)):
-                if big: continue
+                if big or D['ceil']: continue
                 F = inw(a_, zc + .24, ri(zc + .24) - .05) @ Rx(12); scr.add(quad_patch(.62, .34, Zone(IL.ZONES['screen'][0] + s0 * 256, IL.ZONES['screen'][1], 256, 256, atlas=IL.ATLAS)), F); fur.add(box(.66, .38, .03, zone=Z['black'], bevel=.008, center=(0, 0, -.018)), F)
             # aft: curved bench and table, lockers behind
             bz = ri(zf + .3); curved(soft, 122, 238, [(bz - .52, zf + .20), (bz - .52, zf + .27), (bz - .14, zf + .25), (bz - .14, zf + .27), (bz - .09, zf + .66), (bz - .01, zf + .66), (bz - .01, zf + .20)], 'bench', 24); curved(fur, 122, 238, [(bz - .46, zf), (bz - .46, zf + .21), (bz, zf + .21)], 'white', 24)
             curved(led, 122, 238, [(bz - .463, zf + .03), (bz - .463, zf + .012)], 'led', 24)
-            if variant == 'hls':
+            if HLS:
                 tr = bz - 1.02; curved(fur, 140, 220, [(tr - .18, zf + .40), (tr - .18, zf + .43), (tr + .20, zf + .43), (tr + .20, zf + .40), (tr - .18, zf + .40)], 'wood', 16)
                 for a in (150, 180, 210): fur.add(cyl(.035, .40, 12, zone=Z['metal'], center_z=False), T(*pos(a, tr, zf)))
                 for a in (135, 165, 195, 225): d = pos(a, 1, 0); p = d * (bz - .34); SEATS.append((f'seat{len(SEATS) + 1}', 'Wardroom')); F = Matrix(((-d).cross(V((0, 0, 1))), -d, V((0, 0, 1)))).transposed().to_4x4(); F.translation = V((p.x, p.y, zf + .30)); P.empty(SEATS[-1][0], F, P.model)
@@ -184,7 +186,7 @@ def build(variant):
                 rp = ri(zf + .9) * .985 - .12; F = inw(a, zf + .30, rp); on_panel(F, 'htProps_cabinet3x3', 0, 0, 0); on_panel(F, 'htProps_cabinetPanel_01_2x2', -.088, .088, 0); [on_panel(F, 'htProps_galleyCupboard1x1', x, y, 0) for x, y in ((-.176, -.176), (0, -.176), (.176, -.176), (.176, 0))]; on_panel(F, 'htProps_cabinetMonitor', .176, .176, 0); on_panel(F, 'htProps_cabinetMonitorScreen_' + ('graph', 'grid', 'signal', 'topography')[k], .176, .176, 0)
                 F = inw(a, zf + .84, rp); on_panel(F, 'htProps_cabinet3x3', 0, 0, 0); [on_panel(F, 'htProps_galleyCupboard1x1', x, y, 0) for x in (-.176, 0, .176) for y in (-.176, .0, .176)]
                 fur.add(box(.60, 1.16, .25, zone=Z['white'], bevel=.01), inw(a, zf + .57, rp + .10) @ T(0, 0, -.11))
-            F = inw(60 if variant == 'hls' else 58, zf + .6, ri(zf + .6) - .06); on_panel(F, 'htProps_fireExtinguisher', 0, 0, .02)
+            F = inw(60 if HLS else 58, zf + .6, ri(zf + .6) - .06); on_panel(F, 'htProps_fireExtinguisher', 0, 0, .02)
             for a in (112, 248): F = inw(a, zf + 1.0, ri(zf + 1.0) - .012); on_panel(F, 'htProps_airVent01', 0, 0, 0, 1.4)
         if th == 'commons':
             for k, a in enumerate((135, 151.5, 168, 184.5)):
@@ -211,6 +213,27 @@ def build(variant):
                     fur.add(box(.52, .07, .10, zone=Z['grey'], bevel=.01), F @ T(0, y, .09)); led.add(box(.50, .012, .03, zone=Z['led']), F @ T(0, y + .25, .075))
                     for j in range(7): g = Geo(); [g.add(box(.012, .10 + .04 * np.random.rand(), .05, zone=Z['green']), Rz(q) @ T(0, .05, 0)) for q in (-35, 0, 35)]; fur.add(g, F @ T(-.21 + .07 * j, y + .03, .09))
             F = inw(112, zf + .6, ri(zf + .6) - .06); on_panel(F, 'htProps_fireExtinguisher', 0, .2, .02); on_panel(F, 'htProps_cargoBag_small_firstAid', 0, -.1, 0)
+        if th == 'galley':                               # kitchen, table and garden behind two rows of portholes
+            for k, a in enumerate((135, 151.5, 168, 184.5)):
+                rp = ri(zf + .9) - .24; F = inw(a, zf + .285, rp); on_panel(F, 'htProps_cabinet3x3'); on_panel(F, 'htProps_galleyFoodPrep1x2' if k == 1 else 'htProps_cabinetPanel_01_2x2', -.088 if k != 1 else 0, .088); [on_panel(F, 'htProps_galleyCupboard1x1', x, y) for x, y in ((-.176, -.176), (0, -.176), (.176, -.176))]
+                F2 = inw(a, zf + .87, rp); on_panel(F2, 'htProps_cabinet3x2'); [on_panel(F2, 'htProps_galleyCupboard1x1', x, y) for x in (-.176, 0, .176) for y in (-.088, .088)]; fur.add(box(.60, 1.10, .26, zone=Z['white'], bevel=.01), inw(a, zf + .56, rp) @ T(0, 0, -.14))
+            curved(fur, 127, 193, [(ri(zf + .9) - .42, zf + .555), (ri(zf + .9) - .42, zf + .585), (ri(zf + .9) - .24, zf + .585), (ri(zf + .9) - .24, zf + .555)], 'wood', 12); curved(led, 127, 193, [(ri(zf + .9) - .36, zf + .655), (ri(zf + .9) - .27, zf + .655)], 'led', 12)
+            bz = ri(zf + .6); curved(soft, 205, 300, [(bz - .50, zf + .20), (bz - .50, zf + .27), (bz - .13, zf + .25), (bz - .09, zf + .64), (bz - .01, zf + .64), (bz - .01, zf + .20)], 'bench', 18); curved(fur, 205, 300, [(bz - .44, zf), (bz - .44, zf + .21), (bz, zf + .21)], 'white', 18)
+            tr = bz - .98; curved(fur, 222, 284, [(tr - .16, zf + .40), (tr - .16, zf + .43), (tr + .18, zf + .43), (tr + .18, zf + .40), (tr - .16, zf + .40)], 'wood', 14); [fur.add(cyl(.032, .40, 12, zone=Z['metal'], center_z=False), T(*pos(a, tr, zf))) for a in (232, 274)]
+            for k, a in enumerate((64, 81, 98)):           # garden
+                F = inw(a, zf + .55, ri(zf + 1.0) - .10); fur.add(box(.54, .98, .12, zone=Z['white'], bevel=.01), F)
+                for y in (-.30, 0, .30):
+                    fur.add(box(.48, .07, .10, zone=Z['grey'], bevel=.01), F @ T(0, y, .09)); led.add(box(.46, .012, .03, zone=Z['led']), F @ T(0, y + .25, .075))
+                    for j in range(6): g = Geo(); [g.add(box(.012, .10 + .04 * np.random.rand(), .05, zone=Z['green']), Rz(q) @ T(0, .05, 0)) for q in (-35, 0, 35)]; fur.add(g, F @ T(-.18 + .07 * j, y + .03, .09))
+            curved(fur, -50, 50, [(ri(zf + .3) - .24, zf + .24), (ri(zf + .3) - .24, zf + .28), (ri(zf + .3), zf + .28), (ri(zf + .3), zf + .24)], 'wood', 14)      # sill under the portholes
+            for k in range(D['seats']): a = (-24, 24)[k]; d = pos(a, 1, 0); p = d * (ri(zf + .5) - .66); seat(p.x, p.y, zf, d, 'Galley Deck')
+            F = inw(114, zf + .6, ri(zf + .8) - .10); on_panel(F, 'htProps_fireExtinguisher', 0, .2, .02); on_panel(F, 'htProps_cargoBag_small_firstAid', 0, -.1, 0)
+        if th == 'lounge':                               # observation deck under the nose: four seats at the glass, a couch behind the ladder
+            curved(fur, -50, 50, [(ri(zf + .3) - .20, zf + .26), (ri(zf + .3) - .20, zf + .30), (ri(zf + .3), zf + .30), (ri(zf + .3), zf + .26)], 'wood', 16); curved(led, -50, 50, [(ri(zf + .3) - .205, zf + .25), (ri(zf + .3) - .205, zf + .235)], 'led', 16)
+            for k in range(D['seats']): a = (-63, -22, 22, 63)[k]; d = pos(a, 1, 0); p = d * (ri(zf + .5) - .55); seat(p.x, p.y, zf, d, 'Observation Deck')
+            bz = ri(zf + .6); curved(soft, 118, 242, [(bz - .44, zf + .18), (bz - .44, zf + .25), (bz - .12, zf + .23), (bz - .09, zf + .56), (bz - .01, zf + .56), (bz - .01, zf + .18)], 'bench', 22); curved(fur, 118, 242, [(bz - .39, zf), (bz - .39, zf + .19), (bz, zf + .19)], 'white', 22); curved(led, 118, 242, [(bz - .393, zf + .03), (bz - .393, zf + .012)], 'led', 22)
+            for a_, s0 in ((150, 0), (180, 1), (210, 3)): F = inw(a_, zf + .86, ri(zf + .86) - .04) @ Rx(-14); scr.add(quad_patch(.46, .26, Zone(IL.ZONES['screen'][0] + s0 * 256, IL.ZONES['screen'][1], 256, 256, atlas=IL.ATLAS)), F); fur.add(box(.50, .30, .03, zone=Z['black'], bevel=.008, center=(0, 0, -.018)), F)
+            for a in (100, 260): F = inw(a, zf + .5, ri(zf + .7) - .06); on_panel(F, 'htProps_cargoBag_small_white', 0, 0, .03, 1.0); on_panel(F, 'htProps_airVent01', 0, .36, .02, 1.0)
         if th == 'bunks':
             rb, hb = ri(zf) - .62, zc - zf
             for k in range(6):                            # berths round the aft half, two high
@@ -271,7 +294,7 @@ def build(variant):
     S2 = Part(name + '_shell'); w = Geo(); n = 40
     for di, D in enumerate(decks):
         zf = D['floor']; last = di == len(decks) - 1
-        zt = D['ceil'] if D['ceil'] else {'hls': 9.95}.get(variant, 5.75)
+        zt = D['ceil'] if D['ceil'] else {'hls': 9.95, 'hlstall': 9.95}.get(variant, 5.75)
         w.add(lathe([(ri(z), z) for z in np.linspace(zf, zt, 2 if D['ceil'] else 9)], n, flip=True)); w.add(lathe([(ri(zf) + .02, zf), (0 if last else WELL, zf)], n)); w.add(lathe([(ri(zt) + .02, zt), (0 if not D['ceil'] else WELL, zt)], n, flip=True))
         if D['ceil']: w.add(lathe([(WELL, zt), (WELL, decks[di - 1]['floor'])], 24, flip=True))
         if D['theme'] == 'airlock': X = 2.6; q4(w, [(-X, -1.02, zf), (X, -1.02, zf), (X, -1.02, zt), (-X, -1.02, zt)], Z['white'], (0, 9, zf))
@@ -293,7 +316,7 @@ def build(variant):
     for c_, n in CAMS: L_ += ['\tMODULE', '\t{', '\t\tname = InternalCameraSwitch', f'\t\tcolliderTransformName = {c_}', f'\t\tcameraTransformName = {n}', '\t}']
     for n, p, q, sc in PROPS: L_ += ['\tPROP', '\t{', f'\t\tname = {n}', f'\t\tposition = {f(p)}', f'\t\trotation = {f(q)}', f'\t\tscale = {f((sc,) * 3)}', '\t}']
     pos_ = lambda p: f([-c for c in p])
-    part_ = {'hls': 'STMS_HLS_Crew', 'crew': 'STMS_B3_NoseCrew', 'crewcargo': 'STMS_B3_NoseCrewCargo'}[variant]; PS = ':NEEDS[FreeIva]:LAST[StarshipThingyMabobsAndSuch]'
+    part_ = {'hls': 'STMS_HLS_Crew', 'hlstall': 'STMS_HLS_CrewTall', 'crew': 'STMS_B3_NoseCrew', 'crewcargo': 'STMS_B3_NoseCrewCargo'}[variant]; PS = ':NEEDS[FreeIva]:LAST[StarshipThingyMabobsAndSuch]'
     FI = [f'@PART[{part_}]:HAS[!MODULE[ModuleFreeIva]]' + PS, '{', '\tMODULE', '\t{', '\t\tname = ModuleFreeIva', '\t}', '}', f'@INTERNAL[{name}]:HAS[!MODULE[InternalModuleFreeIva]]' + PS, '{', '\tMODEL', '\t{', f'\t\tmodel = StarshipThingyMabobsAndSuch/ITS/Parts/{name}_shell', '\t}',
           '\tMODULE', '\t{', '\t\tname = InternalModuleFreeIva', '\t\tshellColliderName = shellCollider', '\t\t// no depth mask mesh: the windows are real openings', '\t\tinternalDepthMaskName =', '\t\tShadows', '\t\t{', '\t\t\twall = TwoSided', '\t\t\tfloor = TwoSided', '\t\t\tceiling = TwoSided', '\t\t}', '\t}',
           '\t@PROP[htProps_HatchCBM]', '\t{', '\t\tMODULE', '\t\t{', '\t\t\tname = HatchConfig', '\t\t\tattachNodeId = port', '\t\t\thideDoorWhenConnected = true', '\t\t}', '\t}',

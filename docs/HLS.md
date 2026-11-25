@@ -6,6 +6,7 @@ The parts and a craft file (`Ships/VAB/Starship HLS.craft`), modelled on the NAS
 |---|---|
 | **Core** (`STMS_HLS_Core`) | 322 t of methalox, 3 sea-level + 3 vacuum Raptor 3 nodes, 18 landing thrusters in the black band, 4 leg nodes, elevator rails and ladder on the hull (a switch), RCS, floodlights |
 | **Crew Section** (`STMS_HLS_Crew`) | 8 crew, ten windows, airlock bay with an awning door, four solar bays, nose cap over a flat seat for a docking port (shielded while shut) |
+| **Crew Section, Tall Cabin** (`STMS_HLS_CrewTall`) | The same nose with seven rows of windows and five decks: 16 crew, observation lounge, bunks, galley, flight deck, airlock. Same airlock, door, solar bays and both elevators |
 | **Solar Array** (`STMS_HLS_Solar`) | One per solar bay, four in all |
 | **Leg Shroud** (`STMS_HLS_LegShroud`) | Jettisonable, one over each folded leg |
 | **Docking Hardware** (`STMS_HLS_Docking_M`, `_F`) | SEP's ship-to-ship docking parts in white, for the node on the far side of the core |

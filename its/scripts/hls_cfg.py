@@ -36,22 +36,25 @@ def write(G):
                           ('Depot', 'Depot (no landing thrusters)', 'gray', ['hull_d'], (block('MODULE', block('IDENTIFIER', 'name = ModuleEnginesFX', 'engineID = landing'), 'moduleActive = false'),)))]),
                   G['livery']('HLS_Track', 'Elevator track', [('Rails', 'Rails and ladder', 'gray', ['track', 'ladder']), ('None', 'None (cable elevator, cargo)', 'white', [])])])
     anim = lambda a, on, off, what, grp='None': mod('ModuleAnimateGeneric', f'animationName = {a}', f'actionGUIName = Toggle {what}', f'startEventGUIName = {on}', f'endEventGUIName = {off}', f'defaultActionGroup = {grp}', 'allowDeployLimit = false', 'evaDistance = 6')
-    part('STMS_HLS_Crew', 'Starship HLS Crew Section', 'Cabins behind a row of ten windows, an airlock the size of a garage under an awning door, and a nose cap that tips back off a flat seat for a docking port. Four bays in the sides take roll-out solar arrays. The deck is a long way up; the elevator is sold separately and is not optional.',
-         T + ' crew cabin window airlock nose docking seat command', 13.0, 42000, 'Pods', 'veryHeavyRocketry', rules='1,0,1,1,0', profiles='size4p5', crash=14, tmax=2000, skin=2000, brk=5000,
-         extra=['CrewCapacity = 8', 'vesselType = Lander', RCS_FX, block('INTERNAL', 'name = STMS_IVA_HLS')],
-         modules=[anim('noseCap', 'Open Nose Cap', 'Close Nose Cap', 'Nose Cap'),
-                  mod('ModuleCargoBay', 'DeployModuleIndex = 0', 'closedPosition = 0', 'lookupRadius = 0.95', 'lookupCenter = 0, 10.75, 0'),
-                  anim('doorOpen', 'Open Airlock Door', 'Close Airlock Door', 'Airlock Door'),
-                  command(0), sas(), res('ElectricCharge', 3000), wheel(150, 1), antenna(5000000), tank(1950), rcs(34), light('doorLight'),
-                  cc(['windows', 'lampglow'], 'Cabin Lights: On', 'Cabin Lights: Off', 'Cabin Lights'),
-                  G['livery']('HLS_Markings', 'Markings', [('Flag', 'Flag', 'gray', ['flag']), ('None', 'Plain', 'white', [])]),
-                  mod('ModuleScienceContainer', 'reviewActionName = Review Data', 'storeActionName = Store Experiments', 'evaOnlyStorage = True', 'storageRange = 2.0', 'allowRepeatedSubjects = True'),
-                  mod('ModuleInventoryPart', 'InventorySlots = 12', 'packedVolumeLimit = 2400'),
-                  mod('ModuleKerbNetAccess', 'MinimumFoV = 5', 'MaximumFoV = 50', 'enhancedSituationMask = 7', 'requiresAnimation = False', block('DISPLAY_MODES', 'Mode = Terrain', 'Mode = Biome')),
-                  mod('ModuleB9PartSwitch', 'moduleID = HLS_Style', 'switcherDescription = Style', 'affectDragCubes = false',
-                      block('SUBTYPE', 'name = Original', 'title = Original', 'primaryColor = black', block('TEXTURE', 'texture = StarshipThingyMabobsAndSuch/ITS/Parts/hls_crew_o_diff', 'shaderProperty = _MainTex', 'transform = hull', 'transform = doorskin', 'transform = capskin')),
-                      block('SUBTYPE', 'name = R2024', 'title = 2024 render', 'primaryColor = white')),
-                  G['livery']('HLS_Track', 'Elevator track', [('Rails', 'Rails and ladder', 'gray', ['crewtrack']), ('None', 'None (cable elevator)', 'white', [])])])
+    for cn_, ct_, cd_, cm_, cc_, cp_, ci_ in (('STMS_HLS_Crew', 'Starship HLS Crew Section', 'Cabins behind a row of ten windows', 13.0, 42000, 8, 'STMS_IVA_HLS'),
+                                             ('STMS_HLS_CrewTall', 'Starship HLS Crew Section (Tall Cabin)', 'Four decks of cabins behind seven rows of windows, with an observation lounge at the top', 15.5, 56000, 16, 'STMS_IVA_HLSTall')):
+        if not have(cn_): continue
+        part(cn_, ct_, cd_ + ', an airlock the size of a garage under an awning door, and a nose cap that tips back off a flat seat for a docking port. Four bays in the sides take roll-out solar arrays. The deck is a long way up; the elevator is sold separately and is not optional.',
+             T + ' crew cabin window airlock nose docking seat command', cm_, cc_, 'Pods', 'veryHeavyRocketry', rules='1,0,1,1,0', profiles='size4p5', crash=14, tmax=2000, skin=2000, brk=5000,
+             extra=[f'CrewCapacity = {cp_}', 'vesselType = Lander', RCS_FX, block('INTERNAL', 'name = ' + ci_)],
+             modules=[anim('noseCap', 'Open Nose Cap', 'Close Nose Cap', 'Nose Cap'),
+                      mod('ModuleCargoBay', 'DeployModuleIndex = 0', 'closedPosition = 0', 'lookupRadius = 0.95', 'lookupCenter = 0, 10.75, 0'),
+                      anim('doorOpen', 'Open Airlock Door', 'Close Airlock Door', 'Airlock Door'),
+                      command(0), sas(), res('ElectricCharge', 3000), wheel(150, 1), antenna(5000000), tank(1950), rcs(34), light('doorLight'),
+                      cc(['windows', 'lampglow'], 'Cabin Lights: On', 'Cabin Lights: Off', 'Cabin Lights'),
+                      G['livery']('HLS_Markings', 'Markings', [('Flag', 'Flag', 'gray', ['flag']), ('None', 'Plain', 'white', [])]),
+                      mod('ModuleScienceContainer', 'reviewActionName = Review Data', 'storeActionName = Store Experiments', 'evaOnlyStorage = True', 'storageRange = 2.0', 'allowRepeatedSubjects = True'),
+                      mod('ModuleInventoryPart', 'InventorySlots = 12', 'packedVolumeLimit = 2400'),
+                      mod('ModuleKerbNetAccess', 'MinimumFoV = 5', 'MaximumFoV = 50', 'enhancedSituationMask = 7', 'requiresAnimation = False', block('DISPLAY_MODES', 'Mode = Terrain', 'Mode = Biome')),
+                      mod('ModuleB9PartSwitch', 'moduleID = HLS_Style', 'switcherDescription = Style', 'affectDragCubes = false',
+                          block('SUBTYPE', 'name = Original', 'title = Original', 'primaryColor = black', block('TEXTURE', 'texture = StarshipThingyMabobsAndSuch/ITS/Parts/hls_crew_o_diff', 'shaderProperty = _MainTex', 'transform = hull', 'transform = doorskin', 'transform = capskin')),
+                          block('SUBTYPE', 'name = R2024', 'title = 2024 render', 'primaryColor = white')),
+                      G['livery']('HLS_Track', 'Elevator track', [('Rails', 'Rails and ladder', 'gray', ['crewtrack', 'ladder']), ('None', 'None (cable elevator)', 'white', [])])])
     sun = lambda i: mod('ModuleDeployableSolarPanel', 'isTracking = false', f'pivotName = cargoSun{i}', f'raycastTransformName = cargoSun{i}', f'secondaryTransformName = cargoSun{i}', 'isBreakable = false', 'sunAlignFactor = 1', 'resourceName = ElectricCharge', 'chargeRate = 5', 'showStatus = true')
     part('STMS_HLS_CargoAwning', 'Starship HLS Cargo Section (Awning Door)', 'Goes on the HLS core instead of the crew section, with nobody aboard to complain about the elevator. One wide door swings up over the bay. Put the Crane Frame on the node by the sill and the Cargo Winch Hoist under its crossbar (or set Boom mount to Beams and use the Boom), open the door, run it out, and it sets its load down beside the hull. Solar panels round the back keep the lights on. Set the core\'s elevator track to None.',
          T + ' cargo bay delivery uncrewed', 8.0, 26000, 'Payload', 'veryHeavyRocketry', rules='1,0,1,1,0', profiles='size4p5', crash=14, tmax=2000, skin=2000, brk=5000,
