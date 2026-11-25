@@ -33,8 +33,8 @@ def write(G):
                   mod('ModuleToggleCrossfeed', 'crossfeedStatus = true', 'toggleEditor = true', 'toggleFlight = true'),
                   mod('ModuleB9PartSwitch', 'moduleID = HLS_Style', 'switcherDescription = Style', 'affectDragCubes = false', 'affectFARVoxels = false',
                       *[block('SUBTYPE', f'name = {n}', f'title = {t}', f'primaryColor = {c}', *[f'transform = {x}' for x in tr], *off) for n, t, c, tr, off in (
-                          ('Original', 'Original', 'black', ['hull_o', 'bells_o', 'ducts_o'], (eng_on,)), ('R2024', '2024 render', 'white', ['hull', 'bells', 'ducts', 'legpods', 'legpods_in'] + [f'col_pod{a}{k}' for a in HL.LEG_AZ for k in 'abt'], (eng_on,)),
-                          ('Depot', 'Depot (no landing thrusters)', 'gray', ['hull_d'], (block('MODULE', block('IDENTIFIER', 'name = ModuleEnginesFX', 'engineID = landing'), 'moduleActive = false'),)))]),
+                          ('Original', 'Original', 'black', ['hull_o', 'bells_o', 'ducts_o'], (eng_on,)), ('R2024', '2024 render', 'white', ['hull', 'bells', 'ducts', 'legpods', 'legpods_in'] + [f'col_pod{a}{k}' for a in HL.LEG_AZ for k in 'abt'], (eng_on,))
+                          )]),
                   G['livery']('HLS_Track', 'Elevator track', [('Rails', 'Rails and ladder', 'gray', ['track', 'ladder']), ('None', 'None (cable elevator, cargo)', 'white', [])])])
     anim = lambda a, on, off, what, grp='None': mod('ModuleAnimateGeneric', f'animationName = {a}', f'actionGUIName = Toggle {what}', f'startEventGUIName = {on}', f'endEventGUIName = {off}', f'defaultActionGroup = {grp}', 'allowDeployLimit = false', 'evaDistance = 6')
     for cn_, ct_, cd_, cm_, cc_, cp_, ci_ in (('STMS_HLS_Crew', 'Starship HLS Crew Section', 'Cabins behind a row of ten windows', 13.0, 42000, 8, 'STMS_IVA_HLS'),
@@ -149,8 +149,8 @@ def write(G):
                       mod('ModuleDeployableSolarPanel', 'isTracking = false', 'pivotName = depotSun', 'raycastTransformName = depotSun', 'secondaryTransformName = depotSun', 'isBreakable = false', 'sunAlignFactor = 1', 'resourceName = ElectricCharge', 'chargeRate = 12', 'showStatus = true')])
     if have('STMS_HLS_Depot'):
         dw = mod('ModuleB9PartSwitch', 'moduleID = HLS_Fuel', 'switcherDescription = Propellant', 'baseVolume = 22000', block('SUBTYPE', 'name = Methalox', 'title = Methalox', 'tankType = ITSLMOX', 'percentFilled = 0', 'primaryColor = #8fb7d9', 'secondaryColor = #e8e8e8'))
-        part('STMS_HLS_Depot', 'Starship Depot Nose (White)', '<#ef7b06>Goes on the HLS core with its Style set to Depot and its Elevator track to None.</color> The white storage depot: the lander\'s smooth shape with nothing on it that a tank does not need. Four bays take HLS solar arrays, blue lights mark it in the dark, and it keeps its methane cold. Launch it empty.',
-             'starship hls block3 v3 storage depot tanker propellant refuel transfer orbital methalox nose white', 9.0, 30000, 'FuelTank', 'veryHeavyRocketry', rules='1,0,1,1,0', profiles='size4p5', crash=14, tmax=2000, skin=2000, brk=5000,
+        part('STMS_HLS_Depot', 'Starship Depot Nose (White)', '<#ef7b06>Goes on the Block 3 Expendable Core with its Hull set to White.</color> The white storage depot: the lander\'s smooth nose with nothing on it that a tank does not need. Tankers dock to SEP\'s hardware on the core. Four bays take HLS solar arrays, blue lights mark it in the dark, and it keeps its methane cold. Launch it empty.',
+             'starship sep hls block3 v3 storage depot tanker propellant refuel transfer orbital methalox nose white', 9.0, 30000, 'FuelTank', 'veryHeavyRocketry', rules='1,0,1,1,0', profiles='size4p5', crash=14, tmax=2000, skin=2000, brk=5000,
              extra=['fuelCrossFeed = True', 'vesselType = Station', RCS_FX],
              modules=[dw, rcs(68), command(0), sas(), res('ElectricCharge', 4000), wheel(150, 1), antenna(5000000), cc(['depotlights'], 'Position Lights: On', 'Position Lights: Off', 'Position Lights')])
     if have('STMS_CrewArm'):

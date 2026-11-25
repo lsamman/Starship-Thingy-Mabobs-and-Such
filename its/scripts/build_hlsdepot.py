@@ -1,4 +1,4 @@
-"""White storage depot nose for the HLS core in its Depot style, after SpaceX's render of an HLS docked to a depot: the crew section's shape
+"""White storage depot nose for the Block 3 Expendable Core in white, after SpaceX's render of an HLS docked to a depot: the crew section's shape
 with no windows, door or rails, four solar pockets and small blue position lights. Origin at the joint's stack node."""
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hls_common import *
