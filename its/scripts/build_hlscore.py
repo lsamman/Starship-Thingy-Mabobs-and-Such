@@ -119,6 +119,32 @@ spots = []
 for az in (68, 112, 248, 292):
     for z in (6.2,): spots += [(az, z, (1, 0, .35)), (az, z + .28, (-1, 0, .35)), (az, z + .56, (0, 1, .35)), (az, z - .28, (0, -1, .35))]
 rcs(P, d, spots)
+# ---------------- leg pods: faceted fairings with an arched opening the leg lives in and swings out of; a switch hides them
+pod, pin = Geo(), Geo(); OW, OT, OR = HL.POD_OPEN
+def pq(g, pts, zone, M):                                 # quad facing the way its points turn, planar mapped
+    n = len(g.v); g.v += [tuple(M @ V(p)) for p in pts]; o_, e1 = V(pts[0]), (V(pts[1]) - V(pts[0])); L1 = max(e1.length, 1e-6); e2 = V(pts[-1]) - V(pts[0]); g.face(range(n, n + len(pts)), [zone.uv(min(1, max(0, (V(p) - o_).dot(e1) / L1 / 7)), min(1, max(0, (p[2] - pts[0][2]) / 7))) for p in pts])
+pw = lambda z, k: float(np.interp(z, [q[0] for q in HL.POD], [q[k] for q in HL.POD]))
+owz = lambda z: OW if z <= OT - OR else OW - OR + math.sqrt(max(0, OR ** 2 - (z - OT + OR) ** 2))
+hy = lambda x: -math.sqrt(HL.R ** 2 - x * x) + .03; fy_ = lambda z: -(HL.R + pw(z, 1)) + .03 * (z >= HL.POD[-1][0] - 1e-6)
+zp = [0, 1.2, 2.4, 3.6] + [OT - OR + OR * math.sin(math.radians(t)) for t in (0, 22.5, 45, 67.5, 90)] + [HL.POD[1][0], 5.6, 6.25, HL.POD[2][0]]
+for az in HL.LEG_AZ:
+    M = Rz(az)
+    for z0_, z1_ in zip(zp, zp[1:]):
+        o0, o1 = owz(z0_), owz(z1_); op = z1_ <= OT + 1e-6
+        for s in (-1, 1):
+            b0, b1, t0, t1 = pw(z0_, 2), pw(z1_, 2), pw(z0_, 3), pw(z1_, 3)
+            f = [(s * b0, hy(b0), z0_), (s * t0, fy_(z0_), z0_), (s * t1, fy_(z1_), z1_), (s * b1, hy(b1), z1_)]; pq(pod, f if s < 0 else f[::-1], Z.white, M)
+            i0, i1 = (o0, o1) if op else (0, 0)
+            f = [(s * t0, fy_(z0_), z0_), (s * i0, fy_(z0_), z0_), (s * i1, fy_(z1_), z1_), (s * t1, fy_(z1_), z1_)]; pq(pod, f if s < 0 else f[::-1], Z.white, M)
+            if op:                                       # reveal round the opening, dark inside
+                f = [(s * o0, fy_(z0_), z0_), (s * o0, hy(o0) + .02, z0_), (s * o1, hy(o1) + .02, z1_), (s * o1, fy_(z1_), z1_)]; pq(pin, f if s < 0 else f[::-1], Z.black, M)
+            if z0_ == 0: f = [(s * b0, hy(b0), 0), (s * o0, hy(o0), 0), (s * o0, fy_(0), 0), (s * t0, fy_(0), 0)]; pq(pod, f if s < 0 else f[::-1], Z.white, M)
+    o = owz(OT); pq(pin, [(-o, fy_(OT), OT), (-o, hy(o) + .02, OT), (o, hy(o) + .02, OT), (o, fy_(OT), OT)], Z.black, M)
+    for s in (-1, 1): P.hull_collider('col_pod%d%s' % (az, 'ab'[s > 0]), [tuple(M @ V(p)) for z in (.0, 4.6) for p in ((s * pw(z, 2), hy(pw(z, 2)), z), (s * pw(z, 3), fy_(z), z), (s * OW, fy_(z), z), (s * OW, hy(OW), z))])
+    P.hull_collider('col_pod%dt' % az, [tuple(M @ V(p)) for s in (-1, 1) for z in (4.66, 4.95, 6.85) for p in ((s * pw(z, 2), hy(pw(z, 2)), z), (s * pw(z, 3), fy_(z), z))])
+P.mesh('legpods', pod, P.det, smooth_angle=25); P.mesh('legpods_in', pin, P.det, smooth_angle=40)
+# ---------------- flush cover over the elevator track, for the cargo lander
+P.mesh('trackcover', skin(zs, 'core', keep=lambda a, z: abs(wrap(a)) < HL.TRACK), MH, smooth_angle=30)
 P.mesh('details', d, P.det, smooth_angle=40)
 # ---------------- nodes and colliders
 P.node('top', (0, 0, HL.Z_TOP), (0, 0, 1), 5); P.node('bottom', (0, 0, 0), (0, 0, -1), 5)
@@ -135,4 +161,4 @@ for k in range(16):
     a0, a1 = max(7.5, 22.5 * k), min(352.5, 22.5 * (k + 1)); P.hull_collider(f'col_skirt{k}', arcs(a0, a1, HL.R, RI, 0, ZP, 2))
 P.hull_collider('col_dome', [tuple(hp(a, z, r=r)) for a in range(0, 360, 30) for z, r in ((20.5, 2.6), (20.95, 1.6))])
 P.box_trigger('ladder', climb_frame((0, -RR - .14, HL.Z_SKIN / 2 + .3), (0, -1, 0)), (.5, .3, HL.Z_SKIN - .3), 'Ladder')
-finish(P)
+finish(P, ({'legpods', 'legpods_in'}, {'trackcover'}))

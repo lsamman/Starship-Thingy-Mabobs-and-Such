@@ -17,13 +17,15 @@ OGIVE = ((0, 2.8125), (.84, 2.789), (1.82, 2.715), (2.58, 2.602), (3.36, 2.455),
          (5.81, 1.704), (6.23, 1.529), (6.71, 1.307), (7.14, 1.092), (7.40, .951))
 CAP = ((7.40, .951), (7.67, .803), (7.93, .65), (8.14, .52), (8.29, .42), (8.38, .362), (8.43, .322), (8.49, .27), (8.52, .207), (8.555, .10), (8.565, 0))
 # ---- paint
-Z_BLACK = .97               # black base
+Z_BLACK = .97               # a ring of vertices; the base itself is white
 LEG_AZ = (45, 135, 225, 315)
-PANEL_TOP, PANEL_W = 4.85, (1.02, .62)   # black leg panels: top, half-widths at base and top (arc length)
+PANEL_TOP, PANEL_W = 4.75, (.78, .78)    # dark recess behind a leg: top, half-widths at base and top (arc length)
+# leg pods, faceted: rows of (z, depth off the hull, half-width at the hull, half-width of the flat face), and the arched opening
+POD = ((0, .66, 1.08, .93), (4.95, .86, 1.02, .86), (6.9, .0, .80, .66)); POD_OPEN = (.76, 4.74, .34)      # half-width, top, corner radius
 # ---- landing thrusters: six groups of three between the elevator track and the docking side
-BAND = (19.0, 20.25)
+BAND = (19.24, 20.01)       # thin, right under the cargo door's sill (SpaceX's cargo lander render, April 2024)
 GROUPS = (31.875, 91.875, 148.125, 211.875, 268.125, 328.125); PITCH = 11.25   # edges fall on the facet grid
-BORE = (.262, .415)         # half-axes of a port in the skin
+BORE = (.17, .21)         # half-axes of a port in the skin
 CANT = 50                   # exhaust axis: degrees below the outward normal
 LIGHT_AZ = (61.875, 120, 240, 298.125)
 # ---- elevator track and airlock
@@ -46,5 +48,12 @@ SHIP_SHELL = ((.30, .03), (.36, .34), (.43, .60), (.50, .73), (.8, .77), (1.4, .
 SHIP_SHELL_W = ((.30, .56), (.5, .76), (.95, .76), (1.5, .66), (2.1, .42), (2.5, .345), (3.2, .345), (3.9, .42), (4.5, .42), (5.0, .28), (5.45, .06))
 COLLAR = .72               # drag strut collar, up the strut from the ankle (deployed)
 LIFT_TRAVEL = 22.3
-SHEET = {'core': (0.0, Z_SKIN), 'crew': (Z_SKIN, Z_OGIVE + 7.40)}
+SHEET = {'core': (0.0, Z_SKIN), 'crew': (Z_SKIN, Z_OGIVE + 7.40), 'cargo': (Z_SKIN, Z_OGIVE + 7.40)}
+# ---- cargo section, in its own frame (z = 0 at Z_OGIVE): door, bay, crane frame
+CG_SILL, CG_HEAD, CG_AZ = -2.70, 2.70, 52.5
+CG_FLOOR, CG_CEIL = -2.80, 2.24
+CG_SWING = 112
+FRAME_X, FRAME_Y, FRAME_Z, FRAME_L, FRAME_OUT, FRAME_LEAN = 1.74, -1.72, -2.45, 4.20, 1.42, 30     # crane frame: pivots, length folded, how far it telescopes, lean
+FRAME_TOPX = 1.74
+WINCH_DZ = CG_CEIL - 3.97
 PAD = .003

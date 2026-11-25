@@ -38,7 +38,7 @@ t, v = tree(leg0, mov, W); ok(min(p.z for p in v) > .02, 'stowed leg lowest poin
 gap = min(math.hypot(p.x, p.y) for p in v) - HL.R; print('      by piece', {n: round(min(math.hypot(p.x, p.y) for p in tree(leg0, (n,), W)[1]) - HL.R, 3) for n in mov}); ok(gap > -.03, 'stowed leg innermost %.3f m off the hull radius' % gap); print('      stowed leg reaches r %.2f' % max(math.hypot(p.x, p.y) for p in v))
 half = max(abs(math.degrees(math.atan2(p.x, -p.y))) for p in v if p.y < 0); ok(half < 37.5, 'stowed leg half-width %.1f deg (track starts 37.5 away)' % half)
 t, v = tree(leg1, None, W); ok(abs(min(p.z for p in v) - HL.SOLE) < .06, 'deployed sole at %.3f (want %.2f)' % (min(p.z for p in v), HL.SOLE))
-core = load(mu('STMS_HLS_Core')); crew = load(mu('STMS_HLS_Crew')); tc, _ = tree(core); tw, _ = tree(crew, None, Tz(HL.Z_TOP)); td, _ = tree(crew, ('doorskin', 'doorframe', 'flag'), Tz(HL.Z_TOP)); tb, _ = tree(crew, ('hull', 'windows', 'details'), Tz(HL.Z_TOP))
+core = load(mu('STMS_HLS_Core')); core.pop('trackcover', None); crew = load(mu('STMS_HLS_Crew')); tc, _ = tree(core); tw, _ = tree(crew, None, Tz(HL.Z_TOP)); td, _ = tree(crew, ('doorskin', 'doorframe', 'flag'), Tz(HL.Z_TOP)); tb, _ = tree(crew, ('hull', 'windows', 'details'), Tz(HL.Z_TOP))
 so = load(mu('STMS_HLS_Solar'), 'solarDeploy'); so1 = load(mu('STMS_HLS_Solar'), 'solarDeploy', True); ZS = sum(HL.SOL_Z) / 2
 for az in HL.SOL_AZ:
     MS = Matrix.Rotation(math.radians(az), 4, 'Z') @ Matrix.Translation((0, -HL.R, ZS)); hh = ('hatchskin', 'hatchin'); tp, _ = tree(so, [n for n in so if n not in hh + ('rails',)], MS); t2, _ = tree(so, hh, MS); t3, _ = tree(so1, [n for n in so1 if n not in ('rails',)], MS)

@@ -24,9 +24,9 @@ def build(sheet, seams, seed):
     # insulating tiles: brick-laid, a hair of tone each, thin joints; they halve where the nose narrows
     n = np.where(r > 1.9, 24, 12); row, er = cells(z, .50, .0); col, ec = cells(az, 180.0 / n, .5 * (row % 2)); e = np.minimum(er, np.radians(ec) * r)
     v = hash2(row, col, seed); c.albedo *= (1 + .004 * (v - .5))[..., None]; c.gloss += .010 * (hash2(col, row, seed + 3) - .5)
-    g = line(e, .0035, aa); c.albedo *= (1 - .022 * g)[..., None]; c.gloss -= .01 * g
+    g = line(e, .0035, aa); c.albedo *= (1 - .010 * g)[..., None]; c.gloss -= .006 * g
     for s in seams:                                            # barrel joints
-        dd = z - s; k = line(dd, .008, aa); c.albedo *= (1 - .10 * k)[..., None]; h -= .4 * k
+        dd = z - s; k = line(dd, .008, aa); c.albedo *= (1 - .05 * k)[..., None]; h -= .3 * k
         _, ex = cells(x, .14, .5)
         for o in (-.055, .055):
             dot = np.clip(.5 + (.010 - np.hypot(.07 - ex, dd - o)) / (2 * aa), 0, 1); c.albedo *= (1 - .02 * dot)[..., None]
@@ -37,12 +37,10 @@ def build(sheet, seams, seed):
         # signed distance, rounded at the top and flared into the base with a fillet
         sd = np.maximum(s_ - half, z - HL.PANEL_TOP); R_ = .16
         qx, qy = s_ - (half - R_), z - (HL.PANEL_TOP - R_); corner = np.hypot(np.maximum(qx, 0), np.maximum(qy, 0)) + np.minimum(np.maximum(qx, qy), 0) - R_
-        sd = np.where(z > HL.PANEL_TOP - 1, corner, sd); base = z - HL.Z_BLACK; F = .22                       # smooth union
-        hh = np.clip(.5 + .5 * (base - sd) / F, 0, 1); u = base + (sd - base) * hh - F * hh * (1 - hh) * 1.0
-        black = np.maximum(black, np.clip(.5 - u / (2 * aa), 0, 1))
+        sd = np.where(z > HL.PANEL_TOP - 1, corner, sd); sd = sd
+        u = sd; black = np.maximum(black, np.clip(.5 - u / (2 * aa), 0, 1))
         bm = (HL.BAND[0] + HL.BAND[1]) / 2; bh = (HL.BAND[1] - HL.BAND[0]) / 2; R_ = .13
-        xe = np.radians(np.maximum(0, 12.0 - az)) * HL.R; qx = R_ - np.radians(az - 11.2) * HL.R; qy = np.abs(z - bm) - (bh - .02 - R_)
-        u2 = np.hypot(np.maximum(qx, 0), np.maximum(qy, 0)) + np.minimum(np.maximum(qx, qy), 0) - R_
+        u2 = np.abs(z - bm) - (bh - .02)
         black = np.maximum(black, np.clip(.5 - u2 / (2 * aa), 0, 1)); ub = np.minimum(u, u2)
         edge = line(ub, .010, aa); h -= .9 * edge
         pal = .050 + .004 * cloud + .002 * fine
@@ -53,7 +51,7 @@ def build(sheet, seams, seed):
                 d_ = np.abs(az - (b + k * HL.PITCH)); ee = np.hypot(np.radians(d_) * HL.R / HL.BORE[0], (z - bm) / HL.BORE[1]); rg = line((ee - 1.06) * .3, .016, aa)
                 c.albedo[:] = c.albedo * (1 - rg[..., None]) + .085 * rg[..., None]; h += .5 * rg
         _, ea = cells(az, 60, .0); k = line(np.radians(ea) * HL.R, .004, aa) * (np.abs(z - bm) < bh); h -= .7 * k
-    else:
+    elif sheet == 'crew':
         for a0, hw, zc, hh_ in ((56.25, 18.9, sum(HL.SOL_Z) / 2, .44), (101.25, 18.9, sum(HL.SOL_Z) / 2, .44), (180, 9, 26.2, .5)):
             q = np.maximum(np.abs(np.radians(az - a0)) * r - np.radians(hw) * HL.R, np.abs(z - zc) - hh_); k = line(q, .009, aa); c.albedo *= (1 - .45 * k)[..., None]; h -= 1.0 * k
         s_ = line(z - HL.Z_OGIVE - 7.39, .012, aa); c.albedo *= (1 - .3 * s_)[..., None]; h -= s_
@@ -62,6 +60,8 @@ def build(sheet, seams, seed):
 
 build('core', (2.2, 4.85, 7.4, 10.1, 12.8, 15.5, 18.2), 51)
 build('crew', (21.3, 24.0, 27.3, 29.6), 57)
+W = W // 2
+build('cargo', (24.0, 27.3, 29.6), 61)
 import its_lamp
 
 g = np.zeros((64, 64, 4), np.uint8); g[...] = (212, 212, 210, 175); tl.write_dds(g, 'stms_plainwhite_diff')          # white finish for SEP's docking hardware

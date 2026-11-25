@@ -20,7 +20,7 @@ def write(G):
     land_fx = block('landing', block('AUDIO', 'channel = Ship', 'clip = sound_vent_medium', 'volume = 0 0', 'volume = 1 0.9', 'pitch = 0 0.6', 'pitch = 1 0.9', 'loop = true'),
                     block('MODEL_MULTI_PARTICLE', 'modelName = Squad/FX/Monoprop_small', 'transformName = landingThrust', 'emission = 0 0', 'emission = 0.05 0.3', 'emission = 1 1', 'speed = 0 0.6', 'speed = 1 1', 'localRotation = 0, 0, 0'))
     fx = [x for x in RCS_FX]; fx = fx[:-1] + ['\t' + l for l in land_fx] + fx[-1:]
-    part('STMS_HLS_Core', 'Starship HLS Core', 'The Moon-bound ship\'s tanks, engine bay and legwork. White insulating tiles instead of a heat shield, no flaps, and a black belt of eighteen landing thrusters two thirds of the way up, so the last hundred metres are flown without digging a crater under yourself. Mounts three sea-level and three vacuum Raptor 3s from SEP, stacks on SEP\'s Block 3 booster, and takes SEP\'s ship-to-ship docking hardware on the far side from the elevator.',
+    part('STMS_HLS_Core', 'Starship HLS Core', 'The Moon-bound ship\'s tanks, engine bay and legwork. White all over instead of a heat shield, no flaps, faired legs, and a thin black belt of eighteen landing thrusters two thirds of the way up, so the last hundred metres are flown without digging a crater under yourself. Mounts three sea-level and three vacuum Raptor 3s from SEP, stacks on SEP\'s Block 3 booster, and takes SEP\'s ship-to-ship docking hardware on the far side from the elevator.',
          T + ' core tank methalox engine mount landing thruster', 21.0, 31000, 'FuelTank', 'veryHeavyRocketry', profiles='size4p5', crash=20, tmax=2000, skin=2000, brk=5000,
          extra=['fuelCrossFeed = True', 'vesselType = Ship', fx],
          modules=[tank(82000),
@@ -29,7 +29,9 @@ def write(G):
                       block('PROPELLANT', 'name = LqdMethane', 'ratio = 3', 'DrawGauge = True'), block('PROPELLANT', 'name = Oxidizer', 'ratio = 1'), block('atmosphereCurve', 'key = 0 340', 'key = 1 220', 'key = 6 0.001')),
                   rcs(34), command(0), sas(), res('ElectricCharge', 3000), wheel(150, 1.5), antenna(500000), light('baseLight'),
                   cc(['lampglow', 'navgreen', 'navred'], 'Exterior Lights: On', 'Exterior Lights: Off', 'Exterior Lights'),
-                  mod('ModuleToggleCrossfeed', 'crossfeedStatus = true', 'toggleEditor = true', 'toggleFlight = true')])
+                  mod('ModuleToggleCrossfeed', 'crossfeedStatus = true', 'toggleEditor = true', 'toggleFlight = true'),
+                  G['livery']('HLS_Pods', 'Leg fairings', [('Faired', 'Faired', 'white', ['legpods', 'legpods_in'] + [f'col_pod{a}{k}' for a in HL.LEG_AZ for k in 'abt']), ('None', 'None', 'gray', [])]),
+                  G['livery']('HLS_Track', 'Elevator track', [('Open', 'Open', 'gray', []), ('Covered', 'Covered (cargo)', 'white', ['trackcover'])])])
     anim = lambda a, on, off, what, grp='None': mod('ModuleAnimateGeneric', f'animationName = {a}', f'actionGUIName = Toggle {what}', f'startEventGUIName = {on}', f'endEventGUIName = {off}', f'defaultActionGroup = {grp}', 'allowDeployLimit = false', 'evaDistance = 6')
     part('STMS_HLS_Crew', 'Starship HLS Crew Section', 'Cabins behind a row of ten windows, an airlock the size of a garage under an awning door, and a nose cap that tips back off a flat seat for a docking port. Four bays in the sides take roll-out solar arrays. The deck is a long way up; the elevator is sold separately and is not optional.',
          T + ' crew cabin window airlock nose docking seat command', 13.0, 42000, 'Pods', 'veryHeavyRocketry', rules='1,0,1,1,0', profiles='size4p5', crash=14, tmax=2000, skin=2000, brk=5000,
@@ -43,6 +45,15 @@ def write(G):
                   mod('ModuleScienceContainer', 'reviewActionName = Review Data', 'storeActionName = Store Experiments', 'evaOnlyStorage = True', 'storageRange = 2.0', 'allowRepeatedSubjects = True'),
                   mod('ModuleInventoryPart', 'InventorySlots = 12', 'packedVolumeLimit = 2400'),
                   mod('ModuleKerbNetAccess', 'MinimumFoV = 5', 'MaximumFoV = 50', 'enhancedSituationMask = 7', 'requiresAnimation = False', block('DISPLAY_MODES', 'Mode = Terrain', 'Mode = Biome'))])
+    sun = lambda i: mod('ModuleDeployableSolarPanel', 'isTracking = false', f'pivotName = cargoSun{i}', f'raycastTransformName = cargoSun{i}', f'secondaryTransformName = cargoSun{i}', 'isBreakable = false', 'sunAlignFactor = 1', 'resourceName = ElectricCharge', 'chargeRate = 5', 'showStatus = true')
+    part('STMS_HLS_Cargo', 'Starship HLS Cargo Section', 'Goes on the HLS core instead of the crew section, with nobody aboard to complain about the elevator. One wide door swings up over the bay. Open it, lean the crane frame out, put the Cargo Winch on the ceiling node and it sets its load down between the landing legs. Solar panels round the back keep the lights on. Set the core\'s elevator track to Covered.',
+         T + ' cargo bay delivery uncrewed', 8.0, 26000, 'Payload', 'veryHeavyRocketry', rules='1,0,1,1,0', profiles='size4p5', crash=14, tmax=2000, skin=2000, brk=5000,
+         extra=['vesselType = Lander', block('MODEL', 'model = StarshipThingyMabobsAndSuch/ITS/Parts/STMS_HLS_CargoKit'), RCS_FX],
+         modules=[anim('CargoDoor', 'Open Cargo Door', 'Close Cargo Door', 'Cargo Door'),
+                  mod('ModuleCargoBay', 'DeployModuleIndex = 0', 'closedPosition = 0', 'lookupRadius = 2.7', 'lookupCenter = 0, -0.1, 0', 'nodeInnerAft = cargo', 'nodeInnerFore = winch'),
+                  anim('craneFrameOut', 'Lean Crane Frame Out', 'Stow Crane Frame', 'Crane Frame'),
+                  res('ElectricCharge', 2000), rcs(34), sun(0), sun(1), sun(2), light('cargoLight'), cc(['cargo_lamps'], 'Bay Lights: On', 'Bay Lights: Off', 'Bay Lights'),
+                  G['livery']('HLS_Markings', 'Markings', [('Flag', 'Flag', 'gray', ['flag']), ('None', 'Plain', 'white', [])])])
     part('STMS_HLS_Leg', 'Starship HLS Landing Leg', 'One of four. Hangs folded down its black panel, then swings out, telescopes and puts an octagonal pad on the regolith, held by a strut to either side. Use four, on the marked nodes.',
          T + ' landing leg gear ground', .6, 4500, 'Ground', 'veryHeavyRocketry', rules='1,0,0,0,0', profiles='srf, size1', crash=30, skin=2000, brk=3000,
          extra=[block('EFFECTS', block('deploy', SND('elev_start'), SND('elev_loop', True)), block('deployed', SND('elev_stop')), block('retract', SND('elev_start'), SND('elev_loop', True, .6)), block('retracted', SND('elev_stop', False, .75)))],
