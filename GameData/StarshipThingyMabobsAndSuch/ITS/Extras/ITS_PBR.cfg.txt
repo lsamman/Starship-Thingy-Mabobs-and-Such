@@ -1,0 +1,65 @@
+// Optional PBR materials (Shabby + Resurfaced), so the hull matches SEP's engines under Deferred. Without them the parts
+// use the stock specular shader.
+SHABBY_MATERIAL_DEF:NEEDS[Resurfaced]
+{
+	name = ITS_Hull_PBR
+	shader = Resurfaced/Standard
+	FLOAT
+	{
+		_Smoothness = 1.0
+		_Metalness = 0.0
+		_MetalAlbedoMultiplier = 1.0
+	}
+}
+SHABBY_MATERIAL_DEF:NEEDS[Resurfaced]
+{
+	name = ITS_Details_PBR
+	shader = Resurfaced/Standard
+	TEXTURE
+	{
+		_MetalMap = StarshipThingyMabobsAndSuch/ITS/Parts/its_det_metal
+	}
+	FLOAT
+	{
+		_Smoothness = 1.0
+		_Metalness = 1.0
+		_MetalAlbedoMultiplier = 1.15
+	}
+}
+@PART[ITS_*]:HAS[#author[lsamman]]:NEEDS[Shabby,Resurfaced]
+{
+	SHABBY_MATERIAL_REPLACE
+	{
+		materialDef = ITS_Details_PBR
+		targetMaterial = sl_its_det
+	}
+	SHABBY_MATERIAL_REPLACE
+	{
+		materialDef = ITS_Hull_PBR
+		targetMaterial = sl_its_solar
+	}
+}
+@PART[ITS_Fwd*]:NEEDS[Shabby,Resurfaced]
+{
+	SHABBY_MATERIAL_REPLACE
+	{
+		materialDef = ITS_Hull_PBR
+		targetMaterial = sl_its_fwd
+	}
+}
+@PART[ITS_ShipAft]:NEEDS[Shabby,Resurfaced]
+{
+	SHABBY_MATERIAL_REPLACE
+	{
+		materialDef = ITS_Hull_PBR
+		targetMaterial = sl_its_aft
+	}
+}
+@PART[ITS_Booster]:NEEDS[Shabby,Resurfaced]
+{
+	SHABBY_MATERIAL_REPLACE
+	{
+		materialDef = ITS_Hull_PBR
+		targetMaterial = sl_its_booster
+	}
+}

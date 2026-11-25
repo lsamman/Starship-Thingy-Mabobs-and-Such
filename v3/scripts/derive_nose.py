@@ -1,6 +1,6 @@
 """Pieces of SEP's Block 3 nosecone with openings cut in them: a side docking bay with a sliding door, an EVA hatch, and for the
 crew-cargo nose the cargo section's lower barrel with clamshell doors. Cut at build time from the player's own SEP
-install, like the expendable masks; the result is SEP's art, so it is never committed (build/ and GameData/ are ignored).
+install, like the expendable masks; the result is SEP's art, so it is not covered by this repo's licence (see LICENSE).
 usage: blender -b -P derive_nose.py -- <SEP assets> <build/mu> crew|crewcargo"""
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bpy, bmesh
