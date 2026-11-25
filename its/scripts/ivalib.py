@@ -8,6 +8,7 @@ import iva_layout as IL, hls_layout as HL
 V = Vector; R_IVA = Matrix(((-1, 0, 0), (0, 0, -1), (0, -1, 0)))
 Z = {k: Zone(*v, atlas=IL.ATLAS, ppm=300) for k, v in IL.ZONES.items()}
 T_WALL = .11; WELL = .44
+strut = lambda a, b, r, z, n=6: tube([tuple(a), tuple(b)], r, n, zone=z)
 
 
 def outer(variant):
@@ -69,7 +70,7 @@ def build(variant):
             for p, q in zip(idx, idx[1:] + idx[:1]): g.face([c, q, p] if f != cw else [c, p, q], [(Z[zone] if isinstance(zone, str) else zone).uv(.5, .5)] * 3)
 
     for di, D in enumerate(decks):
-        zf = D['floor']; zc = D['ceil'] if D['ceil'] else zf + 1.46; win = D['win']; big = win == 'big'; holes = []
+        zf = D['floor']; zc = D['ceil'] if D['ceil'] else D.get('wall', zf + 1.46); win = D['win']; big = win == 'big'; holes = []
         if win and not big: wz, wn, span, ww, wh = win; holes = [(-s_ + 2 * s_ * i / (n_ - 1), z_, w_, h_) for z_, n_, s_, w_, h_ in (win, *D.get('rows', ())) for i in range(n_)]
         if big:
             B = outer.big; zc = B['z1'] + .25
@@ -79,12 +80,15 @@ def build(variant):
         for az, z0, w, h in holes:
             ha = math.degrees(w / 2 / ri(z0)); azs |= {round(az - ha, 4), round(az + ha, 4)}; zs |= {z0 - h / 2, z0 + h / 2}
         if big: WA = math.degrees(B["ha"] / ri(B["z0"])) - .01; azs |= {round(a, 4) for a in np.linspace(-WA, WA, 65)}; zs |= {B['z0'], 3.36}
+        MZ = D.get('mezz')
+        if MZ: azs |= {-40.5, 40.5}; zs |= {3.93, 4.82}
         zs |= {z for z in BREAKS if zf + .02 < z < zc - .02 and not any(abs(z - q) < .02 for q in zs)}
         azs, zs = sorted(azs), sorted(zs); zs2 = [z for z in zs]
         def ring_uv(a, z): s = ((a + 180) / 60) % 1.00001; return Z['panel'].uv(min(1, s), (z - zf) / (zc - zf))
         def cell(a0, a1, pts):
             t0 = math.floor(((a0 + a1) / 2 + 180) / 60) * 60 - 180
             uv = [Z['panel'].uv(1 - (a - t0) / 60, min(1, max(0, (z - zf) / (zc - zf)))) for a, z in pts]
+            if MZ and all(abs(a) < 40.6 and 3.92 < z < 4.83 for a, z in pts): uv = [Z['black'].uv(.4, .4), Z['black'].uv(.6, .4), Z['black'].uv(.6, .6), Z['black'].uv(.4, .6)]      # the dark surround of the windows
             q4(wall_, [pos(a, ri(z), z) for a, z in pts], None, (0, 0, (pts[0][1] + pts[2][1]) / 2), uv)
         def arch(a):
             x = abs(math.radians(a)) * ri(B['z0']); return B['z0'] + (B['z1'] - B['z0']) * max(0, 1 - (x / B['ha']) ** 2) ** .5 if x < B['ha'] else None
@@ -122,8 +126,8 @@ def build(variant):
         # ---- floor and the ceiling under the deck above, both open round the ladder well
         last = di == len(decks) - 1; R0 = 0 if last else WELL; N = 48
         for a0, a1 in zip(full(0, 360, N), full(0, 360, N)[1:]):
-            for r0, r1 in zip(*(lambda rs: (rs, rs[1:]))([max(R0, .001), 1.2, ri(zf) + .02])):
-                pl = [pos(a0, r0, zf), pos(a1, r0, zf), pos(a1, r1, zf), pos(a0, r1, zf)]; q4(floor_, pl, None, (0, 0, zf + 9), [Z['floor'].uv(.5 + p.x / 5.8, .5 + p.y / 5.8) for p in pl])
+            for r0, r1 in zip(*(lambda rs: (rs, rs[1:]))([max(R0, .001), .98 if MZ else 1.2, ri(zf) + .02])):
+                pl = [pos(a0, r0, zf), pos(a1, r0, zf), pos(a1, r1, zf), pos(a0, r1, zf)]; q4(floor_, pl, None, (0, 0, zf + 9), [(Z['ceil'] if MZ and r1 < 1 else Z['floor']).uv(.5 + p.x / 5.8, .5 + p.y / 5.8) for p in pl])
         if D['ceil']:
             zz = D['ceil']
             for a0, a1 in zip(full(0, 360, N), full(0, 360, N)[1:]):
@@ -131,7 +135,11 @@ def build(variant):
             za = decks[di - 1]['floor']; ceil_.add(lathe([(WELL, zz), (WELL, za)], 40, zone=Z['white'], flip=True))
         if not last:
             fur.add(lathe([(WELL, zf - .01), (WELL, zf + .03), (WELL + .05, zf + .035), (WELL + .06, zf)], 40, zone=Z['grey'], flip=False)); fur.add(lathe([(WELL + .062, zf), (WELL + .05, zf + .036), (WELL, zf + .03)][::-1], 40, zone=Z['grey'], flip=True))
-            for a0, a1 in ((35, 145), (215, 325)):        # guard rails, open fore and aft
+            if MZ:                                        # hooped rails: flat bar, its ends swept down
+                for a0, a1 in ((40, 150), (205, 320)):
+                    for z in (.22, .50): bar_arc(fur, WELL + .12, zf + z, a0, a1, .020, 'metal')
+                    for a in (a0, (a0 + a1) / 2, a1): fur.add(tube([tuple(pos(a, WELL + .05, zf)), tuple(pos(a, WELL + .12, zf + .22)), tuple(pos(a, WELL + .12, zf + .50))], .017, 8, zone=Z['dark']))
+            for a0, a1 in () if MZ else ((35, 145), (215, 325)):        # guard rails, open fore and aft
                 for z in (.26, .48): bar_arc(fur, WELL + .13, zf + z, a0, a1, .014, 'black')
                 for a in (a0, (a0 + a1) / 2, a1): fur.add(tube([tuple(pos(a, WELL + .13, zf)), tuple(pos(a, WELL + .13, zf + .48))], .014, 8, zone=Z['black']))
         # ---- cove light where wall meets ceiling
@@ -142,7 +150,7 @@ def build(variant):
         th = D['theme']; rw = ri(zf + .5)
         if th == 'flight':
             pass
-        if D['ceil'] is None and th in ('flight', 'lounge'):
+        if D['ceil'] is None and th in ('flight', 'lounge', 'main'):
             # ceiling: tapered gores up to the docking tunnel
             ztop = {'hls': 9.95, 'hlstall': 9.95}.get(variant, 5.75); prof = [(ri(z), z) for z in np.linspace(zc, ztop, 8)]; ceil_.add(lathe(prof, 48, zone=Z['ceil'], flip=True)); rt = ri(ztop)
             ceil_.add(lathe([(rt, ztop), (.5 if rt > .6 else rt, ztop + .02), (0, ztop + .02)], 48, zone=Z['white'], flip=True)); zl = zc + (ztop - zc) * .55; curved(led, 0, 360, [(ri(zl) - .06, zl + .0), (ri(zl) - .06, zl - .03), (ri(zl) + .02, zl - .03)][::-1], 'led', 60)
@@ -213,6 +221,83 @@ def build(variant):
                     fur.add(box(.52, .07, .10, zone=Z['grey'], bevel=.01), F @ T(0, y, .09)); led.add(box(.50, .012, .03, zone=Z['led']), F @ T(0, y + .25, .075))
                     for j in range(7): g = Geo(); [g.add(box(.012, .10 + .04 * np.random.rand(), .05, zone=Z['green']), Rz(q) @ T(0, .05, 0)) for q in (-35, 0, 35)]; fur.add(g, F @ T(-.21 + .07 * j, y + .03, .09))
             F = inw(112, zf + .6, ri(zf + .6) - .06); on_panel(F, 'htProps_fireExtinguisher', 0, .2, .02); on_panel(F, 'htProps_cargoBag_small_firstAid', 0, -.1, 0)
+        if th == 'main':                                 # after SpaceX's October 2025 cabin renders
+            zm, rm_, am_ = MZ; zw = win[0] - win[4] / 2
+            # dome: seams between its panels, a second ring of light near the top
+            for k in range(28): a = 360 * k / 28; fur.add(tube([tuple(pos(a, ri(z) - .004, z)) for z in np.linspace(zc, ztop - .5, 9)], .006, 4, zone=Z['dark']))
+            for z in np.linspace(zc + .75, ztop - .5, 5): bar_arc(fur, ri(z) - .004, float(z), 0, 360, .006, 'dark', 56)
+            zr = ztop - .62; bar_arc(fur, ri(zr) - .03, zr, 0, 360, .022, 'dark', 56); curved(led, 0, 360, [(ri(zr) - .05, zr + .035), (ri(zr) - .05, zr + .02), (ri(zr) + .01, zr + .02)][::-1], 'led', 56); curved(fur, 0, 360, [(rc - .13, zc - .05), (rc - .13, zc + .005), (rc - .105, zc + .005), (rc - .105, zc - .05)], 'dark', 72)
+            # mezzanine: deck, curved fascia, lockers under it
+            NM = 32
+            for i in range(NM):
+                a0, a1 = -am_ + 2 * am_ * i / NM, -am_ + 2 * am_ * (i + 1) / NM
+                for r0, r1 in ((rm_, 1.7), (1.7, ri(zm) + .02)): pl = [pos(a0, r0, zm), pos(a1, r0, zm), pos(a1, r1, zm), pos(a0, r1, zm)]; q4(floor_, pl, None, (0, 0, zm + 9), [Z['floor'].uv(.5 + p.x / 5.8, .5 + p.y / 5.8) for p in pl])
+                pl = [pos(a0, rm_, zm - .07), pos(a1, rm_, zm - .07), pos(a1, ri(zm) + .02, zm - .07), pos(a0, ri(zm) + .02, zm - .07)]; q4(ceil_, pl, None, (0, 0, zm - 9), [Z['dark'].uv(.4, .4)] * 4)
+            curved(fur, -am_, am_, [(rm_ - .012, zm - .10), (rm_ - .012, zm + .02), (rm_ + .02, zm + .02), (rm_ + .02, zm - .10)], 'white', NM); curved(led, -am_, am_, [(rm_ + .03, zm - .105), (rm_ + .06, zm - .105)], 'led', NM)
+            SEG = {'0': 'abcdef', '1': 'bc', '2': 'abged', '3': 'abgcd', '4': 'fgbc', '5': 'afgcd', '6': 'afgcde', '7': 'abc', '8': 'abcdefg'}; SP = dict(a=(0, 1, 1), b=(.5, .5, 0), c=(.5, -.5, 0), d=(0, -1, 1), e=(-.5, -.5, 0), f=(-.5, .5, 0), g=(0, 0, 1))
+            rl = rm_ + .10; hl = (zm - .08 - zf) / 2; NC = 8; cw_ = 2 * rl * math.sin(math.radians(am_ / NC))
+            for i in range(NC):
+                a = -am_ + 2 * am_ * (i + .5) / NC; FR_ = rl * math.cos(math.radians(am_ / NC))
+                for j in range(2):
+                    F = inw(a, zf + hl * (j + .5), FR_); fur.add(quad_patch(cw_, hl, Z['dark']), F @ T(0, 0, -.02)); fur.add(box(cw_ - .05, hl - .05, .03, zone=Z['dark'], bevel=.012), F); fur.add(rounded_rect_ring(cw_ - .03, hl - .03, .04, .018, .02, 4, zone=Z['black']), F); fur.add(box(.10, .022, .03, zone=Z['black'], bevel=.006), F @ T((-1) ** i * -cw_ * .24, 0, .028))
+                    n_ = i * 2 + (2 - j)
+                    if n_ < 9:
+                        for q, ch in enumerate('%02d' % n_):
+                            for sg in SEG[ch]: x_, y_, h_ = SP[sg]; fur.add(box(.026 if h_ else .005, .005 if h_ else .026, .002, zone=Z['white']), F @ T(-.02 + q * .042 + x_ * .026, hl * .30 + y_ * .026, .0165))
+            for s in (-1, 1):                            # ends of the mezzanine, the stairs and the railing
+                a = s * am_; tg = V((math.cos(math.radians(a)), math.sin(math.radians(a)), 0)) * s; rd_ = V((math.sin(math.radians(a)), -math.cos(math.radians(a)), 0)); at_ = lambda r, t, z: rd_ * r + tg * t + V((0, 0, z))
+                q4(fur, [at_(rl, 0, zf), at_(ri(zf) + .02, 0, zf), at_(ri(zm), 0, zm), at_(rl, 0, zm)], Z['panel'], at_(1.8, 2, zf + .5)); q4(fur, [at_(rm_, .002, zm - .10), at_(ri(zm), .002, zm - .10), at_(ri(zm), .002, zm + .02), at_(rm_, .002, zm + .02)], Z['white'], at_(1.8, 2, zm))
+                for r in (1.30, 1.74):
+                    fur.add(strut(at_(r, .62, zf), at_(r, .03, zm + .02), .026, Z['dark'], 6)); fur.add(tube([tuple(at_(r, .66, zf + .46)), tuple(at_(r, .04, zm + .48)), tuple(at_(r, -.10, zm + .50))], .016, 8, zone=Z['metal'])); fur.add(tube([tuple(at_(r, .55, zf + .13)), tuple(at_(r, .64, zf + .48))], .014, 8, zone=Z['dark']))
+                for k in range(6): t = (k + .6) / 6; c_ = at_(1.52, .62 - .59 * t, zf + (zm - zf) * t); F = Matrix((rd_, tg, V((0, 0, 1)))).transposed().to_4x4(); F.translation = c_; fur.add(box(.44, .15, .022, zone=Z['metal'], bevel=.005), F)
+                for z in (.25, .50): fur.add(tube([tuple(at_(1.80, -.03, zm + z)), tuple(at_(ri(zm + z) - .03, -.03, zm + z))], .016, 8, zone=Z['metal']))
+                for r in (1.80, ri(zm) - .10): fur.add(tube([tuple(at_(r, -.03, zm)), tuple(at_(r, -.03, zm + .50))], .016, 8, zone=Z['dark']))
+                for z in (.25, .50): fur.add(tube([tuple(at_(rm_ + .04, -.02, zm + z)), tuple(at_(1.24, -.02, zm + z))], .016, 8, zone=Z['metal']))
+            for z in (.25, .50): bar_arc(fur, rm_ + .04, zm + z, -am_ + .8, am_ - .8, .018, 'metal', 40)
+            for k in range(9): a = -am_ + 1 + 2 * (am_ - 1) * k / 8; fur.add(tube([tuple(pos(a, rm_ + .0, zm - .02)), tuple(pos(a, rm_ + .04, zm + .50))], .015, 8, zone=Z['dark']))
+            # cockpit: four seats on splayed legs, one long display on an arm, a padded sill
+            names = ['Pilot', 'Commander', 'Flight Engineer', 'Mission Specialist']
+            for k, a in enumerate((-13, 13, -44, 44)):
+                d = pos(a, 1, 0); p = d * (ri(zm + .5) - .92); seat(p.x, p.y, zm, d, names[k]); t = V((d.y, -d.x, 0))
+                for u, v in ((.20, .24), (-.20, .24), (.20, -.30), (-.20, -.30)): q = p + t * u + d * v; fur.add(strut((p.x + t.x * u * .4, p.y + t.y * u * .4, zm + .16), (q.x, q.y, zm + .012), .016, Z['dark'], 6)); fur.add(cyl(.032, .014, 10, zone=Z['black']), T(q.x, q.y, zm + .008))
+            curved(fur, -62, 62, [(ri(zm) - .16, zm), (ri(zm) - .16, zm + .17), (ri(zm) - .11, zm + .22), (ri(zm) + .0, zm + .22), (ri(zm), zm)], 'white', 24)
+            zd = zm + .56; F = inw(0, zd, ri(zd) - .40) @ Rx(-8); fur.add(box(1.02, .25, .03, zone=Z['black'], bevel=.01), F @ T(0, 0, -.018)); fur.add(box(1.04, .05, .05, zone=Z['dark'], bevel=.01), F @ T(0, -.145, 0))
+            for k in range(4): on_panel(F, f'htProps_MFD_orion{k % 3 + 1}', -.375 + k * .25, .0, .0, .92)
+            for nm, x, sc in (('genericClusterSwitches01', -.36, .8), ('genericClusterButtons', -.12, .8), ('genericClusterKnobs', .12, .8)): on_panel(F, nm, x, -.145, .026, sc)
+            on_panel(F, 'ButtonSquare', .30, -.145, .026, 1.4); on_panel(F, 'throttle', .50, -.12, .02, .45)
+            for s in (-1, 1): fur.add(tube([tuple(F @ V((s * .16, -.10, -.03))), tuple(F @ V((s * .12, -.22, -.18))), tuple(pos(s * 2.5, ri(zm + .2) - .12, zm + .21))], .016, 8, zone=Z['metal']))
+            light((0, -1.5, zm + 1.1), 700, 3.0)
+            # wall: a dark ledge with a strip of displays, an access panel
+            zh = zf + .80; R_ = lambda z: ri(z)
+            curved(fur, 92, 205, [(R_(zh) - .07, zh), (R_(zh) - .07, zh + .04), (R_(zh) + .01, zh + .04), (R_(zh) + .01, zh - .03)], 'wood', 24); curved(fur, 92, 205, [(R_(zh) - .012, zh + .04), (R_(zh) - .012, zh + .17), (R_(zh) + .01, zh + .17), (R_(zh) + .01, zh + .04)], 'black', 24); bar_arc(fur, R_(zh + .18) - .01, zh + .18, 82, 278, .012, 'dark', 48)
+            for k, a in enumerate((112, 121, 130)): F = inw(a, zh + .105, R_(zh) - .03); scr.add(quad_patch(.34, .10, Zone(IL.ZONES['screen'][0] + k * 256, IL.ZONES['screen'][1] + 64, 256, 110, atlas=IL.ATLAS)), F)
+            for a in (99, 262): F = inw(a, zf + .50, R_(zf + .5) - .012); fur.add(box(.25, .40, .02, zone=Z['white'], bevel=.02), F); fur.add(rounded_rect_ring(.27, .42, .05, .008, .012, 4, zone=Z['grey']), F); fur.add(box(.03, .10, .012, zone=Z['dark']), F @ T(-.09, -.10, .012)); fur.add(box(.22, .07, .03, zone=Z['grey'], bevel=.02), F @ T(0, -.27, 0))
+            # counters: wood in a white rim over open lockers
+            for a0, a1 in ((118, 196), (206, 232)):
+                r1 = R_(zf) - .02; r0 = r1 - .34; zt = zf + .46; curved(fur, a0, a1, [(r0 + .03, zt - .03), (r0 + .03, zt + .004), (r1 - .02, zt + .004), (r1 - .02, zt - .03)], 'wood', 20); curved(fur, a0 - .6, a1 + .6, [(r0, zt - .035), (r0, zt + .008), (r0 + .03, zt + .008), (r0 + .03, zt - .035)], 'white', 20)
+                for a in np.arange(a0 + 6, a1 - 2, 13): curved(fur, a - .25, a + .25, [(r0 + .03, zt + .001), (r0 + .03, zt + .007), (r1 - .02, zt + .007), (r1 - .02, zt + .001)], 'dark', 1)
+                nb = round((a1 - a0) / 9.75)
+                for k in range(nb):
+                    a = a0 + (a1 - a0) * (k + .5) / nb; w_ = 2 * (r0 + .06) * math.sin(math.radians((a1 - a0) / nb / 2))
+                    for j in range(2): F = inw(a, zf + .115 + .20 * j, r0 + .05); fur.add(box(w_ - .03, .18, .16, zone=Z['dark'], bevel=.012), F @ T(0, 0, -.08)); fur.add(rounded_rect_ring(w_ - .01, .20, .02, .016, .012, 3, zone=Z['black']), F); fur.add(box(.08, .012, .02, zone=Z['grey']), F @ T(0, .05, .004))
+            for k, a in enumerate((128, 148, 186)): on_panel(inw(a, zf + .62, R_(zf + .6) - .10), ('htProps_cargoBag_small_white', 'htProps_galleyFoodPrep1x2', 'htProps_cargoBag_small_blue')[k], 0, 0, .0, 1.0)
+            # table and four stools
+            zt = zf + .44; ta0, ta1 = 148, 214; curved(fur, ta0, ta1, [(1.30, zt - .03), (1.30, zt), (1.62, zt), (1.62, zt - .03)], 'wood', 16)
+            for r0, r1 in ((1.275, 1.30), (1.62, 1.645)): curved(fur, ta0 - 1, ta1 + 1, [(r0, zt - .035), (r0, zt + .006), (r1, zt + .006), (r1, zt - .035)], 'white', 16)
+            for a in (ta0 - .5, ta1 + .5): curved(fur, a - .6, a + .6, [(1.275, zt - .035), (1.275, zt + .006), (1.645, zt + .006), (1.645, zt - .035)], 'white', 2)
+            for a in (ta0 + 12, ta1 - 12): curved(fur, a - .4, a + .4, [(1.30, zt), (1.30, zt + .004), (1.62, zt + .004), (1.62, zt)], 'dark', 1); fur.add(box(.07, .22, .41, zone=Z['dark'], bevel=.01), T(*pos(a, 1.46, zf + .205)) @ Rz(a))
+            for a in (152, 171, 190, 209):
+                d = pos(a, 1, 0); p = d * 1.06; F = T(p.x, p.y, 0) @ Rz(a); soft.add(box(.27, .22, .035, zone=Z['black'], bevel=.015), F @ T(0, 0, zf + .265)); fur.add(cyl(.024, .25, 10, zone=Z['metal'], center_z=False), F @ T(0, 0, zf)); fur.add(box(.22, .06, .025, zone=Z['dark'], bevel=.006), F @ T(0, 0, zf + .013)); fur.add(box(.06, .22, .025, zone=Z['dark'], bevel=.006), F @ T(0, 0, zf + .013))
+                SEATS.append((f'seat{len(SEATS) + 1}', 'Wardroom')); G_ = Matrix((d.cross(V((0, 0, 1))), d, V((0, 0, 1)))).transposed().to_4x4(); G_.translation = V((p.x, p.y, zf + .30)); P.empty(SEATS[-1][0], G_, P.model)
+            # air duct climbing the wall into the dome
+            ad = 244; zz_ = [zf, zf + 1.2, zc, zc + .6, zc + 1.2, zc + 1.8, zc + 2.4, zc + 3.0]; hw_ = .17; sec = lambda z: [pos(ad, 1, 0) * (ri(z) + .01) + V((-math.cos(math.radians(ad)), -math.sin(math.radians(ad)), 0)) * x + pos(ad, 1, 0) * -o + V((0, 0, z)) for x, o in ((-hw_, 0), (-hw_, .12), (-hw_ + .05, .16), (hw_ - .05, .16), (hw_, .12), (hw_, 0))]
+            for z0, z1 in zip(zz_, zz_[1:]):
+                s0, s1 = sec(z0), sec(z1)
+                for k in range(5): q4(fur, [s0[k], s0[k + 1], s1[k + 1], s1[k]], Z['white'], s0[k] + (V((0, 0, z0)) - s0[2]) * .9 + V(((s0[k] + s0[k + 1]) / 2 - (s0[2] + s0[3]) / 2)) * 3)
+            for z in (zf + 1.0, zc - .35, zc + .9, zc + 2.1):
+                for j in range(5):
+                    for i in range(8): zz2 = z + j * .035; c_ = pos(ad, ri(zz2) - .152, zz2) + V((-math.cos(math.radians(ad)), -math.sin(math.radians(ad)), 0)) * (-.095 + .027 * i); fur.add(box(.015, .004, .02, zone=Z['black']), T(*c_) @ Rz(ad))
+            F = inw(84, zf + .55, R_(zf + .5) - .05); F = inw(272, zf + .55, R_(zf + .5) - .05); on_panel(F, 'htProps_fireExtinguisher', 0, 0, .02)
         if th == 'galley':                               # kitchen, table and garden behind two rows of portholes
             for k, a in enumerate((135, 151.5, 168, 184.5)):
                 rp = ri(zf + .9) - .24; F = inw(a, zf + .285, rp); on_panel(F, 'htProps_cabinet3x3'); on_panel(F, 'htProps_galleyFoodPrep1x2' if k == 1 else 'htProps_cabinetPanel_01_2x2', -.088 if k != 1 else 0, .088); [on_panel(F, 'htProps_galleyCupboard1x1', x, y) for x, y in ((-.176, -.176), (0, -.176), (.176, -.176))]
@@ -297,6 +382,8 @@ def build(variant):
         zt = D['ceil'] if D['ceil'] else {'hls': 9.95, 'hlstall': 9.95}.get(variant, 5.75)
         w.add(lathe([(ri(z), z) for z in np.linspace(zf, zt, 2 if D['ceil'] else 9)], n, flip=True)); w.add(lathe([(ri(zf) + .02, zf), (0 if last else WELL, zf)], n)); w.add(lathe([(ri(zt) + .02, zt), (0 if not D['ceil'] else WELL, zt)], n, flip=True))
         if D['ceil']: w.add(lathe([(WELL, zt), (WELL, decks[di - 1]['floor'])], 24, flip=True))
+        if D.get('mezz'):
+            zm, r_, s_ = D['mezz']; w.add(lathe([(ri(zm) + .02, zm), (r_, zm)], 32, -s_, s_)); w.add(lathe([(r_, zm), (r_, zm - .08)], 32, -s_, s_, flip=True)); w.add(lathe([(r_ + .1, zm), (r_ + .1, zf)], 32, -s_, s_, flip=True))
         if D['theme'] == 'airlock': X = 2.6; q4(w, [(-X, -1.02, zf), (X, -1.02, zf), (X, -1.02, zt), (-X, -1.02, zt)], Z['white'], (0, 9, zf))
         if D.get('eva'):
             ex, ey = IL.EVA[2] + .03, IL.EVA[3] + .03

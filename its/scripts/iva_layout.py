@@ -7,7 +7,7 @@ for _i, _n in enumerate(('white', 'grey', 'dark', 'black', 'metal', 'led', 'oran
 EVA = (.96, 2.04, .36, -1.95)          # the noses' EVA airlock, as in v3/scripts/derive_nose.py: heights, half-width, back wall
 VARIANTS = {
     'hls': dict(part='STMS_HLS_Crew', title='HLS', decks=[
-        dict(floor=3.45, ceil=None, theme='flight', seats=8, win=(4.376, 10, 36.0, .31, .74)),
+        dict(floor=2.30, ceil=None, theme='main', seats=8, win=(4.376, 10, 36.0, .31, .74), wall=4.98, mezz=(3.45, 1.15, 80)),      # mezzanine: height, inner radius, half-span
         dict(floor=.48, ceil=1.80, theme='airlock', seats=0, win=None)]),
     'hlstall': dict(part='STMS_HLS_CrewTall', title='HLS Tall', decks=[
         dict(floor=7.90, ceil=None, theme='lounge', seats=4, win=(8.6163, 7, 42.0, .27, .48), rows=((9.1663, 5, 28.0, .22, .46),)),

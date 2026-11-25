@@ -6,11 +6,16 @@ The parts and a craft file (`Ships/VAB/Starship HLS.craft`), modelled on the NAS
 |---|---|
 | **Core** (`STMS_HLS_Core`) | 322 t of methalox, 3 sea-level + 3 vacuum Raptor 3 nodes, 18 landing thrusters in the black band, 4 leg nodes, elevator rails and ladder on the hull (a switch), RCS, floodlights |
 | **Crew Section** (`STMS_HLS_Crew`) | 8 crew, ten windows, airlock bay with an awning door, four solar bays, nose cap over a flat seat for a docking port (shielded while shut) |
+| **Crew Section, Tall Cabin** (`STMS_HLS_CrewTall`) | The same nose with seven rows of windows and five decks: 16 crew, observation lounge, bunks, galley, flight deck, airlock. Same airlock, door, solar bays and both elevators |
 | **Solar Array** (`STMS_HLS_Solar`) | One per solar bay, four in all |
 | **Leg Shroud** (`STMS_HLS_LegShroud`) | Jettisonable, one over each folded leg |
 | **Docking Hardware** (`STMS_HLS_Docking_M`, `_F`) | SEP's ship-to-ship docking parts in white, for the node on the far side of the core |
 | **Landing Leg** (`STMS_HLS_Leg`) | Use four |
 | **Elevator** (`STMS_HLS_Lift`) | Goes on the `lift` node in the airlock; a Breaking Ground piston, 22.3 m |
+
+## White depot
+
+**Depot Nose (White)** (`STMS_HLS_Depot`) on the HLS core: set the core's **Style** to Depot (no band, landing thrusters off) and **Elevator track** to None. Solar arrays go in its four bays; tankers and the HLS dock to the core's docking node.
 
 ## Two elevators
 
@@ -62,7 +67,7 @@ On the ground: Open Airlock Door, Lower Deck, then slide the elevator's Target E
 
 ## Interiors
 
-`its/scripts/ivalib.py` builds three cabins from `iva_layout.py`: HLS (flight deck and wardroom, airlock deck below), and the Block 3 crew and crew-cargo noses. White panelled rooms with cove lighting, a curved console under the windows and a ladder well, after SpaceX's October 2025 cabin renders. Seats, displays, lockers and galley are HabTechProps and stock props, by name, so **HabTechProps must be installed** or those are missing (KSP logs it; the room and the crew positions still work). Double-click a window to look out. FreeIva works: unbuckle, climb the ladder, leave by the airlock or the docking hatch. Render: `its/ri.sh name STMS_IVA_HLS x,y,z,tx,ty,tz`.
+`its/scripts/ivalib.py` builds four cabins from `iva_layout.py`: HLS (one tall main deck under the dome with a cockpit mezzanine, lockers, wood counters and a table, airlock deck below, after SpaceX's October 2025 renders), HLS Tall (lounge, bunks, galley, flight deck, airlock), and the Block 3 crew and crew-cargo noses. White panelled rooms with cove lighting, a curved console under the windows and a ladder well, after SpaceX's October 2025 cabin renders. Seats, displays, lockers and galley are HabTechProps and stock props, by name, so **HabTechProps must be installed** or those are missing (KSP logs it; the room and the crew positions still work). Double-click a window to look out. FreeIva works: unbuckle, climb the ladder, leave by the airlock or the docking hatch. Render: `its/ri.sh name STMS_IVA_HLS x,y,z,tx,ty,tz`.
 
 ## Other parts made alongside
 

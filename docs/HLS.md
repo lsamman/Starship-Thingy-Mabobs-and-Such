@@ -67,7 +67,7 @@ On the ground: Open Airlock Door, Lower Deck, then slide the elevator's Target E
 
 ## Interiors
 
-`its/scripts/ivalib.py` builds three cabins from `iva_layout.py`: HLS (flight deck and wardroom, airlock deck below), and the Block 3 crew and crew-cargo noses. White panelled rooms with cove lighting, a curved console under the windows and a ladder well, after SpaceX's October 2025 cabin renders. Seats, displays, lockers and galley are HabTechProps and stock props, by name, so **HabTechProps must be installed** or those are missing (KSP logs it; the room and the crew positions still work). Double-click a window to look out. FreeIva works: unbuckle, climb the ladder, leave by the airlock or the docking hatch. Render: `its/ri.sh name STMS_IVA_HLS x,y,z,tx,ty,tz`.
+`its/scripts/ivalib.py` builds four cabins from `iva_layout.py`: HLS (one tall main deck under the dome with a cockpit mezzanine, lockers, wood counters and a table, airlock deck below, after SpaceX's October 2025 renders), HLS Tall (lounge, bunks, galley, flight deck, airlock), and the Block 3 crew and crew-cargo noses. White panelled rooms with cove lighting, a curved console under the windows and a ladder well, after SpaceX's October 2025 cabin renders. Seats, displays, lockers and galley are HabTechProps and stock props, by name, so **HabTechProps must be installed** or those are missing (KSP logs it; the room and the crew positions still work). Double-click a window to look out. FreeIva works: unbuckle, climb the ladder, leave by the airlock or the docking hatch. Render: `its/ri.sh name STMS_IVA_HLS x,y,z,tx,ty,tz`.
 
 ## Other parts made alongside
 
