@@ -176,7 +176,7 @@ if have('ITS_FwdCargo'):
     ncom = 6
     part('ITS_FwdCargo', 'ITS Cargo Section', 'The same nose with the cabins taken out: a hold with two clamshell doors, a payload adapter on the floor, and a ceiling mount for the cargo crane. Nobody aboard, so nobody to complain about the view.',
          'ship cargo bay hold payload doors crane probe nose', 9.5, 62000, 'Payload', 'experimentalRocketry', extra=['vesselType = Ship', RCS_FX],
-         modules=[mod('ModuleAnimateGeneric', 'animationName = bayDoors', 'actionGUIName = Toggle Doors', 'startEventGUIName = Open Doors', 'endEventGUIName = Close Doors', 'allowDeployLimit = true', 'evaDistance = 8'),
+         modules=[mod('ModuleAnimateGeneric', 'animationName = bayDoors', 'actionGUIName = Toggle Doors', 'startEventGUIName = Open Doors', 'endEventGUIName = Close Doors', 'allowDeployLimit = true', 'revClampDirection = true', 'instantAnimInEditor = False', 'evaDistance = 8'),
                   mod('ModuleCargoBay', 'DeployModuleIndex = 0', 'closedPosition = 0', 'lookupRadius = 4.2', 'lookupCenter = 0, -1.0, 0')] + PROBE(4000) +
                  [mod('ModuleLight', 'lightName = bayLight', 'useAnimationDim = true', 'lightBrightenSpeed = 2.5', 'lightDimSpeed = 2.5', 'resourceAmount = 0.1', 'useResources = true'), paint('its_fwd')])
 if have('ITS_FwdTanker'):
