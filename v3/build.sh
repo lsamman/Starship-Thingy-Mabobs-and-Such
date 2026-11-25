@@ -3,7 +3,7 @@
 set -eo pipefail
 cd "$(dirname "$0")"
 B="${BLENDER:-$HOME/Applications/blender-3.6/blender}"
-SEP="${KSP_DIR:-$HOME/.local/share/Steam/steamapps/common/Kerbal Space Program Modded SOL}/GameData/StarshipExpansionProject"
+SEP="${KSP_DIR:-$HOME/.local/share/Steam/steamapps/common/Kerbal Space Program}/GameData/StarshipExpansionProject"
 export SHAB_TEX=build/tex
 mkdir -p build/mu build/tex build/patches
 if [ -z "$SKIP_MODELS" ]; then

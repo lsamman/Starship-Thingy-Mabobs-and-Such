@@ -1,5 +1,5 @@
 """Reads the exported skins back: bones unrotated, weights as authored, every vertex at its modelled place at rest,
-rest bounds that reach the far end of travel, and piston bones at local zero (KSP overwrites that position)."""
+rest bounds that reach the far end of travel, and piston bones at local zero under a parent at the part's origin."""
 import sys, bpy, addon_utils
 addon_utils.enable('io_object_mu')
 from io_object_mu.mu import Mu
@@ -14,6 +14,7 @@ for p in sys.argv[sys.argv.index('--') + 1:]:
         found[t.name] = (W, t.localRotation)
         if t.name.endswith('Servo'):
             assert Vector(t.localPosition).length < 1e-5, f'{t.name} must sit at local zero, has {t.localPosition}'
+            off = M.translation; assert off.length < 1e-4, f'{t.name}: its parent must sit at the part origin (KSP drops the offset in flight), has {tuple(off)}'
         if getattr(o, 'skinned_mesh_renderer', None):
             smr.append((o, W))
         for c in o.children:

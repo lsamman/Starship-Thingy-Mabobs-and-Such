@@ -183,17 +183,17 @@ if have('ITS_FwdTanker'):
     part('ITS_FwdTanker', 'ITS Tanker Section', 'No windows, no cabins, no doors: more propellant where the people would have been. It launches, delivers, comes home, and does not ask what any of it is for.',
          'ship tanker propellant tank refuel nose probe', 2.0, 46000, 'FuelTank', 'experimentalRocketry', extra=['vesselType = Ship', 'fuelCrossFeed = True', RCS_FX], modules=[tank(110)] + PROBE(2500) + [paint('its_fwd')])
 piston = lambda anchor, servo, node, lim, v, vmax, axis: mod('ModuleRoboticServoPiston', f'servoTransformName = {servo}', f'baseTransformName = {anchor}', f'servoAttachNodes = {node}', f'servoSrfMeshNames = {servo}',
-    f'traverseVelocityLimits = 0.05, {vmax}', f'traverseVelocity = {v}', f'hardMinMaxLimits = -{lim},0', f'softMinMaxExtension = -{lim},0', f'mainAxis = {axis}', 'servoMass = 0.05', 'maxMotorOutput = 1500', 'positionSpringMutliplier = 600',
+    f'traverseVelocityLimits = 0.05, {vmax}', f'traverseVelocity = {v}', f'hardMinMaxLimits = -{lim},0', f'softMinMaxExtension = -{lim},0', f'mainAxis = {axis}', 'servoMass = 0.4', 'maxMotorOutput = 1500', 'positionSpringMutliplier = 100',
     'positionDampingMutliplier = 20', 'motorizedMassPerKN = 0.00005', 'motorizedCostPerDriveUnit = 1', 'efficiency = 0.75', 'baseResourceConsumptionRate = 0.01', 'referenceConsumptionVelocity = 1', block('RESOURCE', 'name = ElectricCharge', 'rate = 0.6'))
 if have('ITS_CargoBoom'):
     import layout as LL
-    kw = dict(cat='Payload', tech='veryHeavyRocketry', rules='1,0,1,1,1', profiles='size1, srf', crash=14, skin=1900, brk=1200)
-    part('ITS_CargoBoom', 'ITS Cargo Crane Boom', f'Ceiling rails with a two-stage slide. Top node to the crane mount in the cargo section. With the doors open, slide Target Extension to -{LL.CR_TRAVEL} to carry the hoist out past the hull. Needs Breaking Ground.', 'cargo crane boom winch', mass=.6, cost=2600,
+    kw = dict(cat='Payload', tech='veryHeavyRocketry', rules='1,0,1,1,1', profiles='size1, srf', crash=14, skin=1900, brk=5000)
+    part('ITS_CargoBoom', 'ITS Cargo Crane Boom', f'Ceiling rails with a two-stage slide. Top node to the crane mount in the cargo section. With the doors open, slide Target Extension to -{LL.CR_TRAVEL} to carry the hoist out past the hull; the slider is hidden while the piston is Locked. In action groups, Retract runs it out and Extend brings it in. Needs Breaking Ground.', 'cargo crane boom winch', mass=1.3, cost=2600,
          modules=[piston('BoomAnchor', 'BoomServo', 'hoist', LL.CR_TRAVEL, .3, .6, 'Z')], **kw)
-    part('ITS_CargoHoist', 'ITS Cargo Crane Hoist', f'Two winches on a crossbeam. Top node to the boom, lower node to the platform. With the boom out, slide Target Extension toward -{LL.CR_HOIST} to lower the platform to the surface. Needs Breaking Ground.', 'cargo crane hoist winch', mass=.5, cost=1900,
+    part('ITS_CargoHoist', 'ITS Cargo Crane Hoist', f'Two winches on a crossbeam. Top node to the boom, lower node to the platform. With the boom out, slide Target Extension toward -{LL.CR_HOIST} to lower the platform to the surface. Needs Breaking Ground.', 'cargo crane hoist winch', mass=1.1, cost=1900,
          modules=[piston('CableAnchor', 'HoistServo', 'platform', LL.CR_HOIST, .75, 1, 'Y')], **kw)
     kw['rules'] = '1,0,1,1,1'      # others attach to the deck; the deck itself has no surface node
-    part('ITS_CargoPlatform', 'ITS Cargo Crane Platform', f'A {LL.CR_DECK_W} by {LL.CR_DECK_D} m deck, open at both ends so a rover can drive off. Fix cargo to the deck node or surface attach it, and use Release Deck Cargo on the ground.', 'cargo crane platform elevator', mass=.8, cost=1300,
+    part('ITS_CargoPlatform', 'ITS Cargo Crane Platform', f'A {LL.CR_DECK_W} by {LL.CR_DECK_D} m deck, open at both ends so a rover can drive off. Fix cargo to the deck node or surface attach it, and use Release Deck Cargo on the ground.', 'cargo crane platform elevator', mass=1.2, cost=1300,
          extra=['fx_gasBurst_white = 0.0, 0.02, 0.0, 0.0, 1.0, 0.0, decouple', 'sound_decoupler_fire = decouple'],
          modules=[mod('ModuleDecouple', 'ejectionForce = 1', 'explosiveNodeID = cargo', 'stagingEnabled = False', 'menuName = Release Deck Cargo')], node_attach=None, **kw)
 

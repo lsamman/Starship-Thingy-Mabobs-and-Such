@@ -29,6 +29,6 @@ for s in (-1, 1):
         w.extend(0.0 if (V(p) - top).length < (V(p) - bot).length else 1.0 for p in skin.v[n:])
     g = box(.20, .10, .14, zone=DK, bevel=.012); n = len(skin.v); skin.add(g, T(x, Y, L.APEX_Z + .02)); w.extend([1.0] * (len(skin.v) - n))
 far = (0, Y, L.APEX_Z - L.HOIST_TRAVEL - .2)
-rig('hoist', P, M, 'CableAnchor', 'HoistServo', (0, Y, TOP), (0, Y, L.APEX_Z), skin, w, far)
+rig('hoist', P, M, 'CableAnchor', 'HoistServo', (0, Y + .2, TOP), (0, Y, TOP), skin, w, far)      # the servo at the part's origin
 P.model.location = -V((0, Y, TOP))
 P.export(out); P.save_blend(out)

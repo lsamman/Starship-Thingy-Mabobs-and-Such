@@ -21,6 +21,6 @@ for s in (-1, 1):
         top, bot = V((x + q * .06, 0, CT)), V((x + q * .06, 0, AP)); n = len(sk.v); sk.add(tube([top, bot], .016, 6, zone=Z.cable))
         w.extend(0.0 if (V(p) - top).length < (V(p) - bot).length else 1.0 for p in sk.v[n:])
     g = box(.24, .12, .16, zone=Z.dark, bevel=.015); n = len(sk.v); sk.add(g, T(x, 0, AP + .03)); w.extend([1.0] * (len(sk.v) - n))
-rig('hoist', P, P.det, 'CableAnchor', 'HoistServo', (0, 0, 0), (0, 0, AP), sk, w, (0, 0, AP - L.CR_HOIST - .2))
-P.node('top', (0, 0, 0), (0, 0, 1), 1); P.node('platform', (0, 0, AP), (0, 0, -1), 1)
+rig('hoist', P, P.det, 'CableAnchor', 'HoistServo', (0, .2, 0), (0, 0, 0), sk, w, (0, 0, AP - L.CR_HOIST - .2))
+P.node('top', (0, 0, 0), (0, 0, 1), 3); P.node('platform', (0, 0, AP), (0, 0, -1), 3)
 finish(P)

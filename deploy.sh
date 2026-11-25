@@ -3,8 +3,8 @@
 # The new copy is put in place first and checked; only then are the folders it replaces removed.
 set -e
 cd "$(dirname "$0")"
-if pgrep -x "KSP.x86_64" >/dev/null || pgrep -x KSP_x64 >/dev/null || pgrep -x KSP_x64.exe >/dev/null; then echo "KSP is running; not deploying"; exit 1; fi
-K="${KSP_DIR:-$HOME/.local/share/Steam/steamapps/common/Kerbal Space Program Modded SOL}"
+if pgrep -x "KSP.x86_64" >/dev/null || pgrep -x KSP_x64 >/dev/null || pgrep -x KSP_x64.exe >/dev/null || pgrep -f '^[A-Z]:.*KSP_x64\.exe' >/dev/null; then echo "KSP is running; not deploying"; exit 1; fi
+K="${KSP_DIR:-$HOME/.local/share/Steam/steamapps/common/Kerbal Space Program}"
 N=StarshipThingyMabobsAndSuch
 [ -f "GameData/$N/ITS/Parts/ITS_Booster.mu" ] && [ -f "GameData/$N/Parts/SEP_CW_Boom.mu" ] && [ -f "GameData/$N/Textures/SEP_B3_Ship_Core_5_MASK_BARE.dds" ] && [ -f "GameData/$N/ITS/Parts/STMS_B3_HullCrew.mu" ] || { echo "build is incomplete; not deploying"; exit 1; }
 rm -rf "$K/$N.new"; cp -a "GameData/$N" "$K/$N.new"

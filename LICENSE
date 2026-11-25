@@ -6,6 +6,6 @@ obtaining a copy of this software and associated documentation files, to deal in
 without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies, subject to
 this notice being included in all copies. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
-The V3 mask textures (*_MASK_BARE.dds, built by v3/scripts/bake_masks.py and only present in releases) are derived from
-Starship Expansion Project textures. They and the SEP models shown by the engine rings are All Rights Reserved by their
+The V3 mask textures (*_MASK_BARE.dds, built by v3/scripts/bake_masks.py) and the crew nose hulls (STMS_B3_Hull*.mu, built by
+v3/scripts/derive_nose.py) are derived from Starship Expansion Project art. They and the SEP models shown by the engine rings are All Rights Reserved by their
 authors and are not covered by the licences above.

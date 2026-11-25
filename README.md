@@ -23,7 +23,7 @@ Add-ons for Kari's [Starship Expansion Project](https://github.com/Kari1407/Star
 
 # Install
 
-Download the zip from Releases and copy its `GameData/StarshipThingyMabobsAndSuch` into `GameData`. Delete `GameData/SEPExtras` and `GameData/StarshipITS` if you have them: their parts now live here under the same names, so saves and craft keep working. Craft files are in `Ships/VAB`.
+Download this repository (Code > Download ZIP) and copy `GameData/StarshipThingyMabobsAndSuch` into KSP's `GameData`. Delete `GameData/SEPExtras` and `GameData/StarshipITS` if you have them: their parts now live here under the same names, so saves and craft keep working. Craft files are in `Ships/VAB`.
 
 Needs SEP, ModuleManager and B9PartSwitch. The winch and crane need Breaking Ground.
 
@@ -31,4 +31,9 @@ With Community Category Kit installed, all parts are also under **Starship Thing
 
 ## Build
 
+`./build_all.sh` builds both halves (Blender 3.6 with io_object_mu; Python with numpy and Pillow; SEP installed, for the V3 masks). `SKIP_MODELS=1` and `SKIP_TEX=1` reuse the last build. `./deploy.sh` copies it into the Sol install.
+
+## Licence
+
+See [LICENSE](LICENSE). The V3 mask textures and the two crew nose hulls are derived from SEP's, which are All Rights Reserved, and the engine rings show SEP's engines.
 `./build_all.sh` builds both halves (Blender 3.6 with io_object_mu; Python with numpy and Pillow; SEP installed, for the V3 masks). `SKIP_MODELS=1` and `SKIP_TEX=1` reuse the last build. `./deploy.sh` copies it into the Sol install

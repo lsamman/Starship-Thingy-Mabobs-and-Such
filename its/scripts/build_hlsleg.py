@@ -3,7 +3,8 @@ Stock wheel-module layout as in ITS_Leg. Authored deployed; frame 0 of legDeploy
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hls_common import *
 SHIP = globals().get('SHIP', False)                        # True: the aeroshielded leg for SEP's ship
-P = start('STMS_Ship_Leg' if SHIP else 'STMS_HLS_Leg'); N = 120; F_SWING, F_SLIDE, F_DONE = 70, 25, 100; XA = V((1, 0, 0))
+P = start('STMS_Ship_Leg' if SHIP else 'STMS_HLS_Leg'); N = 120; F_SWING, F_SLIDE, F_DONE, F_TURN = 62, 34, 94, 80      # swing; slide from..to; the foot turns from F_TURN, once it is out of the shell
+XA = V((1, 0, 0))
 H0 = V((0, -(HL.HINGE[0] - HL.R) - .20, 0)); OZ = HL.HINGE[1]     # hinge pin, proud of the hull
 SUSP, RAD = .32, .30; AN = V((0, -(HL.FOOT_R - HL.R), HL.SOLE - OZ + RAD + SUSP))   # ankle at rest
 U = (AN - H0).normalized(); SLEN = (AN - H0).length; TILT = math.atan2(-U.y, -U.z)
@@ -40,12 +41,23 @@ if SHIP:                                                 # shell that swings out
     P.mesh('tube0', tb, MS_, parent=pb, frame=pf)
     KW = dict(shell=HL.SHIP_SHELL, width=HL.SHIP_SHELL_W)
     OFFS = T(0, HL.R, -OZ); sw = T(*H0) @ UNSW.inverted().to_matrix().to_4x4() @ T(*-H0) @ OFFS
-    zs = [.30, .33, .38, .46, .56, .72, .95, 1.3, 1.7, 2.0, 2.2, 2.5, 2.9, 3.3, 3.7, 4.02]; zn_ = [4.06, 4.2, 4.4, 4.6, 4.8, 5.0, 5.15, 5.3, 5.4, 5.45]
+    # the toe stays on the hull, so the shell is open at its lower end and foot and strut slide straight out; the upper fairing is
+    # slotted for the strut, and a strip of shell that swings with the strut fills the slot while it is stowed
+    TOE, TOP, SLOT, STRIP, SW_ = .50, 4.02, 4.66, 4.50, .235
+    zs = [TOE, .56, .72, .95, 1.3, 1.7, 2.0, 2.2, 2.5, 2.9, 3.3, 3.7, TOP]; zt = [.30, .33, .38, .44, TOE - .015]; zn_ = [4.06, 4.2, 4.4, 4.52, SLOT, 4.8, 5.0, 5.15, 5.3, 5.4, 5.45]; zc = [TOP, 4.2, 4.35, STRIP]
+    def keep(g, test):
+        o = Geo(); o.v = list(g.v)
+        for k, f in enumerate(g.f):
+            if test([g.v[i] for i in f]): o.face(list(f), list(g.uv[k]))
+        return o
+    inslot = lambda q: all(abs(v[0]) <= SW_ + 1e-4 for v in q) and max(v[2] for v in q) <= SLOT + 1e-4
+    bl = lambda z_, zone, sc_=None, **k: blister(z_, zone, scale=sc_, n=36, **KW, **k)
     for nm, mt, sc_ in (('shell_steel', MS_, .25), ('shell_tile', MT_, .0781)):
-        P.mesh(nm, Geo().add(blister(zs, Z.steel, scale=sc_, **KW), sw), mt, parent=pb, frame=pf, smooth_angle=50)
-        P.mesh(nm.replace('shell', 'nose'), Geo().add(blister(zn_, Z.steel, scale=sc_, **KW), OFFS), mt, parent=leg, smooth_angle=50)
-    li = Geo().add(recolor(blister(zs[1:], Z.dark, inner=.04, flip=True, **KW), Z.dark), sw)
-    for z in (1.4, 2.6, 3.5): li.add(box(.5 if z > 2 else .9, .07, .06, zone=Z.alu, bevel=.01), sw @ T(0, -HL.R - .40, z))
+        sh_ = Geo().add(bl(zs, Z.steel, sc_), sw); sh_.add(keep(bl(zc, Z.steel, sc_), lambda q: all(abs(v[0]) <= SW_ - .02 for v in q)), sw); P.mesh(nm, sh_, mt, parent=pb, frame=pf, smooth_angle=50)
+        no_ = Geo().add(keep(bl(zn_, Z.steel, sc_), lambda q: not inslot(q)), OFFS); no_.add(keep(bl(zt, Z.steel, sc_), lambda q: all(abs(v[0]) < .36 for v in q)), OFFS)      # notched for the side struts
+        P.mesh(nm.replace('shell', 'nose'), no_, mt, parent=leg, smooth_angle=50)
+    li = Geo().add(recolor(bl(zs, Z.dark, inner=.04, flip=True), Z.dark), sw); lw = Geo()
+    for z in (1.62, 2.6, 3.5): li.add(box(.5, .06, .06, zone=Z.alu, bevel=.01), sw @ T(0, -HL.R - (.62 if z < 2 else .50), z))      # frames behind the strut
     P.mesh('shell_in', li, P.det, parent=pb, frame=pf, smooth_angle=50)
     P.variants = ({'shell_steel', 'nose_steel'}, {'shell_tile', 'nose_tile'})
     P.hull_collider('col_shell', [tuple(sw @ V((x, -math.sqrt(HL.R ** 2 - x * x) - h, z))) for x, h in ((-.5, .1), (-.3, .4), (.3, .4), (.5, .1)) for z in (.8, 3.9)], parent=pb, frame=pf)
@@ -81,13 +93,13 @@ QF = Quaternion((1, 0, 0), math.radians(90 - math.degrees(0)))    # stowed: pad 
 tst = QF @ V((0, 0, -1))
 if tst.y > 0: QF = Quaternion((1, 0, 0), math.radians(-90))
 # parent (piston) sits in the swung frame, so the stowed foot also undoes that swing: it must end up vertical
-for f, l, q in ((0, V((0, 0, 0)), 0), (F_SLIDE, V((0, 0, 0)), 0), (F_DONE, fl, 1), (N, fl, 1)):
-    P.key('legDeploy', fo, f, location=UNSW.inverted() @ V((0, .02, 0)) if q == 0 else l, rotation_quaternion=(UNSW.inverted() @ QF) if q == 0 else Quaternion())
+for f, l, q in ((0, V((0, 0, 0)), 0), (F_TURN, V((0, 0, 0)), 0), (N - 2, fl, 1), (N, fl, 1)):
+    P.key('legDeploy', fo, f, location=UNSW.inverted() @ V((0, -.07 if SHIP else .02, 0)) if q == 0 else l, rotation_quaternion=(UNSW.inverted() @ QF) if q == 0 else Quaternion())
 # side struts: two nested tubes aimed frame by frame
 CD = SLEN - HL.COLLAR                                      # deployed collar distance from hinge, on the last stage
 cl = Geo(); cl.add(tube([at(CD - .08), at(CD + .08)], RS[-1] + .05, 16, zone=Z.black)); [cl.add(cyl(.07, .12, 12, zone=Z.dark, bevel=.01), T(*(at(CD) + XA * s * .2)) @ Ry(90)) for s in (-1, 1)]
 P.mesh('collar', cl, P.det, parent=last, frame=T(*at(CD)))
-FR = sorted({0, 8, 16, 25, 34, 42, 50, 58, 66, 74, 82, 90, F_DONE, N}); sc = bpy.context.scene
+FR = sorted(set(range(0, F_DONE, 6)) | {F_SLIDE, F_SWING, F_DONE, N}); sc = bpy.context.scene
 P.bake_clips(0)                                            # so the collar's path can be read off the posed model
 pos = {}
 for f in FR:

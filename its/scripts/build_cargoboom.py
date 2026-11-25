@@ -33,6 +33,6 @@ for s in (-1, 1):
     add(g, 1.0)
 g = Geo(); bar(g, -RX - .12, RX + .12, L.CR_C - .12, L.CR_C + .12, *BZ, Z.white)
 bar(g, -RX, RX, L.CR_C - .125, L.CR_C + .125, BZ[0] + .05, BZ[0] + .09, Z.stripe, .003); add(g, 1.0)
-rig('boom', P, P.det, 'BoomAnchor', 'BoomServo', (0, 0, 0), (0, L.CR_C, BZ[0]), skin_, w, (0, L.CR_C - L.CR_TRAVEL - .2, BZ[0]))
-P.node('top', (0, 0, 0), (0, 0, 1), 1); P.node('hoist', (0, L.CR_C, BZ[0]), (0, 0, -1), 1)
+rig('boom', P, P.det, 'BoomAnchor', 'BoomServo', (0, .2, 0), (0, 0, 0), skin_, w, (0, L.CR_C - L.CR_TRAVEL - .2, BZ[0]))
+P.node('top', (0, 0, 0), (0, 0, 1), 3); P.node('hoist', (0, L.CR_C, BZ[0]), (0, 0, -1), 3)
 finish(P)

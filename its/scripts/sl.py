@@ -673,6 +673,14 @@ class Part:
                 o.muproperties.separate = True
         path = os.path.join(out_dir, self.name + '.mu')
         mu = export_object(self.root, path)
+        # StagedAnimation only plays its clip; holding the last frame keeps the part where the clip left it
+        held = []
+        def hold(o):
+            for c in getattr(getattr(o, 'animation', None), 'clips', []):
+                if c.name.endswith('Stage'): c.wrapMode = 8; held.append(c.name)
+            for c in o.children: hold(c)
+        hold(mu.obj)
+        if held: mu.write(path)
         for m in getattr(mu, 'messages', []):
             print('EXPORT MSG', m)
         total = sum(self.meta.get('tris', {}).values())

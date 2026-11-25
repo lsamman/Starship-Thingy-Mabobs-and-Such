@@ -156,7 +156,8 @@ for i, (za, zb_) in enumerate(((0, 1.82), (1.82, 3.36), (3.36, 4.64), (4.64, 5.8
     P.hull_collider(f'col_n{i}', [p for z in (HL.Z_OGIVE + za, HL.Z_OGIVE + zb_) for p in ringpts(z, 0, 345, 23)])
 P.hull_collider('col_seat', [(.9 * math.cos(t * math.pi / 8), .9 * math.sin(t * math.pi / 8), z) for z in (zc - .2, zc - .03) for t in range(16)])
 P.hull_collider('col_cap', [tuple(hp(a, HL.Z_OGIVE + z) - dz) for z in (7.41, 7.93, 8.38) for a in range(0, 360, 30)] + [(0, 0, HL.Z_OGIVE + 8.56 - O)], parent=cap, frame=cf)
-P.box_trigger('airlock', climb_frame((0, YB - .28, D0 - O + .75), (0, -1, 0)), (.8, .5, 1.1), 'Airlock')
+AZ_ = D0 - O + .55; print('AIRLOCK z', D0 - O, D1 - O, 'YB', YB, 'RR', RR)
+P.box_trigger('airlock', climb_frame((0, -2.5, AZ_), (0, -1, 0)), (.8, .5, .9), 'Airlock')      # KSP's obstruction ray starts .5 m behind this and runs from the part's origin, our own colliders included: check_airlocks.py
 P.box_trigger('ladder', climb_frame((0, -RR - .14, (HL.Z_SKIN + D0) / 2 - O + .1), (0, -1, 0)), (.5, .3, D0 - HL.Z_SKIN + .2), 'Ladder')
 P.bake_clips(0)
 finish(P)

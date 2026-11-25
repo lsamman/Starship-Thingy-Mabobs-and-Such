@@ -30,16 +30,27 @@ RF = Matrix.Translation(TIP) @ Matrix.Rotation(math.atan2(away.y, away.x), 4, 'Z
 r.add(box(ROOM, RW, .06, zone=Z.deck, center=(xm, 0, -.03))); r.add(box(ROOM, RW + .06, .08, zone=Z.white, bevel=.02, center=(xm, 0, RH)))
 for s in (-1, 1): r.add(box(ROOM, .06, RH, zone=Z.white, bevel=.01, center=(xm, s * RW / 2, RH / 2))); r.add(box(.6, .02, .45, zone=Z.black, bevel=.02, center=(xm, s * (RW / 2 + .03), 1.2))); r.add(box(.06, .48, RH, zone=Z.white, center=(a0 + .03, s * (RW / 2 - .24), RH / 2)))
 r.add(box(.06, RW, RH - 1.35, zone=Z.white, center=(a0 + .03, 0, (RH + 1.35) / 2)))
+bl = Geo(); fl = Geo(); dl = [Geo(), Geo()]
 for k in range(6):
     w = .46 + (.03 if k % 2 else 0); x = .04 + k * .075; rg = [(x, y, z) for y, z in ((-w, -.04), (-w, 1.30), (w, 1.30), (w, -.04))]
-    for a, b in zip(rg, rg[1:] + rg[:1]): r.add(tube([a, b], .05, 8, zone=Z.rubber))
-for s in (-1, 1): r.add(box(.46, .02, 1.34, zone=Z.rubber, center=(.22, s * .47, .64)))
-r.add(box(.46, .96, .02, zone=Z.rubber, center=(.22, 0, 1.31))); r.add(box(.46, .92, .04, zone=Z.deck, center=(.22, 0, -.03))); r.add(box(.10, .9, .03, zone=Z.stripe, center=(.02, 0, -.01)))
+    for a, b in zip(rg, rg[1:] + rg[:1]): bl.add(tube([a, b], .05, 8, zone=Z.rubber))
+for s in (-1, 1): bl.add(box(.46, .02, 1.34, zone=Z.rubber, center=(.22, s * .47, .64)))
+bl.add(box(.46, .96, .02, zone=Z.rubber, center=(.22, 0, 1.31))); fl.add(box(.46, .84, .03, zone=Z.deck, center=(.22, 0, -.03))); fl.add(box(.10, .82, .03, zone=Z.stripe, center=(.02, 0, -.02)))
+for k, sg in enumerate((-1, 1)): dl[k].add(box(.035, .47, 1.30, zone=Z.white, bevel=.008, center=(a0 + .085, sg * .735, .68))); dl[k].add(box(.04, .26, .34, zone=Z.black, bevel=.01, center=(a0 + .085, sg * .735, .98))); dl[k].add(box(.03, .03, .30, zone=Z.alu, bevel=.006, center=(a0 + .115, sg * .56, .62)))      # two leaves, parked behind the jambs
 r.add(box(2.0, 1.1, .04, zone=Z.deck, center=(a1 + .5, 0, -.06)));  rl = Geo(); rl.add(box(1.2, .12, .03, zone=Z.lamp, center=(xm, 0, RH - .055)))
 P.mesh('roommesh', Geo().add(r, RF), P.det, parent=room, frame=RF); P.mesh('roomlamp', Geo().add(rl, RF), LM, parent=room, frame=RF); add_spot(P, 'armLight', RF @ V((xm, 0, RH - .1)), (0, 0, -1), parent=room, power=120, angle=130, reach=4)
-CL = 'crewArm'; NF = 240; l0 = room.location.copy(); q = P.rest_quat(arm)
-for f, l in ((0, l0), (50, l0 + away * 1.2), (NF, l0 + away * 1.2)): P.key(CL, room, f, location=l)
-for f, a in ((0, 0), (44, 0), (NF, 92)): P.key(CL, arm, f, rotation_quaternion=q @ Quaternion((0, 0, 1), math.radians(a)))
+# ---------------- letting go, in stages: gangway in, bellows back, doors shut, room back, arm away. Frame 0 is connected.
+BF = RF @ T(a0, 0, 0); bel = P.empty('bellows', BF, room); P.mesh('bellowsmesh', Geo().add(bl, RF), P.det, parent=bel, frame=BF); gang = P.empty('gangway', RF, room); P.mesh('gangmesh', Geo().add(fl, RF), P.det, parent=gang, frame=RF)
+CL = 'crewArm'; NF = 300; k0 = gang.location.copy()
+for f, x in ((0, 0), (6, 0), (30, .46), (NF, .46)): P.key(CL, gang, f, location=k0 + V((x, 0, 0)))
+for f, x in ((0, 1), (16, 1), (46, .24), (NF, .24)): P.key(CL, bel, f, scale=(x, 1, 1))
+for k, sg in enumerate((-1, 1)):
+    lf = P.empty('leaf%d' % k, RF, room); P.mesh('leafmesh%d' % k, Geo().add(dl[k], RF), P.det, parent=lf, frame=RF); q0 = lf.location.copy()
+    for f, y in ((0, 0), (34, 0), (72, 1), (NF, 1)): P.key(CL, lf, f, location=q0 + V((0, -sg * .495 * y, 0)))
+l0 = room.location.copy(); q = P.rest_quat(arm)
+for f, l in ((0, l0), (62, l0), (112, l0 + away * 1.2), (NF, l0 + away * 1.2)): P.key(CL, room, f, location=l)
+for f, a in ((0, 0), (104, 0), (NF, 92)): P.key(CL, arm, f, rotation_quaternion=q @ Quaternion((0, 0, 1), math.radians(a)))
+P.clips['crewArmStage'] = {k: list(v) for k, v in P.clips[CL].items()}         # StagedAnimation plays its own copy
 seg_collider('col_low0', [p for p in section(H + u1 * .5, u1, 1.0, -.1, -.02)], [p for p in section(E, um, 1.2, -.1, -.02)], arm); seg_collider('col_low1', section(E, u2, 1.2, -.1, -.02), section(END, u2, 1.25, -.1, -.02), arm)
 for s in (-1, 1): k_ = V((-u2.y, u2.x, 0)) * s * .64; seg_collider('col_wall%d' % (s > 0), section(E + u2 * 1.0 + k_, u2, .06, 0, 1.8), section(END + k_, u2, .06, 0, 1.8), arm)
 def bx(nm, c, s): P.hull_collider(nm, [tuple(RF @ V((c[0] + i * s[0] / 2, c[1] + j * s[1] / 2, c[2] + k * s[2] / 2))) for i in (-1, 1) for j in (-1, 1) for k in (-1, 1)], parent=room)
