@@ -6,7 +6,7 @@ from common import *
 import bmesh
 from hls_common import sep_mat
 V = Vector; CANT = 6.0
-for variant, (AZ, Z0, R0, SL) in {'B3': (54, 2.46, 2.618, -.170), 'B1': (40, -.10, 2.637, -.165), 'FB': (45, .06, 2.8125, 0)}.items():          # azimuth, height, hull radius there, dr/dz
+for variant, (AZ, Z0, R0, SL) in {'B3': (54, 2.46, 2.618, -.170), 'B1': (40, -.10, 2.637, -.165), 'B1C': (60, -.10, 2.637, -.165), 'FB': (45, .06, 2.8125, 0)}.items():          # azimuth, height, hull radius there, dr/dz
     P = start('STMS_FwdRCS_' + variant); MS = sep_mat(P, 'stms_steel', 'stms_steel_diff', 'stms_steel_nrm', 'stms_steelmask_diff'); g, dg = Geo(), Geo()
     for s in (-1, 1) + ((-3, 3) if variant == 'FB' else ()):          # the fairing base takes four, all round
         a = math.radians(s * AZ); n = V((math.sin(a), -math.cos(a), -SL)).normalized(); up = V((0, 0, 1)); up = (up - up.dot(n) * n).normalized(); x = up.cross(n)
@@ -14,9 +14,9 @@ for variant, (AZ, Z0, R0, SL) in {'B3': (54, 2.46, 2.618, -.170), 'B1': (40, -.1
         e = V((math.sin(a) * math.sin(math.radians(CANT)), -math.cos(a) * math.sin(math.radians(CANT)), math.cos(math.radians(CANT)))); el = F.to_3x3().inverted() @ e
         # wedge: wide foot, narrower top, running out to nothing aft; the front face square to the exhaust
         fy = lambda h: .16 - el.z / el.y * (h - .07)
-        pts = [(w, y, h) for w, y, h in ((-.17, fy(-.06), -.06), (.17, fy(-.06), -.06), (-.10, fy(.15), .15), (.10, fy(.15), .15), (-.10, -.02, .15), (.10, -.02, .15), (-.15, -.40, -.06), (.15, -.40, -.06), (-.06, -.34, .02), (.06, -.34, .02))]
+        pts = [(w, y, h) for w, y, h in ((-.17, fy(-.022), -.022), (.17, fy(-.022), -.022), (-.10, fy(.15), .15), (.10, fy(.15), .15), (-.10, -.02, .15), (.10, -.02, .15), (-.15, -.40, -.022), (.15, -.40, -.022), (-.06, -.34, .02), (.06, -.34, .02))]
         bm = bmesh.new(); [bm.verts.new(p) for p in pts]; bmesh.ops.convex_hull(bm, input=bm.verts); bm.normal_update()
-        bmesh.ops.bevel(bm, geom=[q for q in bm.edges if q.is_manifold and q.calc_face_angle() > .3], offset=.008, segments=1, affect='EDGES'); bm.normal_update()
+        bmesh.ops.bevel(bm, geom=[q for q in bm.edges if q.is_manifold and q.calc_face_angle() > .3], offset=.008, segments=1, affect='EDGES'); bmesh.ops.triangulate(bm, faces=bm.faces); bm.normal_update()
         for f in bm.faces:
             b = len(g.v); g.v += [tuple(F @ v.co) for v in f.verts]; ax = max(range(3), key=lambda i: abs(f.normal[i])); uv = [(v.co[(0, 1, 0)[ax] if ax != 0 else 1], v.co[(0, 2, 1)[ax]]) for v in f.verts]
             g.face(list(range(b, b + len(f.verts))), [(0.3486 + p * .087, 0.1189 + q * .12) for p, q in uv])
