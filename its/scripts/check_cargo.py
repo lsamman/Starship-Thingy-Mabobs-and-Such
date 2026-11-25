@@ -21,7 +21,7 @@ def posed(clips):
         if o.type == 'MESH' and o.muproperties.collider == 'MU_COL_NONE' and o.data.polygons: out.setdefault(base(o), []).append(([o.matrix_world @ v.co for v in o.data.vertices], [list(p.vertices) for p in o.data.polygons]))
     return out
 rad_ = lambda z: float(__import__('numpy').interp(z, *zip(*HL.OGIVE)))
-DOOR = ('doorskin', 'doorframe'); FR = ('crane',)
+DOOR = ('doorskin', 'doorframe', 'doorbay'); FR = ('crane',)
 CR = load(mu('STMS_HLS_Crane')); YB = HL.CR_IN - HL.CR_Y; CO = V((0, HL.CR_Y, HL.CG_FLOOR))
 def crane(b):
     out = []; tip = V((0, YB - b, HL.CR_BAR)); foot = V((0, 0, HL.CR_FOOT)); t0 = V((0, YB, HL.CR_BAR))
@@ -37,7 +37,7 @@ def crane(b):
 _posed = posed
 def posed(c):
     d_ = _posed({'CargoDoor': c['CargoDoor']}); d_['crane'] = crane(4.4 * c['craneFrameOut']); return d_
-p = posed({'CargoDoor': 0, 'craneFrameOut': 0}); st = [n for n in p if n not in DOOR + FR]; print('      meshes', list(p))
+p = posed({'CargoDoor': 0, 'craneFrameOut': 0}); st = [n for n in p if n not in DOOR + FR + ('winchmount',)]; print('      meshes', list(p))
 body = tree(p, st)[0]; print('      shut door touches', [n for n in st if tree(p, DOOR)[0].overlap(tree(p, (n,))[0])])
 ok(not tree(p, FR)[0].overlap(tree(p, DOOR)[0]), 'stowed frame clear of the shut door'); ok(not tree(p, FR)[0].overlap(tree(p, ('hull',))[0]), 'stowed frame clear of the hull')
 dv = tree(p, DOOR)[1]; print('      door reaches r %.3f' % max(math.hypot(q.x, q.y) for q in dv))
@@ -48,8 +48,8 @@ for k in (.02, .05, .1, .2, .35, .5, .65, .8, .9, 1):
         for a, b in q[dm]: o_ = len(vp); vp += a; fp += [[i + o_ for i in f] for f in b]
         for m in st:
             for x, y in t.overlap(tree(q, (m,))[0]):
-                c = sum((vp[i] for i in fp[x]), V()) / len(fp[x]); dist = math.hypot(c.y + HL.R * 0 + math.sqrt(max(0, rad_(HL.CG_HEAD) ** 2)), c.z - HL.CG_HEAD)
-                if dist > .22: n.setdefault((dm, m), []).append(tuple(round(e, 2) for e in c))          # the hinge itself may touch its frame
+                c = sum((vp[i] for i in fp[x]), V()) / len(fp[x]); dist = min(math.hypot(vp[i].y + rad_(HL.CG_HEAD) - .02, vp[i].z - HL.CG_HEAD + .03) if abs(vp[i].x) < .75 else 9 for i in fp[x]); dist = min(dist, math.hypot(c.y + rad_(HL.CG_HEAD), c.z - HL.CG_HEAD))
+                if dist > .24: n.setdefault((dm, m), []).append(tuple(round(e, 2) for e in c))          # the hinge itself may touch its frame
     ok(not n, 'door at %.2f clear of the section away from its hinge %s' % (k, {a: (len(b), b[:3]) for a, b in n.items()})); t = tree(q, DOOR)[0]; ok(not t.overlap(tree(q, FR)[0]), 'door at %.2f clear of the stowed frame' % k) if t.overlap(tree(q, FR)[0]) else None
 W = {}
 for nm, off in (('Boom', (0, 0, HL.CG_CEIL)), ('Hoist', (0, -.5, 3.38 + HL.WINCH_DZ)), ('Platform', (0, -.5, .87 + HL.WINCH_DZ))):

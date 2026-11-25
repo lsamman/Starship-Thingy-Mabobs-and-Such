@@ -19,7 +19,7 @@ The core and crew section have a **Style** switch: **Original** (black base, leg
 ## Cargo versions
 
 - **Cargo Section (Bay Doors)** (`STMS_HLS_Cargo`): SEP's Block 3 cargo section in white. Winch boom on the ceiling node; the platform reaches the ground at about -25.7.
-- **Cargo Section (Awning Door)** (`STMS_HLS_CargoAwning`): our own, one wide door that swings up. Put the **Crane Frame** (`STMS_HLS_Crane`) on the node by the sill and the Cargo Winch Hoist on the node under its crossbar; open the door, slide the frame's Target Extension to -4.4, then lower the hoist (ground at about -23.5). Or use the winch boom on the ceiling node instead; not both. Set the core's **Elevator track** to None.
+- **Cargo Section (Awning Door)** (`STMS_HLS_CargoAwning`): our own, one wide door that swings up. Put the **Crane Frame** (`STMS_HLS_Crane`) on the node by the sill and the Cargo Winch Hoist on the node under its crossbar; open the door, slide the frame's Target Extension to -4.4, then lower the hoist (ground at about -23.5). Or set **Boom mount** to Beams and use the winch boom on its node instead; not both. The bay is open up to the header tank, about 7 m over the floor. Set the core's **Elevator track** to None.
 
 ## Solar arrays
 
