@@ -2,39 +2,36 @@
 and an opening nose cap over a docking port for Orion. Origin at the joint's stack node."""
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hls_common import *
-P = start('STMS_HLS_Crew'); MH = hull_mat(P, 'hls_crew'); MG = glass_mat(P); LM = lamp_mat(P)
+TALL = globals().get('TALL', False); P = start('STMS_HLS_CrewTall' if TALL else 'STMS_HLS_Crew'); MH = hull_mat(P, 'hls_crew'); MG = glass_mat(P); LM = lamp_mat(P)
 O = HL.Z_TOP; dz = V((0, 0, O)); D0, D1 = HL.DOOR; S0, S1 = HL.SOL_Z; ZC = HL.Z_OGIVE + 7.40
 zs = sorted({HL.Z_SKIN, D0, D1, S0, S1, HL.Z_OGIVE, *[HL.Z_OGIVE + z for z, _ in HL.OGIVE], *[HL.Z_OGIVE + z for z in (.42, 1.33, 2.2, 2.97, 3.75, 4.97, 6.0)]})
 insol = lambda a: any(abs(wrap(a - s)) < HL.SOL_HW for s in HL.SOL_AZ)
 def keep(a, z):
-    if abs(wrap(a)) < HL.TRACK and z < D0: return False
     if abs(wrap(a)) < HL.DOOR_AZ and D0 < z < D1: return False
     if S0 < z < S1 and insol(a): return False
     return True
 hull = skin(zs, 'crew', O, keep); P.mesh('hull', hull, MH, smooth_angle=30)
 d = Geo()
 def put(pts, zone, g=None): quad([p - dz for p in pts], zone, g if g is not None else d)
-# ---------------- track continues up to the door
-TR, RR = HL.TRACK, HL.TRACK_R
-g = fac(RR, HL.Z_SKIN, D0, -TR, TR, Z.white); d.add(g, T(0, 0, -O))
+# ---------------- the rails and ladder go on up to the door
+ct = Geo()
+TR, RR = HL.TRACK, HL.R
 for s in (-1, 1):
-    p = [hp(s * TR, HL.Z_SKIN), hp(s * TR, HL.Z_SKIN, r=RR), hp(s * TR, D0, r=RR), hp(s * TR, D0)]; put(p if s > 0 else p[::-1], Z.white)
-    x = s * (RR * math.sin(math.radians(TR)) - .035); H_ = D0 - HL.Z_SKIN
-    d.add(box(.05, .09, H_, zone=Z.alu, bevel=.01, center=(x, -RR - .03, (D0 + HL.Z_SKIN) / 2 - O)))
-    d.add(box(.02, .05, H_, zone=Z.steel, center=(x - s * .02, -RR - .075, (D0 + HL.Z_SKIN) / 2 - O)))
-    d.add(box(.02, .07, H_, zone=Z.grey, center=(s * .16, -RR - .025, (D0 + HL.Z_SKIN) / 2 - O)))
-for z in np.arange(HL.Z_SKIN + .15, D0, .38): d.add(tube([(-.16, -RR - .05, float(z) - O), (.16, -RR - .05, float(z) - O)], .012, 5, zone=Z.steel))
+    x = s * (HL.TRACK_R * math.sin(math.radians(TR)) - .035); H_ = D0 - HL.Z_SKIN - .06
+    ct.add(box(.05, .09, H_, zone=Z.alu, bevel=.01, center=(x, -RR - .03, (D0 + HL.Z_SKIN) / 2 - O - .03)))
+    ct.add(box(.02, .05, H_, zone=Z.steel, center=(x - s * .02, -RR - .075, (D0 + HL.Z_SKIN) / 2 - O - .03)))
+    ct.add(box(.02, .07, H_, zone=Z.grey, center=(s * .16, -RR - .025, (D0 + HL.Z_SKIN) / 2 - O - .03)))
+for z in np.arange(HL.Z_SKIN + .15, D0 - .08, .38): ct.add(tube([(-.16, -RR - .05, float(z) - O), (.16, -RR - .05, float(z) - O)], .012, 5, zone=Z.steel))
+P.mesh('crewtrack', ct, P.det, smooth_angle=40)
 # ---------------- airlock bay
 XB = HL.R * math.sin(math.radians(HL.DOOR_AZ)); YB = HL.BAY_BACK; az_s = [i * 3.75 - HL.DOOR_AZ for i in range(11)]
 for z, flip in ((D0, False), (D1, True)):
     arc = [hp(a, z) for a in az_s]
     for p, q in zip(arc, arc[1:]):
-        if not flip and max(abs(p.x), abs(q.x)) < hp(TR, z).x + .01:      # the carriage passes through the sill here
-            p, q = (p * ((RR * math.cos(math.radians(1.875))) / math.hypot(p.x, p.y)), q * ((RR * math.cos(math.radians(1.875))) / math.hypot(q.x, q.y)))
         f = [V((p.x, p.y, z)), V((q.x, q.y, z)), V((q.x, YB, z)), V((p.x, YB, z))]; put(f[::-1] if flip else f, Z.deck if not flip else Z.white)
 for s in (-1, 1):
     e = hp(s * HL.DOOR_AZ, D0); p = [V((e.x, e.y, D0)), V((e.x, YB, D0)), V((e.x, YB, D1)), V((e.x, e.y, D1))]; put(p if s < 0 else p[::-1], Z.white)
-    for z in (D0 + .35, D0 + .95): d.add(tube([(s * (XB - .07), -2.3, z - O), (s * (XB - .07), -1.5, z - O)], .018, 6, zone=Z.grey)); [d.add(box(.07, .03, .03, zone=Z.grey, center=(s * (XB - .035), y, z - O))) for y in (-2.25, -1.55)]
+    for z in (D0 + .35, D0 + .70): d.add(tube([(s * (XB - .07), -2.3, z - O), (s * (XB - .07), -1.5, z - O)], .018, 6, zone=Z.grey)); [d.add(box(.07, .03, .03, zone=Z.grey, center=(s * (XB - .035), y, z - O))) for y in (-2.25, -1.55)]
 put([V((-XB, YB, D0)), V((XB, YB, D0)), V((XB, YB, D1)), V((-XB, YB, D1))], Z.white)
 BF = Matrix(((1, 0, 0, 0), (0, 0, -1, YB), (0, 1, 0, (D0 + D1) / 2 - O), (0, 0, 0, 1)))      # +Z toward the door
 d.add(rounded_rect_ring(.98, 1.28, .22, .09, .06, 6, zone=Z.alu), BF)
@@ -60,7 +57,7 @@ add_spot(P, 'doorLight', (0, -1.75, D1 - O - .04), (0, -.25, -1), power=170, ang
 # frame round the door opening
 for s in (-1, 1): d.add(lay(box(.05, D1 - D0 + .1, .016, zone=Z.alu, bevel=.005), s * (HL.DOOR_AZ + .5), (D0 + D1) / 2, O, sink=.004))
 for z in (D0 - .025, D1 + .025):
-    d.add(lay(box(XB * 2.08, .05, .016, zone=Z.alu, bevel=.005), 0, z, O, sink=.004)) if z > D0 else [d.add(lay(box(.50, .05, .016, zone=Z.alu, bevel=.005), s * 13.2, z - .012, O, sink=.004)) for s in (-1, 1)]
+    d.add(lay(box(XB * 2.08, .05, .016, zone=Z.alu, bevel=.005), 0, z, O, sink=.004)) if z > D0 else d.add(lay(box(XB * 2.08, .05, .016, zone=Z.alu, bevel=.005), 0, z - .012, O, sink=.004))
 # ---------------- door: an awning hinged on its top edge
 HY = -HL.R - .02; HZ = D1 - .015; hf = T(0, HY, HZ - O)
 door = Geo(); ids = {}; dd = Geo(); az_d = [a for a in az_s]
@@ -83,6 +80,27 @@ fl.add(lay(quad_patch(.62, .33, FZ, nx=6, ny=2), 0, 22.72, O, sink=-.006)); P.me
 q0 = P.rest_quat(dpiv); NA = 60
 for f, a in ((0, 0), (NA, -108)): P.key('doorOpen', dpiv, f, rotation_quaternion=q0 @ Quaternion((1, 0, 0), math.radians(a)))
 P.hull_collider('col_door', [tuple(dv(a, z, r)) for a in (-18.75, -9, 0, 9, 18.75) for z in (D0 + .01, D1 - .01) for r in (HL.R, HL.R - .06)], parent=dpiv, frame=hf)
+# hinges: pads on the hull over the opening, lugs out to the pin, straps down the door; two struts from the bay's walls hold it up
+for x in (-.55, 0, .55):
+    yh = -math.sqrt(HL.R ** 2 - x * x); z0 = HZ - O
+    d.add(box(.22, .05, .12, zone=Z.alu, bevel=.012), T(x, yh - .012, z0 + .125)); [d.add(box(.026, abs(HY - yh) + .07, .15, zone=Z.alu, bevel=.008), T(x + q, (HY + yh) / 2 + .005, z0 + .075)) for q in (-.075, .075)]
+    for q in (-.075, .075): d.add(cyl(.036, .032, 18, zone=Z.grey, bevel=.006), T(x + q, HY, z0) @ Ry(90)); [d.add(cyl(.012, .02, 8, zone=Z.steel), T(x + q, yh - .04, z0 + .15) @ Rx(90))]
+    d.add(cyl(.018, .21, 12, zone=Z.steel), T(x, HY, z0) @ Ry(90))
+    hd = Geo(); hd.add(cyl(.034, .10, 18, zone=Z.white, bevel=.006), T(x, HY, z0) @ Ry(90)); hd.add(box(.09, abs(HY - yh) + .05, .06, zone=Z.white, bevel=.008), T(x, (HY + yh) / 2 + .005, z0 - .035)); hd.add(box(.10, .022, .34, zone=Z.white, bevel=.008), T(x, yh - .006, z0 - .20))
+    for zz in (-.12, -.30): hd.add(cyl(.013, .012, 8, zone=Z.steel), T(x, yh - .02, z0 + zz) @ Rx(90))
+    P.mesh('doorhinge', hd, P.det, parent=dpiv, frame=hf)
+PV = V((0, HY, HZ - O))
+for s in (-1, 1):
+    X = s * .815; A = V((X, -1.31, HZ - O - .64)); B0 = V((X, -2.50, HZ - O - .55)); L0 = (B0 - A).length; e = (B0 - A).normalized()
+    d.add(box(.10, .12, .12, zone=Z.grey, bevel=.015), T(s * (XB - .045), A.y, A.z)); d.add(cyl(.03, .05, 14, zone=Z.steel), T(X, A.y, A.z) @ Ry(90))
+    db_ = Geo(); db_.add(box(.05, .17, .07, zone=Z.white, bevel=.01), T(X, B0.y - .085, B0.z)); db_.add(cyl(.026, .05, 14, zone=Z.steel), T(X, B0.y, B0.z) @ Ry(90)); P.mesh('doorlug', db_, P.det, parent=dpiv, frame=hf)
+    n_ = 'LR'[s > 0]; fa, fb = T(*A), T(*B0); cy, ro = P.empty('strutCyl' + n_, fa, P.model), P.empty('strutRod' + n_, fb, P.model)
+    P.mesh('strutcyl', strut(A, A + e * (L0 - .04), .026, Z.dark, 12), P.det, parent=cy, frame=fa); P.mesh('strutrod', strut(B0, B0 - e * (L0 - .04), .014, Z.steel, 10), P.det, parent=ro, frame=fb)
+    qa, qb, lb = P.rest_quat(cy), P.rest_quat(ro), ro.location.copy()
+    for f in range(0, NA + 1, 4):
+        B = PV + Quaternion((1, 0, 0), math.radians(-108 * f / NA)) @ (B0 - PV); B.x = X; v_ = B - A; th = math.atan2(v_.z, v_.y) - math.atan2(e.z, e.y); R_ = Quaternion((1, 0, 0), th)
+        P.key('doorOpen', cy, f, rotation_quaternion=qa @ R_); P.key('doorOpen', ro, f, location=lb + (B - B0), rotation_quaternion=qb @ R_)
+    print('STRUT shut %.2f open %.2f' % (L0, (B - A).length))
 # ---------------- windows
 wf = Geo(); WW, WHt = HL.WIN
 for i in range(HL.WIN_N):
@@ -90,6 +108,9 @@ for i in range(HL.WIN_N):
     wf.add(lay(rounded_rect_ring(fr_w, fr_h, .105, .045, .024, 5, zone=Z.black), az, HL.WIN_Z, O))
     wf.add(lay(box(WW + .01, .03, .016, zone=Z.black), az, HL.WIN_Z - .05, O))
     wg.add(lay(pane(WW, WHt, .075, (i * 3 + 1) % 8), az, HL.WIN_Z, O, .08, -.004))
+for rz, rn, rs_, rw, rh in HL.ROWS_TALL if TALL else ():
+    for i in range(rn):
+        az = -rs_ + 2 * rs_ * i / (rn - 1); wf.add(lay(rounded_rect_ring(rw + .05, rh + .05, min(rw, rh) * .34, .034, .018, 4, zone=Z.black), az, rz, O)); wg.add(lay(pane(rw, rh, min(rw, rh) * .28, (i * 5 + int(rz * 7)) % 8), az, rz, O, .06, -.004))
 d.add(wf)
 P.mesh('windows', wg, MG, smooth_angle=60)
 # ---------------- solar bays: four pockets with a node each; the array part brings its own hatch
@@ -126,29 +147,29 @@ d.add(bolts(24, .62, .016), T(0, 0, zc - .03)); d.add(bolts(16, .36, .010), T(0,
 P.node('port', (0, 0, zc - .022), (0, 0, 1), 1)
 # ---------------- bottom: dome, skirt inside
 zb = HL.Z_SKIN - O
-d.add(lathe([(2.765, zb), (2.765, .30), (2.36, .33)], 96, TR, 360 - TR, zone=Z.wall, flip=True)); d.add(lathe([(2.36, .33), (0, .36)], 96, zone=Z.wall, flip=True))
-d.add(fac(2.36, HL.Z_SKIN, O + .33, -TR, TR, Z.wall, flip=True), T(0, 0, -O)); d.add(lathe([(HL.R - .004, zb), (2.765, zb)], 96, TR, 360 - TR, zone=Z.alu, flip=True))
+d.add(lathe([(2.765, zb), (2.765, .30), (2.36, .33)], 96, zone=Z.wall, flip=True)); d.add(lathe([(2.36, .33), (0, .36)], 96, zone=Z.wall, flip=True))
+d.add(lathe([(HL.R - .004, zb), (2.765, zb)], 96, zone=Z.alu, flip=True))
 # ---------------- lights, antennas, RCS
 for s in (-1, 1):
     d.add(lay(box(.30, .12, .09, zone=Z.white, bevel=.02), s * 14, D1 + .20, O)); lamp.add(lay(box(.24, .02, .05, zone=Z.lamp), s * 14, D1 + .135, O, sink=-.035))
     add_spot(P, 'doorLight', hp(s * 14, D1 + .12, .12) - dz, (0, -.35, -1), power=260, angle=95, reach=26)
 P.mesh('lampglow', lamp, LM)
 for az in (95, 265): d.add(lay(cyl(.11, .03, 20, zone=Z.white, bevel=.008), az, 27.2, O)); d.add(lay(box(.34, .34, .02, zone=Z.white, bevel=.008), az, 26.2, O))
-d.add(lay(cyl(.05, .05, 14, zone=Z.dark, bevel=.01), 0, 26.35, O)); d.add(lay(rounded_rect_ring(.2, .14, .04, .03, .03, 4, zone=Z.white), 0, 26.35, O))
+d.add(lay(cyl(.05, .05, 14, zone=Z.dark, bevel=.01), 0, 24.6 if TALL else 26.35, O)); d.add(lay(rounded_rect_ring(.2, .14, .04, .03, .03, 4, zone=Z.white), 0, 24.6 if TALL else 26.35, O))
 spots = []
 for az in (80, 100, 260, 280):
-    z = 24.5; spots += [(az, z, (1, 0, .35)), (az, z + .28, (-1, 0, .35)), (az, z + .56, (0, 1, .35)), (az, z - .28, (0, -1, .35))]
+    z = 25.1; spots += [(az, z, (1, 0, .35)), (az, z + .28, (-1, 0, .35)), (az, z + .56, (0, 1, .35)), (az, z - .28, (0, -1, .35))]
 rcs(P, d, spots, O)
 P.mesh('details', d, P.det, smooth_angle=40)
 # ---------------- nodes, colliders, triggers
-P.node('bottom', (0, 0, 0), (0, 0, -1), 5); P.node('lift', (0, -RR, D0 - O), (0, -1, 0), 1); P.node('floor', (0, YB - .5, D0 - O), (0, 0, 1), 0)
+P.node('bottom', (0, 0, 0), (0, 0, -1), 5); P.node('lift', (0, -HL.TRACK_R, D0 - O), (0, -1, 0), 1); P.node('floor', (0, YB - .5, D0 - O), (0, 0, 1), 0)
 def ringpts(z, a0, a1, n, r=None): return [tuple(hp(a0 + (a1 - a0) * i / n, z, r=r) - dz) for i in range(n + 1)]
 for i, (a0, a1) in enumerate(((18.75, 99.4), (99.4, 180), (180, 260.6), (260.6, 341.25))):
     lo, hi = HL.Z_SKIN, HL.Z_OGIVE
     for j in range(2):
         b0, b1 = a0 + (a1 - a0) * j / 2, a0 + (a1 - a0) * (j + 1) / 2; P.hull_collider(f'col_w{i}{j}', [p for z in (lo, hi) for r in (2.1, HL.R) for p in ringpts(z, b0, b1, 4, r)])
-for s in (-1, 1): P.hull_collider('col_track%d' % (s > 0), [p for z in (HL.Z_SKIN, D0) for r in (2.1, HL.R) for p in ringpts(z, min(s * TR, s * 18.75), max(s * TR, s * 18.75), 3, r)])
-P.hull_collider('col_floor', [(x, y, z) for x in (-XB, XB) for y in (-RR, YB) for z in (D0 - O, D0 - O - .4)])
+for k in range(4): P.hull_collider(f'col_track{k}', [p for z in (HL.Z_SKIN, D0) for r in (2.1, HL.R) for p in ringpts(z, -18.75 + 9.375 * k, -9.375 + 9.375 * k, 3, r)])
+P.hull_collider('col_floor', [(x, y, z) for x in (-XB, XB) for y in (-2.66, YB) for z in (D0 - O, D0 - O - .4)])
 P.hull_collider('col_back', [(x, y, z) for x in (-XB, XB) for y in (YB, YB + .1) for z in (D0 - O, D1 - O)])
 P.hull_collider('col_over', [p for z in (D1, HL.Z_OGIVE) for r in (2.1, HL.R) for p in ringpts(z, -18.75, 18.75, 6, r)])
 P.hull_collider('col_base', [p for z in (zb + O + .55, O + .36) for p in ringpts(z, 0, 345, 23, 2.4)])

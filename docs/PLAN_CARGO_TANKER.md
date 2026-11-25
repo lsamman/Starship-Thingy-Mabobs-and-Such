@@ -1,3 +1,5 @@
+> Plan B (tanker nose) was dropped on 2026-11-25: the depot, `STMS_B3_Depot`, is what was wanted.
+
 # Draft plans: HLS Cargo and Block 3 Tanker
 
 Draft of 24 Nov 2026, nothing built. SEP scale (real x 0.625, mass x 0.244). 1 tank unit of methalox = 3.92 kg, so SEP's 82,000-unit core is 322 t.

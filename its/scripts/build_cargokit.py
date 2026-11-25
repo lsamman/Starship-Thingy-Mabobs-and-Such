@@ -1,5 +1,5 @@
-"""HLS Cargo kit, added as a second MODEL to a copy of SEP's Block 3 cargo section (its/patches/STMS_Variants.cfg): body-mounted solar
-panels round the back of the barrel, a black sill under the doors, bay lights. In SEP's cargo frame: barrel z -3.42..0, doors at azimuth 0."""
+"""HLS Cargo kit, the second MODEL of the cargo section (build_hlscargo.py): body-mounted solar
+panels round the back of the barrel, and bay lights. Same frame: barrel z -3.42..0, door at azimuth 0."""
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hls_common import *
 P = start('STMS_HLS_CargoKit'); MS = P.material('its_solar', spec=(.25, .25, .28), shininess=.6); R = HL.R
@@ -20,9 +20,11 @@ for k, (a0, a1) in enumerate(((108, 144), (162, 198), (216, 252))):
     if M.determinant() < 0: M = Matrix((-V((0, 0, 1)).cross(-o_), o_, V((0, 0, 1)))).transposed().to_4x4()
     M.translation = o_ * (R + .25) + V((0, 0, (Z0 + Z1) / 2)); P.empty(f'cargoSun{k}', M, P.model)
 g = Geo()
+sl_ = Geo()
 for k in range(22):                                          # black sill the platform swings over
-    az = -38.5 + 77 * (k + .5) / 22; a, b = az - 1.75, az + 1.75; q = [pr(x, z, R + o) for o in (-.03, .016) for x, z in ((a, -2.74), (b, -2.74), (b, -2.62), (a, -2.62))]; n = len(g.v); g.v += [tuple(p) for p in q]
-    for f in ((4, 5, 6, 7), (0, 1, 5, 4), (2, 3, 7, 6)): g.face([n + x for x in f], [(Z.stripe if abs(az) < 33 else Z.black).uv(*u) for u in ((0, 0), (.2, 0), (.2, .2), (0, .2))])
+    az = -38.5 + 77 * (k + .5) / 22; a, b = az - 1.75, az + 1.75; q = [pr(x, z, R + o) for o in (-.03, .016) for x, z in ((a, -2.74), (b, -2.74), (b, -2.62), (a, -2.62))]; n = len(sl_.v); sl_.v += [tuple(p) for p in q]
+    for f in ((4, 5, 6, 7), (0, 1, 5, 4), (2, 3, 7, 6)): sl_.face([n + x for x in f], [(Z.stripe if abs(az) < 33 else Z.black).uv(*u) for u in ((0, 0), (.2, 0), (.2, .2), (0, .2))])
+P.mesh('cargo_sill', sl_, P.det)
 lp = Geo()
 for s in (-1, 1):
     for z in (-.4, 2.0):

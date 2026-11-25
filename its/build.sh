@@ -19,4 +19,5 @@ cp build/mu/*.mu build/tex/*.dds build/cfg/*.cfg "$D/Parts/"
 cp build/iva/*.cfg "$D/Parts/"
 cp build/patches/*.cfg patches/*.cfg "$D/Patches/"
 cp extras/* "$D/Extras/"
+mkdir -p ../GameData/StarshipThingyMabobsAndSuch/Plugins; plugin/build.sh "$PWD/build/plugin" && cp build/plugin/STMS.dll ../GameData/StarshipThingyMabobsAndSuch/Plugins/
 python3 scripts/make_craft.py build/mu ../Ships/VAB

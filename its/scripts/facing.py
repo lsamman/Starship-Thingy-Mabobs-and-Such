@@ -87,6 +87,8 @@ def fix_facing(objects, frames, verbose=True, variants=()):
     flipped = doubled = 0
     for o in meshes:
         bm = data[o.name]
+        if o.get('facing_ok'):                           # its faces are wound right already
+            bm.free(); continue
         for k, isl in enumerate(isl_of[o.name]):
             front, back = votes[o.name][k]
             if back <= 0 or back < .15 * front:
