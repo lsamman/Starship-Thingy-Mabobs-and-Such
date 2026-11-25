@@ -80,14 +80,14 @@ for z in (-1.2, .42, 2.0): db.add(tube([tuple(h(a, z, R_(z) - DT - RB - .015)) f
 # inside hinges: brackets hung from the frame over the opening, arms curving down onto the door, a spreader tying them to its first hoop
 for x in (-.42, 0, .42):
     pv = V((x, HY + .02, HZ)); yb = -math.sqrt((R_(HZ + .42) - TH - .02) ** 2 - x * x)
-    for q in (-.075, .075): d.add(box(.03, .15, .50, zone=Z.alu, bevel=.01), T(x + q, (pv.y + yb) / 2 + .08, HZ + .20) @ Rx(math.degrees(math.atan2(yb - pv.y, .42)) * -1)); d.add(cyl(.085, .035, 18, zone=Z.grey, bevel=.008), T(x + q, HY, HZ) @ Ry(90))
+    for q in (-.075, .075): d.add(box(.03, .15, .50, zone=Z.alu, bevel=.01), T(x + q, (pv.y + yb) / 2 + .08, HZ + .20) @ Rx(math.degrees(math.atan2(yb - pv.y, .42)) * -1)); d.add(cyl(.042, .035, 18, zone=Z.grey, bevel=.008), T(x + q, HY, HZ) @ Ry(90))
     d.add(box(.30, .06, .30, zone=Z.alu, bevel=.012), T(x, yb + .05, HZ + .40)); d.add(cyl(.028, .26, 14, zone=Z.steel), T(x, HY, HZ) @ Ry(90))
     path = [V((x, HY, HZ)), V((x, pv.y + .10, pv.z - .10)), V((x, pv.y + .12, pv.z - .30))] + [h(math.degrees(math.asin(x / R_(z))), z, R_(z) - DT - .09) for z in (2.0, 1.4)]
     for q in (-.03, .03): di.add(tube([tuple(p + V((q, 0, 0))) for p in path], .032, 8, zone=Z.white))
-    di.add(cyl(.08, .10, 16, zone=Z.white, bevel=.008), T(x, HY, HZ) @ Ry(90)); di.add(box(.24, .07, .16, zone=Z.white, bevel=.015), T(x, -math.sqrt((R_(1.4) - DT - .06) ** 2 - x * x), 1.4))
+    di.add(cyl(.04, .10, 16, zone=Z.white, bevel=.008), T(x, HY, HZ) @ Ry(90)); di.add(box(.24, .07, .16, zone=Z.white, bevel=.015), T(x, -math.sqrt((R_(1.4) - DT - .06) ** 2 - x * x), 1.4))
 for s in (-1, 1): di.add(strut(h(s * 9.3, 2.0, R_(2.0) - DT - .09), h(s * 30, 1.4, R_(1.4) - DT - .08), .032, Z.white, 8)); di.add(strut(h(s * 9.3, 1.4, R_(1.4) - DT - .09), h(s * 36, .42, R_(.42) - DT - .09), .032, Z.white, 8))
 di.add(tube([tuple(h(a, 2.0, R_(2.0) - DT - .10)) for a in np.arange(-14, 14.1, 4)], .04, 8, zone=Z.white))
-d.add(box(.55, .16, .18, zone=Z.dark, bevel=.025), T(-.21, -R_(3.1) + .34, 3.06)); d.add(cyl(.07, .50, 18, zone=Z.grey, bevel=.01), T(.22, -R_(3.1) + .34, 3.06) @ Ry(90))      # drive
+d.add(box(.55, .16, .18, zone=Z.dark, bevel=.025), T(-.21, -R_(3.0) + .28, 2.93)); d.add(cyl(.07, .50, 18, zone=Z.grey, bevel=.01), T(.22, -R_(3.0) + .28, 2.93) @ Ry(90))      # drive
 for a in np.arange(-AZ + 4, AZ - 3, 7): di.add(box(.07, .05, .10, zone=Z.steel, bevel=.01), T(*h(float(a), S0 + .13, R_(S0) - DT - .02)) @ Rz(float(a)))      # latches along the lower edge
 P.mesh('doorskin', ds, MH, parent=door, frame=hf, smooth_angle=30); P.mesh('doorframe', di, P.det, parent=door, frame=hf); P.mesh('doorbay', db, MB, parent=door, frame=hf, smooth_angle=35); P.mesh('bay', st, MB, smooth_angle=35)
 q0 = P.rest_quat(door)
@@ -95,6 +95,20 @@ for f, a in ((0, 0), (90, -HL.CG_SWING)): P.key('CargoDoor', door, f, rotation_q
 for i in range(7):
     a0, a1 = -AZ + 15 * i, -AZ + 15 * (i + 1)
     P.hull_collider(f'col_door{i}', [tuple(h(a, z, R_(z) - o)) for a in (a0, (a0 + a1) / 2, a1) for z in (S0 + .02, 0, H0 - .02) for o in (0, .09)], parent=door, frame=hf)
+# ---------------- ramp over the sill, folded inward on its hinge; level with a lowered floor when out
+RY, RZ_, RW, RL = HL.RAMP_Y, HL.RAMP_Z, HL.RAMP_W, HL.RAMP_L; rf = T(0, RY, RZ_ - .03); ramp = P.empty('ramp', rf, P.model); rg = Geo()
+rg.add(box(2 * RW, RL - .06, .035, zone=Z.deck, bevel=.006), T(0, RY - RL / 2 - .01, RZ_ - .0175)); rg.add(box(2 * RW, .07, .037, zone=Z.stripe), T(0, RY - RL + .045, RZ_ - .0175))
+for x in np.linspace(-RW + .1, RW - .1, 5): rg.add(box(.07, RL - .12, .03, zone=Z.alu, bevel=.006), T(float(x), RY - RL / 2, RZ_ - .05))
+for x in (-1.2, 0, 1.2):                                 # leaf knuckles and straps onto the plate; the fixed knuckles and pins are on the posts
+    for q in (-.055, .055): rg.add(cyl(.042, .05, 16, zone=Z.grey, bevel=.006), T(x + q, RY, RZ_ - .03) @ Ry(90))
+    rg.add(box(.16, .34, .016, zone=Z.alu, bevel=.004), T(x, RY - .20, RZ_ - .043)); [rg.add(cyl(.014, .008, 8, zone=Z.steel), T(x + a_, RY - b_, RZ_ - .054) @ Rx(180)) for a_ in (-.05, .05) for b_ in (.12, .30)]
+rg.add(tube([(-.95, RY, RZ_ - .03), (-.16, RY, RZ_ - .03)], .022, 10, zone=Z.steel)); rg.add(tube([(.16, RY, RZ_ - .03), (.95, RY, RZ_ - .03)], .022, 10, zone=Z.steel))
+P.mesh('rampplate', rg, P.det, parent=ramp, frame=rf); qr = P.rest_quat(ramp)
+for f, a in ((0, 180), (80, 0)): P.key('rampOut', ramp, f, rotation_quaternion=qr @ Quaternion((1, 0, 0), math.radians(-a)))
+P.key('rampOut', ramp, 40, rotation_quaternion=qr @ Quaternion((1, 0, 0), math.radians(-90)))
+P.hull_collider('col_ramp', [(x, y, z) for x in (-RW, RW) for y in (RY - .02, RY - RL) for z in (RZ_, RZ_ - .06)], parent=ramp, frame=rf)
+for x in (-1.2, 0, 1.2): d.add(box(.14, .10, RZ_ - .06 - FL, zone=Z.grey, bevel=.01), T(x, RY, (RZ_ - .06 + FL) / 2)); d.add(cyl(.045, .05, 16, zone=Z.alu, bevel=.006), T(x, RY, RZ_ - .03) @ Ry(90)); d.add(cyl(.02, .20, 12, zone=Z.steel), T(x, RY, RZ_ - .03) @ Ry(90))
+for s in (-1, 1): d.add(cyl(.05, .20, 18, zone=Z.white, bevel=.01), T(s * .60, RY, RZ_ - .03) @ Ry(90)); d.add(box(.10, .12, RZ_ - .06 - FL, zone=Z.grey, bevel=.01), T(s * .60, RY, (RZ_ - .06 + FL) / 2))      # rotary actuators
 # ---------------- flag on the nose, RCS, colliders, nodes
 fx, fy, fw, fh = L.FLAG; fl_ = Geo().add(lay(quad_patch(.95, .50, Zone(fx, fy, fw, fh, atlas=2048), nx=8, ny=4), 0, O + 5.1, O, sink=-.004)); P.mesh('flag', fl_, P.det)
 spots = []
@@ -111,5 +125,5 @@ for i in range(12):
     for k, (z0, z1) in enumerate(((H0, 3.7), (3.7, TP))): P.hull_collider(f'col_u{i}{k}', [p for z in (z0, z1) for o in (0, .12) for p in ring_(z, 30 * i, 30 * i + 30, 3, R_(z) - o)])
 P.hull_collider('col_ceil', [p for z in (TP, TP + .12) for p in ring_(z, 0, 345, 23, R_(z) - .06)])
 for i, (za, zb) in enumerate(((TP, 5.81), (5.81, 7.40), (7.40, 8.52))): P.hull_collider(f'col_n{i}', [p for z in (za, zb) for p in ring_(z, 0, 345, 23)])
-P.node('bottom', (0, 0, HL.Z_TOP - O), (0, 0, -1), 5); P.node('cargo', (0, 0, FL), (0, 0, 1), 4); P.node('winch', (0, 0, CE), (0, 0, -1), 3); P.node('crane', (0, HL.CR_Y, FL), (0, 0, 1), 2)
+P.node('bottom', (0, 0, HL.Z_TOP - O), (0, 0, -1), 5); P.node('cargo', (0, 0, FL), (0, 0, 1), 4); P.node('winch', (0, 0, CE), (0, 0, -1), 3); P.node('crane', (0, HL.CR_Y, FL), (0, 0, 1), 2); P.node('floor1', (0, HL.FLOORS['Mid'][0], FL), (0, 0, 1), 2); P.node('floor2', (0, HL.FLOORS['Top'][0], FL), (0, 0, 1), 2)
 P.bake_clips(0); finish(P)

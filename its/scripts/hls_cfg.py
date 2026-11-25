@@ -56,7 +56,8 @@ def write(G):
                   mod('ModuleCargoBay', 'DeployModuleIndex = 0', 'closedPosition = 0', 'lookupRadius = 3.6', 'lookupCenter = 0, 0.8, 0', 'nodeInnerAft = cargo'),
                   res('ElectricCharge', 2000), rcs(34), sun(0), sun(1), sun(2), light('cargoLight'), cc(['cargo_lamps'], 'Bay Lights: On', 'Bay Lights: Off', 'Bay Lights'),
                   mod('ModuleB9DisableTransform', 'transform = cargo_sill'), G['livery']('HLS_Markings', 'Markings', [('Flag', 'Flag', 'gray', ['flag']), ('None', 'Plain', 'white', [])]),
-                  G['livery']('HLS_WinchMount', 'Boom mount', [('None', 'None', 'gray', []), ('Beams', 'Beams (for the winch boom)', 'white', ['winchmount'])])])
+                  G['livery']('HLS_WinchMount', 'Boom mount', [('None', 'None', 'gray', []), ('Beams', 'Beams (for the winch boom)', 'white', ['winchmount'])]),
+                  anim('rampOut', 'Put Ramp Out', 'Fold Ramp In', 'Ramp')])
     part('STMS_HLS_Leg', 'Starship HLS Landing Leg', 'One of four. Hangs folded down its black panel, then swings out, telescopes and puts an octagonal pad on the regolith, held by a strut to either side. Use four, on the marked nodes.',
          T + ' landing leg gear ground', .6, 4500, 'Ground', 'veryHeavyRocketry', rules='1,0,0,0,0', profiles='srf, size1', crash=30, skin=2000, brk=3000,
          extra=[block('EFFECTS', block('deploy', SND('elev_start'), SND('elev_loop', True)), block('deployed', SND('elev_stop')), block('retract', SND('elev_start'), SND('elev_loop', True, .6)), block('retracted', SND('elev_stop', False, .75)))],
@@ -118,6 +119,15 @@ def write(G):
         part('STMS_HLS_Crane', 'Starship HLS Crane Frame', f'<#ef7b06>Goes on the crane node by the sill of the awning-door cargo section; hang the Cargo Winch Hoist under its crossbar.</color> A frame that leans out over the sill with the winch on it. Open the door, lift the load clear of the floor, then slide <b>Target Extension</b> to -{HL.CR_TRAVEL}. The slider is hidden while the piston is <b>Locked</b>. In action groups, Retract runs it out and Extend brings it in.',
              T + ' crane frame winch hoist cargo', .9, 3200, 'Payload', 'veryHeavyRocketry', rules='1,0,1,1,0', profiles='size1, srf', crash=14, skin=1900, brk=5000,
              modules=[G['piston']('CraneAnchor', 'CraneServo', 'hoist', HL.CR_TRAVEL, .25, .5, 'Z'), look])
+    for w, title, txt, m in (('Mid', 'Starship HLS Cargo Floor (Mid)', 'Carries the second load over the stowed crane. Room for about 2.3 m of it, or 1.3 m with a Top floor fitted.', .6), ('Top', 'Starship HLS Cargo Floor (Top)', 'Carries a third, flat load, up to about 0.8 m tall, under the header tank, and lands on the Mid floor.', .5)):
+        if not have('STMS_HLS_Floor' + w): continue
+        y, zp, zr, cy, ro = HL.FLOORS[w]; tr = round(zp - zr, 2)
+        part('STMS_HLS_Floor' + w, title, f'<#ef7b06>Goes on node {"floor1" if w == "Mid" else "floor2"} of the awning-door cargo section.</color> {txt} Keep the load on a decoupler or docking port until the floor is down. Crane out and ramp out first, then slide <b>Target Extension</b> to -{tr}. The slider is hidden while the piston is <b>Locked</b>. In action groups, Retract lowers it and Extend raises it.',
+             T + ' cargo floor deck pez stack dispenser elevator rover', m, 3000, 'Payload', 'veryHeavyRocketry', rules='1,0,1,1,0', profiles='size1, srf', crash=14, skin=1900, brk=5000,
+             modules=[G['piston']('FloorAnchor', 'FloorServo', 'cargo', tr, .4, 1, 'Y')])
+    if have('STMS_HLS_Tray'):
+        part('STMS_HLS_Tray', 'Starship HLS Cargo Tray', f'<#ef7b06>Goes on the top node of a cargo floor, carriage to the door.</color> For loads without wheels: with the floor down and the winch platform up under the ramp, slide <b>Target Extension</b> to -{HL.TRAY_TRAVEL} to run the load out over the platform, then decouple it. It drops a hand\'s width onto the deck.',
+             T + ' cargo tray slide pallet', .3, 1800, 'Payload', 'veryHeavyRocketry', rules='1,0,1,1,0', profiles='size1, srf', crash=14, skin=1900, brk=5000, modules=[G['piston']('TrayAnchor', 'TrayServo', 'cargo', HL.TRAY_TRAVEL, .3, .6, 'Z')])
     if have('STMS_B3_Depot'):
         import depot_layout as D
         dt = mod('ModuleB9PartSwitch', 'moduleID = HLS_Fuel', 'switcherDescription = Propellant', f'baseVolume = {D.UNITS}', block('SUBTYPE', 'name = Methalox', 'title = Methalox', 'tankType = ITSLMOX', 'percentFilled = 0', 'primaryColor = #8fb7d9', 'secondaryColor = #e8e8e8'))

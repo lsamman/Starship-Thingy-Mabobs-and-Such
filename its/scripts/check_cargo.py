@@ -36,7 +36,7 @@ def crane(b):
     return out
 _posed = posed
 def posed(c):
-    d_ = _posed({'CargoDoor': c['CargoDoor']}); d_['crane'] = crane(4.4 * c['craneFrameOut']); return d_
+    d_ = _posed({'CargoDoor': c['CargoDoor'], 'rampOut': 0}); d_['crane'] = crane(4.4 * c['craneFrameOut']); return d_
 p = posed({'CargoDoor': 0, 'craneFrameOut': 0}); st = [n for n in p if n not in DOOR + FR + ('winchmount',)]; print('      meshes', list(p))
 body = tree(p, st)[0]; print('      shut door touches', [n for n in st if tree(p, DOOR)[0].overlap(tree(p, (n,))[0])])
 ok(not tree(p, FR)[0].overlap(tree(p, DOOR)[0]), 'stowed frame clear of the shut door'); ok(not tree(p, FR)[0].overlap(tree(p, ('hull',))[0]), 'stowed frame clear of the hull')
@@ -94,4 +94,53 @@ for i in range(0, 121, 8):
         if o.type == 'MESH' and o.muproperties.collider == 'MU_COL_NONE' and o.data.polygons: l.setdefault(base(o), []).append(([o.matrix_world @ v.co for v in o.data.vertices], [list(f.vertices) for f in o.data.polygons]))
     M = Matrix.Rotation(math.radians(45), 4, 'Z') @ Matrix.Translation((0, -HL.R, HL.HINGE[1])); hits = {n: [m for m in pods if tree(l, (n,), M)[0].overlap(tree(core, (m,))[0])] for n in l}; hits = {a: b for a, b in hits.items() if b}
     if hits or i in (0, 120): ok(not hits, 'leg frame %d clear of its pod %s' % (i, hits))
+# ---------------- moving floors, ramp, tray
+FLR = {w: load(mu('STMS_HLS_Floor' + w)) for w in ('Mid', 'Top')}; MOVE = ('floordeck', 'floorlip')
+def floor(w, d, part=None):
+    oy = HL.FLOORS[w][0]; F0 = FLR[w]; M = Matrix.Translation((0, oy, HL.CG_FLOOR)); o = []
+    for n, l in F0.items():
+        mv = n in MOVE
+        if part == 'deck' and not mv or part == 'frame' and mv: continue
+        for vs, fs in l: o.append(([M @ q + (V((0, 0, -d)) if mv else V()) for q in vs], fs))
+    return tree({'x': o})[0]
+def boxt(x, y0, y1, z0, z1): return tree({'x': [([V((sx * x, y, z)) for sx in (-1, 1) for y in (y0, y1) for z in (z0, z1)], [[0, 1, 3, 2], [4, 6, 7, 5], [0, 4, 5, 1], [2, 3, 7, 6], [0, 2, 6, 4], [1, 5, 7, 3]])]})[0]
+TR_ = {w: HL.FLOORS[w][1] - HL.FLOORS[w][2] for w in FLR}
+for w in FLR:
+    for o in (None,):
+        load(mu('STMS_HLS_Floor' + w)); q = [x for x in bpy.data.objects if base(x) in ('FloorServo', 'FloorAnchor')]; ok(all((x.matrix_world.translation - [y for y in bpy.data.objects if y.parent is None][0].matrix_world.translation).length < 1e-4 for x in q) and len(q) == 2, w + ': anchor and servo at the origin')
+ramp_in = _posed({'CargoDoor': 0}); ro = _posed({'CargoDoor': 1, 'rampOut': 1}); ri = _posed({'CargoDoor': 1, 'rampOut': 0})
+ig = lambda n: n == 'bay' or n == 'details'
+def hits(t, d, names=None): return [m for m in d if (names is None or m in names) and m != 'winchmount' and t.overlap(tree(d, (m,))[0])]
+W0 = {n: tree(W[n][0], None, Matrix.Translation((0, -.5, (3.38 if n == 'Hoist' else .87) + HD)))[0] for n in ('Hoist', 'Platform')}; wo = {n: tree(W[n][0], None, Matrix.Translation((0, -4.9, (3.38 if n == 'Hoist' else .87) + HD)))[0] for n in W0}
+for k in (0, .05, .1, .2, .35, .5, .75, 1):
+    q = _posed({'CargoDoor': k})
+    for w in FLR: h = hits(floor(w, 0), q, DOOR + ('rampplate',)); ok(not h, '%s parked clear of the door at %.2f %s' % (w, k, h))
+KIT = tree(load(mu('STMS_HLS_CargoKit')), ('cargo_trim', 'cargo_lamps'))[0]
+for w in FLR:
+    fr = floor(w, 0, 'frame'); cr0 = tree({'x': crane(0)})[0]
+    ok(not fr.overlap(cr0) and not floor(w, 0).overlap(cr0), w + ' parked clear of the stowed crane')
+    for n in W0: ok(not floor(w, 0).overlap(W0[n]), '%s parked clear of the stowed %s' % (w, n))
+    for b in (1, 2, 3, 4.4): ok(not floor(w, 0).overlap(tree({'x': crane(b)})[0]), '%s clear of the crane at %.1f' % (w, b))
+    ok(not fr.overlap(KIT), w + ' frame clear of the lamps')
+    for i in range(0, 13):
+        d = TR_[w] * i / 12; t = floor(w, d, 'deck'); h = hits(t, ro, ('hull', 'details', 'bay', 'doorframe', 'doorbay', 'rampplate')); ok(not h, '%s down %.2f clear of the bay and ramp %s' % (w, d, h)); ok(not t.overlap(KIT), '%s down %.2f clear of the lamps' % (w, d)) if t.overlap(KIT) else None
+        cx = tree({'x': crane(4.4)})[0]; ok(not t.overlap(cx), '%s down %.2f clear of the crane (out)' % (w, d)) if t.overlap(cx) else None
+        ot = floor('Top' if w == 'Mid' else 'Mid', 0 if w == 'Mid' else TR_['Mid']); ok(not t.overlap(ot) or (w == 'Top' and i == 12), '%s down %.2f clear of the other floor' % (w, d)) if t.overlap(ot) else None
+        # loads: 1.9 x 2.9 m
+        for hh in ((2.2,) if w == 'Mid' and d > TR_['Mid'] * .25 else (.8,)):
+            z = HL.FLOORS[w][1] + HL.DECK_T + .06 - d; bx = boxt(.95, -1.45, 1.45, z, z + hh); h = hits(bx, ro, ('hull', 'details', 'bay', 'doorframe', 'doorbay', 'rampplate')); ok(not h, '%s down %.2f: %.2f m load clear %s' % (w, d, hh, h))
+ok(not floor('Mid', 0).overlap(floor('Top', 0)), 'both floors parked apart'); ok(not boxt(.95, -1.2, 1.2, HL.FLOORS['Mid'][1] + .17, HL.FLOORS['Mid'][1] + .17 + 2.2).overlap(tree(ramp_in, ('details', 'bay', 'hull', 'doorframe', 'doorbay'))[0]), 'mid floor: 1.9 x 2.4 x 2.2 m load parked under the header tank, door shut')
+h = hits(tree(ramp_in, ('rampplate',))[0], ramp_in, DOOR + ('hull',)); ok(not h, 'ramp folded clear of the shut door %s' % h)
+ok(not tree(ri, ('rampplate',))[0].overlap(tree({'x': crane(0)})[0]), 'ramp folded clear of the crane')
+for k in (.0, .25, .5, .75, 1):
+    q = _posed({'CargoDoor': 1, 'rampOut': k}); t = tree(q, ('rampplate',))[0]; h = hits(t, q, ('hull', 'doorframe', 'doorbay', 'doorskin')); ok(not h, 'ramp at %.2f clear %s' % (k, h)); ok(not t.overlap(tree({'x': crane(4.4)})[0]), 'ramp at %.2f clear of the crane (out)' % k)
+v = tree(ro, ('rampplate',))[1]; print('      ramp out y %.2f..%.2f z %.2f..%.2f' % (min(q.y for q in v), max(q.y for q in v), min(q.z for q in v), max(q.z for q in v)))
+TY_ = load(mu('STMS_HLS_Tray')); zt = HL.FLOORS['Mid'][2] + HL.DECK_T + HL.CG_FLOOR * 0
+for e in (0, 1, 2, 3, 4.1):
+    M = Matrix.Translation((0, 0, zt)); t = tree(TY_, ('traycar',), Matrix.Translation((0, -e, 0)) @ M); h = hits(t[0], ro, ('hull', 'doorframe', 'doorbay', 'doorskin', 'rampplate')); ok(not h, 'tray %.1f clear %s' % (e, h)); ok(not t[0].overlap(tree({'x': crane(4.4)})[0]), 'tray %.1f clear of the crane' % e)
+# the platform brought up under the ramp's tip, the tray's carriage over it
+pz = min(q.z for q in tree(ro, ('rampplate',))[1]); P0 = tree(W['Platform'][0], None, Matrix.Translation((0, -4.9, .87 + HD)))[1]
+dk = -.0 + .87 + HD
+for drop in (1.4, 1.5, 1.55, 1.6, 1.7, 1.8):
+    t, v = tree(W['Platform'][0], None, Matrix.Translation((0, -4.9, .87 + HD - drop))); print('      platform hoist -%.2f: deck z %.2f, touches ramp %s, tray %s, hull %s' % (drop, dk - drop, bool(t.overlap(tree(ro, ('rampplate',))[0])), bool(t.overlap(tree(TY_, ('traycar',), Matrix.Translation((0, -4.1, zt)))[0])), bool(t.overlap(tree(ro, ('hull',))[0]))))
 print('check_cargo:', bad, 'failures')

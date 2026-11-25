@@ -59,5 +59,10 @@ CG_FLOOR, CG_CEIL, CG_TOP = -2.80, 2.24, 4.64      # floor, winch mount, bulkhea
 CG_SWING = 112
 CR_X, CR_Y, CR_FOOT, CR_BAR, CR_TRAVEL = 1.74, -1.72, .34, 4.36, 4.4     # crane frame: legs either side, pivots' y, pivot and crossbar heights over the bay floor, travel
 CR_IN = -.5                  # where the crossbar stands when it is in (the hoist and its platform fit behind the shut door there)
+# ---- moving floors for several loads, in the cargo section's frame: part origin y, parked underside, resting underside, column y's, outline radius
+DECK_W, DECK_T, DECK_Y = 1.5, .11, (-1.98, 1.92); COL_X = 1.73
+FLOORS = {'Mid': (1.0, 1.72, CG_FLOOR + .07, (.0, 1.35), 2.28), 'Top': (.3, 3.13, CG_FLOOR + .19, (.45, .95), 2.13)}
+RAMP_Y, RAMP_Z, RAMP_W, RAMP_L = -2.10, CG_FLOOR + .18, 1.5, 1.5      # hinge, upper face when out (level with the mid floor), half-width, length
+TRAY_TRAVEL = 4.1
 WINCH_DZ = CG_CEIL - 3.97
 PAD = .003
