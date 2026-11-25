@@ -38,7 +38,10 @@ namespace STMS
             }
             tracks = panel.part.partInfo.partPrefab.FindModuleImplementing<ModuleDeployableSolarPanel>().isTracking;
             pivot = part.FindModelTransform(panel.pivotName);
-            tiltRest = tilt.localRotation;
+            // rest poses come from the prefab: a copy made in the editor (symmetry, alt-click) starts with its source's pose, tilt included
+            Transform tilt0 = part.partInfo.partPrefab.FindModelTransform(tiltTransform), pivot0 = part.partInfo.partPrefab.FindModelTransform(panel.pivotName);
+            tiltRest = tilt0 != null ? tilt0.localRotation : tilt.localRotation;
+            if (pivot0 != null) panel.originalRotation = pivot0.localRotation;
             Animation[] anims = part.FindModelAnimators(panel.animationName);
             if (anims.Length > 0) deployAnim = anims[0][panel.animationName];
             if (panel.deployState == ModuleDeployablePart.DeployState.RETRACTED)

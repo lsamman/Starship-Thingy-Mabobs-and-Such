@@ -66,33 +66,73 @@ for s in (-1, 1):
     tk.add(box(.02, .07, ZT - .2, zone=Z.grey, center=(s * .16, -RR - .025, ZT / 2)))
 for z in np.arange(.35, ZT - .05, .38): tk.add(tube([(-.16, -RR - .05, float(z)), (.16, -RR - .05, float(z))], .012, 5, zone=Z.steel))
 P.mesh('track', tk, P.det, smooth_angle=40)
-# ---------------- base: lip, inner skirt, stringers, engine plate with wells for SEP's vacuum Raptors
-ZP = HL.Z_SL; RI = 2.77
-d.add(lathe([(HL.R, 0), (HL.R - .16, 0)], HL.SIDES, zone=Z.alu, flip=True))
-d.add(lathe([(RI - .035, 0), (RI - .035, .05), (RI, .05)], HL.SIDES, zone=Z.dark, flip=True))
-d.add(lathe([(RI, .05), (RI, ZP)], HL.SIDES, zone=Z.wall, flip=True))
-for k in range(48):
-    az = 3.75 + 7.5 * k
-    d.add(box(.045, .05, ZP - .1, zone=Z.alu, bevel=.008), on_cyl(az, ZP / 2, RI - .012) @ Matrix(((1, 0, 0, 0), (0, 0, 1, 0), (0, -1, 0, 0), (0, 0, 0, 1))))
-    a, c = on_cyl(az - 3, .09, RI - .022).translation, on_cyl(az + 3, .36, RI - .022).translation
-    d.add(strut(a, c, .013, Z.grey, 5)); d.add(strut(on_cyl(az + 3, .09, RI - .022).translation, on_cyl(az - 3, .36, RI - .022).translation, .013, Z.grey, 5))
-d.add(ring(RI - .035, RI, .36, .42, Z.alu, 96)); d.add(ring(RI - .04, RI, 1.12, 1.18, Z.alu, 96))
+# ---------------- engine bay, laid out as on SEP's Block 3 ship: hat-stringer skirt with four hoops, flat ring, cone, engine puck
+from mathutils.geometry import delaunay_2d_cdt
+ZP = HL.Z_SL; RI = 2.787; ZC = 2.25; RC0, RC1 = 1.09, 1.98; WR = .47; aft = Geo()
+MA = sep_mat(P, 'hls_aft', 'hls_aft_diff', 'hls_aft_nrm', 'stms_steelmask_diff')
+SW_ = {'dark': (.01, .90), 'straw': (.90, .90), 'black': (.01, .01), 'bright': (.90, .01)}        # swatches in the sheet's corners, .09 wide
+class _S:
+    def __init__(s, k): s.o = SW_[k]
+    def uv(s, a, b): return (s.o[0] + .09 * (a % 1.0001), s.o[1] + .09 * (b % 1.0001))
+    def uv_m(s, a, b, offs=(0, 0)): return s.uv(a * .4, b * .4)
+S = {k: _S(k) for k in SW_}; puv = lambda x, y: (.5 + x / 6.6, .5 + y / 6.6)
+def rev(prof, k, n, m=None, a0=0.0):                       # surface of revolution in one swatch
+    g = Geo(); g.v = [(r * math.sin(TAU * i / n + a0), -r * math.cos(TAU * i / n + a0), z) for r, z in prof for i in range(n)]
+    for q in range(len(prof) - 1):
+        for i in range(n):
+            i2 = (i + 1) % n; t0, t1 = (i % 8) / 8, (i % 8 + 1) / 8
+            g.face([q * n + i, (q + 1) * n + i, (q + 1) * n + i2, q * n + i2], [S[k].uv(u_, .05 + .9 * w_ / len(prof)) for u_, w_ in ((t0, q), (t0, q + 1), (t1, q + 1), (t1, q))])
+    aft.add(g, m) if m is not None else aft.add(g)
 vac = [(HL.R_VAC * math.sin(math.radians(a)), -HL.R_VAC * math.cos(math.radians(a))) for a in (60, 180, 300)]
-outer = [(p.x, p.y) for p in (hp(a, 0, r=RI) for a in np.arange(0, 359.9, 3.75))]
-WR = .56
-d.add(plate(outer, [circ(WR, 32, *v) for v in vac], ZP, Z.dome))
-for i, (x, y) in enumerate(vac):
-    d.add(lathe([(WR, ZP), (WR, HL.Z_VAC), (0, HL.Z_VAC)], 32, zone=Z.dark, flip=True), T(x, y, 0))
-    d.add(lathe([(WR + .07, ZP), (WR + .06, ZP - .035), (WR + .005, ZP - .035), (WR, ZP)], 32, zone=Z.alu, flip=True), T(x, y, 0))
-    P.node(f'vac{i + 1}', (x, y, HL.Z_VAC), (0, 0, -1), 1)
-for i, a in enumerate((0, 120, 240)):
-    P.node(f'sl{i + 1}', (HL.R_SL * math.sin(math.radians(a)), -HL.R_SL * math.cos(math.radians(a)), ZP), (0, 0, -1), 1)
-d.add(lathe([(1.12, ZP), (1.10, ZP - .05), (1.02, ZP - .06), (1.02, ZP - .004)], 48, zone=Z.alu, flip=True))
-for a in (0, 120, 240):                                  # feed lines and boxes between the engines
-    for q in (-14, 14):
-        p = [on_cyl(a + q, ZP - .05, r).translation for r in (1.15, 1.6, 2.3, 2.66)]; d.add(tube(p, .05, 10, zone=Z.alu))
-    d.add(box(.5, .34, .13, zone=Z.white, bevel=.02), Rz(a) @ T(0, -2.42, ZP - .06) if a else Rz(0) @ T(.55, -2.2, ZP - .06))
-    d.add(tube([on_cyl(a + 33, ZP + .01, 1.16).translation, on_cyl(a + 33, ZP - .08, 1.3).translation, on_cyl(a + 33, ZP + .01, 1.44).translation], .04, 8, zone=Z.copper))
+sl = [(HL.R_SL * math.sin(math.radians(a)), -HL.R_SL * math.cos(math.radians(a))) for a in (0, 120, 240)]
+hz = lambda r: ZP + (ZC - ZP) * min(1, max(0, (r - RC0) / (RC1 - RC0)))
+holes = [(x, y, WR, HL.Z_VAC) for x, y in vac] + [(x, y, .19, 2.14) for x, y in sl] + [(x * .52, y * .52, .062, 2.1) for x, y in sl]
+loops = [circ(RC0, 48), circ(RC1, 96), circ(RI, 96)] + [circ(r, 32, x, y) for x, y, r, _ in holes]
+pv, pe = [], []
+for l in loops: b = len(pv); pv += [V(p) for p in l]; pe += [(b + i, b + (i + 1) % len(l)) for i in range(len(l))]
+ov, _, of, *_ = delaunay_2d_cdt(pv, pe, [], 0, 1e-5)
+pl = Geo(); pl.v = [(p.x, p.y, hz(math.hypot(p.x, p.y))) for p in ov]
+for t_ in of:
+    for k in range(1, len(t_) - 1):
+        t = [t_[0], t_[k], t_[k + 1]]; p = [ov[i] for i in t]; m = sum(p, V((0, 0))) / 3
+        if math.hypot(m.x, m.y) > RI or any(math.hypot(m.x - x, m.y - y) < r - 1e-3 for x, y, r, _ in holes): continue
+        s_ = (p[1] - p[0]).cross(p[2] - p[0])
+        if abs(s_) < 1e-9: continue
+        t = t if s_ < 0 else t[::-1]; pl.face(t, [puv(ov[i].x, ov[i].y) for i in t])
+P.mesh('aftplate', pl, MA, smooth_angle=12)
+for x, y, r, top in holes:                                 # bores and their rims, following the cone
+    n = 32; rim = [(x + r * math.cos(TAU * i / n), y + r * math.sin(TAU * i / n)) for i in range(n)]; b = Geo()
+    hr = [hz(math.hypot(*p)) for p in rim]; th = .022 if r > .1 else .01
+    rows = [[(x + (q[0] - x) * (1 + th / r), y + (q[1] - y) * (1 + th / r), h + .002) for q, h in zip(rim, hr)], [(x + (q[0] - x) * (1 + th / r * .7), y + (q[1] - y) * (1 + th / r * .7), h - th) for q, h in zip(rim, hr)],
+            [(q[0], q[1], h - th) for q, h in zip(rim, hr)], [(q[0], q[1], top) for q in rim]]
+    for l in rows: b.v += l
+    for q in range(3):
+        for i in range(n): i2 = (i + 1) % n; b.face([q * n + i, q * n + i2, (q + 1) * n + i2, (q + 1) * n + i][::-1], [S['bright'].uv(u_, w_) for u_, w_ in ((i / n, q / 3), ((i + 1) / n, q / 3), ((i + 1) / n, q / 3 + .3), (i / n, q / 3 + .3))][::-1])
+    c_ = len(b.v); b.v.append((x, y, top)); [b.face([3 * n + i, 3 * n + (i + 1) % n, c_][::-1], [S['black'].uv(.2, .2), S['black'].uv(.3, .2), S['black'].uv(.25, .3)]) for i in range(n)]
+    aft.add(b)
+rev([(HL.R, 0), (RI, 0)], 'bright', HL.SIDES); rev([(RI, 0), (RI, ZC)], 'dark', HL.SIDES)
+NH = 144
+for k in range(NH):                                        # hat stringers, open sections against the wall
+    a = TAU * (k + .5) / NH; g = Geo(); z0, z1 = .03, ZC - .01; hh = [(-.036, RI), (-.020, RI - .05), (.020, RI - .05), (.036, RI)]
+    g.v = [(rr * math.sin(a) + w * math.cos(a), -rr * math.cos(a) + w * math.sin(a), z) for z in (z0, z1) for w, rr in hh]
+    for i in range(3): g.face([i, 4 + i, 5 + i, i + 1], [S['dark'].uv(u_, w_) for u_, w_ in ((.3 * i, 0), (.3 * i, 1), (.3 * i + .3, 1), (.3 * i + .3, 0))])
+    g.face([0, 1, 2, 3], [S['bright'].uv(.1, .1), S['bright'].uv(.2, .2), S['bright'].uv(.3, .2), S['bright'].uv(.4, .1)]); aft.add(g)
+for za, zb in ((.365, .42), (.825, .88), (1.285, 1.34), (2.06, 2.15)):      # hoops: web and flange, straw tinted
+    rev([(RI, za), (2.69, za), (2.69, zb), (RI, zb)], 'straw', HL.SIDES)
+    g = Geo()
+    for k in range(NH):                                    # clips that tie each stringer to the hoops, above and below
+        a0, a1 = TAU * (k + .12) / NH, TAU * (k + .88) / NH
+        for z0, z1 in ((za, za - .035), (zb, zb + .035)):
+            b = len(g.v); g.v += [(rr * math.sin(q), -rr * math.cos(q), z) for q, rr, z in ((a0, 2.728, z0), (a1, 2.728, z0), ((a0 * .75 + a1 * .25), 2.728, z1), ((a0 * .25 + a1 * .75), 2.728, z1))]
+            f_ = [b, b + 1, b + 3, b + 2]; u_ = [S['straw'].uv(*q) for q in ((.1, .1), (.5, .1), (.4, .3), (.2, .3))]
+            g.face(f_[::-1], u_[::-1]) if z1 > z0 else g.face(f_, u_)
+    aft.add(g)
+rev([(RI, ZC - .055), (RI - .05, ZC - .05), (RI - .05, ZC)], 'dark', HL.SIDES)
+for a in (15, 135, 255):                                   # engine bay cameras on the upper hoop
+    d.add(box(.10, .12, .09, zone=Z.dark, bevel=.015), on_cyl(a, 2.0, 2.68)); d.add(cyl(.028, .03, 14, zone=Z.rubber), on_cyl(a, 2.0, 2.61))
+ab = P.mesh('aftbay', aft, MA, smooth_angle=25); ab['facing_ok'] = True
+for i, (x, y) in enumerate(vac): P.node(f'vac{i + 1}', (x, y, HL.Z_VAC), (0, 0, -1), 1)
+for i, (x, y) in enumerate(sl): P.node(f'sl{i + 1}', (x, y, ZP), (0, 0, -1), 1)
 # ---------------- forward dome
 d.add(lathe([(2.76, 20.1), (2.76, 20.35), (2.6, 20.52), (2.36, 20.67)], 96, zone=Z.alu))
 d.add(lathe([(2.36, 20.1), (2.36, 20.67), (2.2, 20.76), (1.6, 20.95), (.9, 21.06), (0, 21.1)], 96, zone=Z.dome))
@@ -155,9 +195,9 @@ for i, az in enumerate(HL.LEG_AZ):
 def arcs(a0, a1, r0, r1, z0, z1, n):
     return [tuple(hp(a0 + (a1 - a0) * i / n, z, r=r)) for i in range(n + 1) for r in (r0, r1) for z in (z0, z1)]
 for i, (a0, a1) in enumerate(((0, 90), (90, 180), (180, 270), (270, 360))):
-    P.hull_collider(f'col_body{i}', [tuple(hp(a0 + (a1 - a0) * k / 8, z)) for k in range(9) for z in (ZP, HL.Z_SKIN)] + [(0, 0, ZP), (0, 0, HL.Z_SKIN)])
+    P.hull_collider(f'col_body{i}', [tuple(hp(a0 + (a1 - a0) * k / 8, z)) for k in range(9) for z in (ZC, HL.Z_SKIN)] + [tuple(hp(a0 + (a1 - a0) * k / 4, ZP, r=RC0)) for k in range(5)] + [(0, 0, ZP), (0, 0, HL.Z_SKIN)])
 for k in range(16):
-    a0, a1 = 22.5 * k, 22.5 * (k + 1); P.hull_collider(f'col_skirt{k}', arcs(a0, a1, HL.R, RI, 0, ZP, 2))
+    a0, a1 = 22.5 * k, 22.5 * (k + 1); P.hull_collider(f'col_skirt{k}', arcs(a0, a1, HL.R, RI, 0, ZC, 2))
 P.hull_collider('col_dome', [tuple(hp(a, z, r=r)) for a in range(0, 360, 30) for z, r in ((20.5, 2.6), (20.95, 1.6))])
 P.box_trigger('ladder', climb_frame((0, -RR - .14, HL.Z_SKIN / 2 + .3), (0, -1, 0)), (.5, .3, HL.Z_SKIN - .3), 'Ladder')
 finish(P, ({'hull', 'bells', 'ducts', 'legpods', 'legpods_in'}, {'hull_o', 'bells_o', 'ducts_o'}))
