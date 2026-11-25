@@ -21,7 +21,7 @@ Z_BLACK = .97               # a ring of vertices; the base itself is white
 LEG_AZ = (45, 135, 225, 315)
 PANEL_TOP, PANEL_W = 4.75, (.78, .78)    # dark recess behind a leg: top, half-widths at base and top (arc length)
 # leg pods, faceted: rows of (z, depth off the hull, half-width at the hull, half-width of the flat face), and the arched opening
-POD = ((0, .66, 1.08, .93), (4.95, .86, 1.02, .86), (6.9, .0, .80, .66)); POD_OPEN = (.76, 4.74, .34)      # half-width, top, corner radius
+POD = ((0, .66, 1.08, .93), (4.95, .86, 1.02, .86), (6.9, .0, .685, .66)); POD_OPEN = (.76, 4.74, .34)      # half-width, top, corner radius
 # ---- landing thrusters: six groups of three between the elevator track and the docking side
 BAND = (19.24, 20.01)       # thin, right under the cargo door's sill (SpaceX's cargo lander render, April 2024)
 GROUPS = (31.875, 91.875, 148.125, 211.875, 268.125, 328.125); PITCH = 11.25   # edges fall on the facet grid

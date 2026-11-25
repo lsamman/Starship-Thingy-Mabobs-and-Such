@@ -114,28 +114,35 @@ for az in (68, 112, 248, 292):
 rcs(P, d, spots)
 # ---------------- leg pods: faceted fairings with an arched opening the leg lives in and swings out of; a switch hides them
 pod, pin = Geo(), Geo(); OW, OT, OR = HL.POD_OPEN
-def pq(g, pts, zone, M):                                 # quad facing the way its points turn, planar mapped
-    n = len(g.v); g.v += [tuple(M @ V(p)) for p in pts]; o_, e1 = V(pts[0]), (V(pts[1]) - V(pts[0])); L1 = max(e1.length, 1e-6); e2 = V(pts[-1]) - V(pts[0]); g.face(range(n, n + len(pts)), [zone.uv(min(1, max(0, (V(p) - o_).dot(e1) / L1 / 7)), min(1, max(0, (p[2] - pts[0][2]) / 7))) for p in pts])
 pw = lambda z, k: float(np.interp(z, [q[0] for q in HL.POD], [q[k] for q in HL.POD]))
 owz = lambda z: OW if z <= OT - OR else OW - OR + math.sqrt(max(0, OR ** 2 - (z - OT + OR) ** 2))
-hy = lambda x: -math.sqrt(HL.R ** 2 - x * x) + .03; fy_ = lambda z: -(HL.R + pw(z, 1)) + .03 * (z >= HL.POD[-1][0] - 1e-6)
-zp = [0, 1.2, 2.4, 3.6] + [OT - OR + OR * math.sin(math.radians(t)) for t in (0, 22.5, 45, 67.5, 90)] + [HL.POD[1][0], 5.6, 6.25, HL.POD[2][0]]
+hy = lambda x: -math.sqrt(HL.R ** 2 - x * x) + .03; ZK, ZE = HL.POD[1][0], HL.POD[2][0]
+def fy_(z, x=0.0):                                       # the front: flat up to the kink, then bending into the hull's curve, so its top edge sinks in all along
+    if z <= ZK: return -(HL.R + pw(z, 1))
+    t = (z - ZK) / (ZE - ZK); return -(HL.R + HL.POD[1][1]) * (1 - t) + hy(x) * t
+def pq(g, pts, M, zone=None):                            # hull paint, from a plain stretch of the core's sheet, laid on as one piece
+    if g is pod:
+        b = len(g.v); g.v += [tuple(M @ V(p)) for p in pts]; g.face(range(b, b + 4), [huv(80 + math.degrees(math.atan2(p[0], -p[1])), 7.75 + p[2] * .3, 'core') for p in pts])
+    else: b = len(g.v); g.v += [tuple(M @ V(p)) for p in pts]; g.face(range(b, b + 4), [zone.uv(*t) for t in ((.1, .1), (.2, .1), (.2, .2), (.1, .2))])
+zp = [0, 1.2, 2.4, 3.6] + [OT - OR + OR * math.sin(math.radians(t)) for t in (0, 22.5, 45, 67.5, 90)] + [ZK, 5.3, 5.65, 6.0, 6.35, 6.65, ZE]; NX = 6; NS = 2
 for az in HL.LEG_AZ:
     M = Rz(az)
     for z0_, z1_ in zip(zp, zp[1:]):
         o0, o1 = owz(z0_), owz(z1_); op = z1_ <= OT + 1e-6
         for s in (-1, 1):
             b0, b1, t0, t1 = pw(z0_, 2), pw(z1_, 2), pw(z0_, 3), pw(z1_, 3)
-            f = [(s * b0, hy(b0), z0_), (s * t0, fy_(z0_), z0_), (s * t1, fy_(z1_), z1_), (s * b1, hy(b1), z1_)]; pq(pod, f if s < 0 else f[::-1], Z.white, M)
+            side = lambda z, b, t, k: (s * (b + (t - b) * k / NS), hy(b) + (fy_(z, t) - hy(b)) * k / NS, z)
+            for k in range(NS): f = [side(z0_, b0, t0, k), side(z0_, b0, t0, k + 1), side(z1_, b1, t1, k + 1), side(z1_, b1, t1, k)]; pq(pod, f if s < 0 else f[::-1], M)
             i0, i1 = (o0, o1) if op else (0, 0)
-            f = [(s * t0, fy_(z0_), z0_), (s * i0, fy_(z0_), z0_), (s * i1, fy_(z1_), z1_), (s * t1, fy_(z1_), z1_)]; pq(pod, f if s < 0 else f[::-1], Z.white, M)
+            fr = lambda z, a, t, k: (s * (t + (a - t) * k / NX), fy_(z, t + (a - t) * k / NX), z)
+            for k in range(NX): f = [fr(z0_, i0, t0, k), fr(z0_, i0, t0, k + 1), fr(z1_, i1, t1, k + 1), fr(z1_, i1, t1, k)]; pq(pod, f if s < 0 else f[::-1], M)
             if op:                                       # reveal round the opening, dark inside
-                f = [(s * o0, fy_(z0_), z0_), (s * o0, hy(o0) + .02, z0_), (s * o1, hy(o1) + .02, z1_), (s * o1, fy_(z1_), z1_)]; pq(pin, f if s < 0 else f[::-1], Z.black, M)
-            if z0_ == 0: f = [(s * b0, hy(b0), 0), (s * o0, hy(o0), 0), (s * o0, fy_(0), 0), (s * t0, fy_(0), 0)]; pq(pod, f if s < 0 else f[::-1], Z.white, M)
-    o = owz(OT); pq(pin, [(-o, fy_(OT), OT), (-o, hy(o) + .02, OT), (o, hy(o) + .02, OT), (o, fy_(OT), OT)], Z.black, M)
+                f = [(s * o0, fy_(z0_), z0_), (s * o0, hy(o0) + .02, z0_), (s * o1, hy(o1) + .02, z1_), (s * o1, fy_(z1_), z1_)]; pq(pin, f if s < 0 else f[::-1], M, Z.black)
+            if z0_ == 0: f = [(s * b0, hy(b0), 0), (s * o0, hy(o0), 0), (s * o0, fy_(0), 0), (s * t0, fy_(0), 0)]; pq(pod, f if s < 0 else f[::-1], M)
+    o = owz(OT); pq(pin, [(-o, fy_(OT), OT), (-o, hy(o) + .02, OT), (o, hy(o) + .02, OT), (o, fy_(OT), OT)], M, Z.black)
     for s in (-1, 1): P.hull_collider('col_pod%d%s' % (az, 'ab'[s > 0]), [tuple(M @ V(p)) for z in (.0, 4.6) for p in ((s * pw(z, 2), hy(pw(z, 2)), z), (s * pw(z, 3), fy_(z), z), (s * OW, fy_(z), z), (s * OW, hy(OW), z))])
     P.hull_collider('col_pod%dt' % az, [tuple(M @ V(p)) for s in (-1, 1) for z in (4.66, 4.95, 6.85) for p in ((s * pw(z, 2), hy(pw(z, 2)), z), (s * pw(z, 3), fy_(z), z))])
-P.mesh('legpods', pod, P.det, smooth_angle=25); P.mesh('legpods_in', pin, P.det, smooth_angle=40)
+lp_ = P.mesh('legpods', pod, MH, smooth_angle=20); import bmesh; bm = bmesh.new(); bm.from_mesh(lp_.data); bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=2e-4); bm.to_mesh(lp_.data); bm.free(); P.mesh('legpods_in', pin, P.det, smooth_angle=40)
 P.mesh('details', d, P.det, smooth_angle=40)
 # ---------------- nodes and colliders
 P.node('top', (0, 0, HL.Z_TOP), (0, 0, 1), 5); P.node('bottom', (0, 0, 0), (0, 0, -1), 5)
