@@ -97,6 +97,14 @@ def write(G):
          modules=[mod('ModuleDeployableSolarPanel', 'animationName = solarDeploy', 'pivotName = sunPivot', 'raycastTransformName = suncatcher', 'secondaryTransformName = suncatcher', 'isTracking = true', 'sunAlignFactor = 1',
                       'retractable = true', 'isBreakable = false', 'resourceName = ElectricCharge', 'chargeRate = 14', 'showStatus = true', 'bypassAnimations = false', 'trackingSpeed = 0.2'),
                   mod('ModuleSTMSArrayTilt', 'tiltTransform = tilt', 'downAngle = -90', 'tiltSpeed = 6', 'centreSpeed = 20')])
+    if have('STMS_B3_Depot'):
+        import depot_layout as D
+        dt = mod('ModuleB9PartSwitch', 'moduleID = HLS_Fuel', 'switcherDescription = Propellant', f'baseVolume = {D.UNITS}', block('SUBTYPE', 'name = Methalox', 'title = Methalox', 'tankType = ITSLMOX', 'percentFilled = 0', 'primaryColor = #8fb7d9', 'secondaryColor = #e8e8e8'))
+        part('STMS_B3_Depot', 'Starship Depot Tank and Nose', '<#ef7b06>Goes on the Expendable Block 3 Core.</color> The storage depot: bare bright steel, no flaps, no tiles, no way home, and seven metres more tank than anything else on the pad. Launch it empty on top of a core that gets itself to orbit, then let the tankers fill it. Meets them with SEP\'s docking hardware on the core, and keeps its methane cold on its own power.',
+             'starship sep hls block3 v3 storage depot tanker propellant refuel transfer orbital methalox nose', 13.0, 34000, 'FuelTank', 'veryHeavyRocketry', rules='1,0,1,1,0', profiles='size4p5', crash=14, tmax=2000, skin=2000, brk=5000,
+             extra=['fuelCrossFeed = True', 'vesselType = Station', RCS_FX],
+             modules=[dt, rcs(68), command(0), sas(), res('ElectricCharge', 4000), wheel(150, 1), antenna(5000000),
+                      mod('ModuleDeployableSolarPanel', 'isTracking = false', 'pivotName = depotSun', 'raycastTransformName = depotSun', 'secondaryTransformName = depotSun', 'isBreakable = false', 'sunAlignFactor = 1', 'resourceName = ElectricCharge', 'chargeRate = 12', 'showStatus = true')])
     if have('STMS_CrewArm'):
         kw = dict(profiles='size2, srf', crash=80, tmax=3000, skin=3000, brk=200000)
         part('STMS_CrewArm', 'Crew Access Arm', '<#ef7b06>Attach radially to the rear column of SLE\'s tower core, the one furthest from the ship, on its face toward the crew hatch side, with the walkway level with the nose\'s EVA hatch.</color> Reaches round the chopstick carriage to the Block 3 crew noses. Its gangway, bellows, doors and white room let go one after another before it swings clear. Retract it by hand, or put it in a stage (with StagedAnimation) and it goes by itself, in ten seconds. Stage it before the engines; it stays back until the launch is reverted.',
