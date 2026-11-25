@@ -39,6 +39,10 @@ gap = min(math.hypot(p.x, p.y) for p in v) - HL.R; print('      by piece', {n: r
 half = max(abs(math.degrees(math.atan2(p.x, -p.y))) for p in v if p.y < 0); ok(half < 37.5, 'stowed leg half-width %.1f deg (track starts 37.5 away)' % half)
 t, v = tree(leg1, None, W); ok(abs(min(p.z for p in v) - HL.SOLE) < .06, 'deployed sole at %.3f (want %.2f)' % (min(p.z for p in v), HL.SOLE))
 core = load(mu('STMS_HLS_Core')); core_o = {k: v for k, v in core.items() if k not in ('hull', 'bells', 'ducts', 'legpods', 'legpods_in')}; ok(not any(tree(core_o, None)[0].overlap(tree(leg1, ('foot', 'strut2', 'strut3'), Matrix.Rotation(math.radians(a), 4, 'Z') @ W)[0]) for a in HL.LEG_AZ), 'original style: deployed legs clear of the hull'); crew = load(mu('STMS_HLS_Crew')); tc, _ = tree(core); tw, _ = tree(crew, None, Tz(HL.Z_TOP)); td, _ = tree(crew, ('doorskin', 'doorframe', 'flag'), Tz(HL.Z_TOP)); tb, _ = tree(crew, ('hull', 'windows', 'details'), Tz(HL.Z_TOP))
+lf0 = load(mu('STMS_HLS_LegFaired'), 'legDeploy'); cv = load(mu('STMS_HLS_PodCover')); pods = {k: v for k, v in core.items() if k in ('legpods', 'legpods_in', 'hull')}
+MP = lambda a, out=0: Matrix.Rotation(math.radians(a), 4, 'Z') @ W @ Matrix.Translation((0, -out, 0)); t = tree(cv, None, MP(45))[0]
+ok(not t.overlap(tree(lf0, None, MP(45))[0]), 'pod cover clear of the stowed faired leg %d' % len(t.overlap(tree(lf0, None, MP(45))[0]))); ok(not t.overlap(tree(pods)[0]), 'pod cover clear of the pod %d' % len(t.overlap(tree(pods)[0])))
+for o_ in (.1, .3, .6): ok(not tree(cv, None, MP(45, o_))[0].overlap(tree(pods)[0]) and not tree(cv, None, MP(45, o_))[0].overlap(tree(lf0, None, MP(45))[0]), f'pod cover clear {o_} m off')
 so = load(mu('STMS_HLS_Solar'), 'solarDeploy'); so1 = load(mu('STMS_HLS_Solar'), 'solarDeploy', True); ZS = sum(HL.SOL_Z) / 2
 for az in HL.SOL_AZ:
     MS = Matrix.Rotation(math.radians(az), 4, 'Z') @ Matrix.Translation((0, -HL.R, ZS)); hh = ('hatchskin', 'hatchin'); tp, _ = tree(so, [n for n in so if n not in hh + ('rails',)], MS); t2, _ = tree(so, hh, MS); t3, _ = tree(so1, [n for n in so1 if n not in ('rails',)], MS)
@@ -73,6 +77,15 @@ for k in range(0, int(HL.LIFT_TRAVEL * 4) + 1):
         if n and len(hit.get(nm, [])) < 3: print('      ', nm, k / 4, [q for q in (core if nm == 'core' else crew) if t.overlap(tree(core if nm == 'core' else crew, (q,), Matrix() if nm == 'core' else Tz(HL.Z_TOP))[0])])
         if n: hit.setdefault(nm, []).append((k / 4, n))
 for az in HL.SOL_AZ: n = [k / 2 for k in range(0, int(HL.LIFT_TRAVEL * 2)) if tree(l1, ('carriage', 'deckmesh'), L0 @ Tz(-k / 2))[0].overlap(hangs[az])]; ok(not n, f'elevator clear of hanging array {az} {n[:3]}')
+c0, c1 = load(mu('STMS_HLS_LiftCable'), 'cageOut'), load(mu('STMS_HLS_LiftCable'), 'cageOut', True); CM = ('cagemesh', 'boommesh', 'midmesh'); bayT = tree({k: v for k, v in crew.items() if k in ('hull', 'details', 'windows')}, None, Tz(HL.Z_TOP))[0]
+core_n = {k: v for k, v in core.items() if k != 'track'}; tcn = tree(core_n)[0]
+for q_ in CM + ('channels',): h_ = {k: len(tree(crew, (k,), Tz(HL.Z_TOP))[0].overlap(tree(c0, (q_,), L0)[0])) for k in crew}; ok(q_ == 'channels' or not any(h_.values()), f'cable elevator stowed, {q_}: ' + str({k: c for k, c in h_.items() if c}))
+for q_ in CM: h_ = {k: len(tree(crew1, (k,), Tz(HL.Z_TOP))[0].overlap(tree(c1, (q_,), L0)[0])) for k in crew1 if k != 'crewtrack'}; ok(not any(h_.values()), f'cable elevator out, {q_}: ' + str({k: c for k, c in h_.items() if c}))
+ok(not tree(c0, ('cagemesh',))[0].overlap(tree(c0, ('boommesh', 'midmesh', 'channels'))[0]) and not tree(c1, ('cagemesh',))[0].overlap(tree(c1, ('boommesh',))[0]), 'cage clear of its beams'); ok(not tree(c0, ('boommesh',))[0].overlap(tree(c0, ('channels',))[0]), 'beam inside beam stowed %d' % len(tree(c0, ('boommesh',))[0].overlap(tree(c0, ('channels',))[0])))
+for k in range(0, int(HL.LIFT_TRAVEL * 2) + 1): t_ = tree(c1, ('cagemesh',), L0 @ Tz(-k / 2))[0]; ok(not t_.overlap(tcn) and not any(t_.overlap(hangs[a_]) for a_ in HL.SOL_AZ), f'cage {k / 2} m down') if t_.overlap(tcn) or any(t_.overlap(hangs[a_]) for a_ in HL.SOL_AZ) else None
+for i, az in enumerate(HL.LEG_AZ):
+    for nm_, l_ in (('', leg1), ('faired ', load(mu('STMS_HLS_LegFaired'), 'legDeploy', True))):
+        for k in range(0, 5): t_ = tree(c1, ('cagemesh',), L0 @ Tz(-HL.LIFT_TRAVEL + k))[0]; ok(not t_.overlap(tree(l_, None, Matrix.Rotation(math.radians(az), 4, 'Z') @ W)[0]), f'cage clear of {nm_}leg {az}') if t_.overlap(tree(l_, None, Matrix.Rotation(math.radians(az), 4, 'Z') @ W)[0]) else None
 ok(not hit, 'elevator clear along its travel ' + str({k: (len(x), x[:4]) for k, x in hit.items()}))
 for i, az in enumerate(HL.LEG_AZ):
     t2, _ = tree(leg1, None, Matrix.Rotation(math.radians(az), 4, 'Z') @ W)
@@ -105,8 +118,6 @@ if SEP and os.path.exists(SEP):
 sh, _ = tree(load(mu('STMS_HLS_LegShroud')), ('shroud_black', 'inside'), W)
 for n in leg0: ok(not sh.overlap(tree(leg0, (n,), W)[0]) or n == 'bracket', 'shroud over stowed leg: ' + n) if sh.overlap(tree(leg0, (n,), W)[0]) else None
 q0, q1 = load(mu('STMS_Ship_Leg'), 'legDeploy'), load(mu('STMS_Ship_Leg'), 'legDeploy', True)
-for tag, q in (('stowed', q0), ('deployed', q1)):
-    sx, _ = tree(q, ('shell_steel', 'shell_in'), W); print('      ship leg', tag, 'shell touches', [n for n in q if n[:5] not in ('shell', 'nose_') and sx.overlap(tree(q, (n,), W)[0])])
 if SEP and os.path.exists(SEP):
     co = load(os.path.join(SEP, 'SEP_26_SHIP_CORE.mu')); M0 = Tz(12.5993)
     dh = load(os.path.join(SEP, 'SEP_26_SHIP_DOCKING_HARDWARE.mu'))

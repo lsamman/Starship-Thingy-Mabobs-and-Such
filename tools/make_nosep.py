@@ -1,7 +1,6 @@
 """Writes a copy of the packaged mod with nothing of SEP's in it: no files derived from SEP's art, no copies of or patches on SEP's
 parts, no paths into SEP's folder. Part names stay. usage: make_nosep.py <GameData/mod> <out dir>  (out dir must not exist)"""
 import glob, os, re, shutil, sys
-import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); src, out = os.path.abspath(sys.argv[1]), os.path.abspath(sys.argv[2])
 dst = os.path.join(out, 'GameData', os.path.basename(src)); shutil.copytree(src, dst, ignore=shutil.ignore_patterns('@thumbs'))
 p = lambda *a: os.path.join(dst, *a)
@@ -22,37 +21,8 @@ for g in GONE:
     fs = glob.glob(p(g)); assert fs, g
     for f in fs: shutil.rmtree(f) if os.path.isdir(f) else os.remove(f)
 
-# ---------------- the aeroshielded leg's heat shield: our own hexagons (the UVs repeat every 12.8 m)
-sys.path.insert(0, os.path.join(HERE, '..', 'its', 'scripts')); os.environ.setdefault('SHAB_TEX', os.path.join(HERE, '..', 'its', 'build', 'tex'))
-import tl
-tl.OUT = p('ITS', 'Parts'); tl.PNG = os.path.join(out, '.png')
-N, C, R = 2048, 68, 78
-y, x = (np.mgrid[0:N, 0:N] + .5) / N; best = np.full((N, N), 9.); two = best.copy(); cell = np.zeros((N, N), int)
-X, Y = x * C, y * R * .8660254
-for o in (0, 1):                                                # two rectangular lattices make the hexagonal one
-    i, j = np.round(X - .5 * o), 2 * np.round((y * R - o) / 2) + o
-    for dj in (-2, 0, 2):
-        for di in (-1, 0, 1):
-            d = np.hypot(X - .5 * o - i - di, Y - (j + dj) * .8660254); near = d < best
-            two = np.where(near, best, np.minimum(two, d)); best = np.where(near, d, best)
-            cell = np.where(near, ((i + di) % C) * 101 + ((j + dj) % R) * 7919, cell)
-edge = (two - best) / 2; gap = np.clip(1 - edge / .035, 0, 1)   # tile pitch is 1 here
-rng = np.random.default_rng(7); tone = rng.normal(0, 1, 1 << 20)[cell.astype(int) % (1 << 20)]
-v = 30 + 2.2 * tone; v = v * (1 - gap) + 12 * gap
-im = np.zeros((N, N, 4), np.uint8); im[..., :3] = np.clip(v[..., None] * (1, 1, 1.03), 0, 255); im[..., 3] = np.clip(70 + 6 * tone, 0, 255) * (1 - .6 * gap); tl.write_dds(im, 'stms_leg_til_base')
-h = np.clip(edge / .07, 0, 1) * 2.0
-nx, ny = -(np.roll(h, -1, 1) - np.roll(h, 1, 1)) * .5, (np.roll(h, -1, 0) - np.roll(h, 1, 0)) * .5; l = np.sqrt(nx * nx + ny * ny + 1)
-im = np.full((N, N, 4), 255, np.uint8); im[..., 1] = im[..., 2] = np.clip(128 + 127 * ny / l, 0, 255); im[..., 3] = np.clip(128 + 127 * nx / l, 0, 255); tl.write_dds(im, 'stms_leg_til_nm')
-shutil.rmtree(tl.PNG, ignore_errors=True)
-mu = p('ITS/Parts/STMS_Ship_Leg.mu'); b = open(mu, 'rb').read()
-for a, c in ((b'SEP_B3_TILES_BASE', b'stms_leg_til_base'), (b'SEP_B3_TILES_NRM', b'stms_leg_til_nm\0')):
-    if c.endswith(b'\0'):                                      # strings carry their length in the byte before
-        assert b.count(bytes([len(a)]) + a) == 1; b = b.replace(bytes([len(a)]) + a, bytes([len(a) - 1]) + c[:-1])
-    else: assert b.count(a) == 1; b = b.replace(a, c)
-open(mu, 'wb').write(b)
-
 # ---------------- configs
-f = 'ITS/Parts/STMS_Ship_Leg.cfg'; t = rd(f); i = t.index('\tMODULE\n\t{\n\t\tname = ModuleB9PartSwitch\n\t\tmoduleID = STMS_LegTex'); wr(f, t[:i] + '}\n')
+f = 'ITS/Parts/STMS_Ship_Leg.cfg'
 sub(f, ("<#ef7b06>Goes on the four leg nodes this mod adds to SEP's Block 3 ship core, or anywhere on its barrel.</color>", '<#ef7b06>Attaches anywhere on a 5.6 m barrel.</color>'))
 t = rd('ITS/Parts/STMS_HLS_Core.cfg'); n = re.sub(r'Mounts three sea-level and three vacuum Raptor 3s from SEP[^\n]*', 'Mounts three sea-level and three vacuum engines of your choice, with a docking node on the far side.', t); assert n != t; wr('ITS/Parts/STMS_HLS_Core.cfg', n)
 sub('ITS/Parts/STMS_B3_Depot.cfg', ('<#ef7b06>Goes on the Expendable Block 3 Core.</color>', '<#ef7b06>Goes on the Starship HLS Core.</color>'),
@@ -143,7 +113,7 @@ The same mod without the Starship Expansion Project (SEP): no files made from it
 
 ## In it
 
-ITS 2016 (booster, ship, crew, cargo and tanker sections, grid fins, legs, solar fans, crane), Starship HLS (core, crew and awning cargo sections, legs, shrouds, elevator, solar arrays, crane frame, floors, tray), cargo winch, depot, payload plate and fairing, aeroshielded leg, crew access arm and ship QD arm.
+ITS 2016 (booster, ship, crew, cargo and tanker sections, grid fins, legs, solar fans, crane), Starship HLS (core, crew and awning cargo sections, legs, shrouds, elevator, solar arrays, crane frame, floors, tray), cargo winch, depot, payload plate and fairing, Block 3 leg, crew access arm and ship QD arm.
 
 ## Not in it
 

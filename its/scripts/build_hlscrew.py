@@ -14,13 +14,15 @@ hull = skin(zs, 'crew', O, keep); P.mesh('hull', hull, MH, smooth_angle=30)
 d = Geo()
 def put(pts, zone, g=None): quad([p - dz for p in pts], zone, g if g is not None else d)
 # ---------------- the rails and ladder go on up to the door
+ct = Geo()
 TR, RR = HL.TRACK, HL.R
 for s in (-1, 1):
     x = s * (HL.TRACK_R * math.sin(math.radians(TR)) - .035); H_ = D0 - HL.Z_SKIN - .06
-    d.add(box(.05, .09, H_, zone=Z.alu, bevel=.01, center=(x, -RR - .03, (D0 + HL.Z_SKIN) / 2 - O - .03)))
-    d.add(box(.02, .05, H_, zone=Z.steel, center=(x - s * .02, -RR - .075, (D0 + HL.Z_SKIN) / 2 - O - .03)))
-    d.add(box(.02, .07, H_, zone=Z.grey, center=(s * .16, -RR - .025, (D0 + HL.Z_SKIN) / 2 - O - .03)))
-for z in np.arange(HL.Z_SKIN + .15, D0 - .08, .38): d.add(tube([(-.16, -RR - .05, float(z) - O), (.16, -RR - .05, float(z) - O)], .012, 5, zone=Z.steel))
+    ct.add(box(.05, .09, H_, zone=Z.alu, bevel=.01, center=(x, -RR - .03, (D0 + HL.Z_SKIN) / 2 - O - .03)))
+    ct.add(box(.02, .05, H_, zone=Z.steel, center=(x - s * .02, -RR - .075, (D0 + HL.Z_SKIN) / 2 - O - .03)))
+    ct.add(box(.02, .07, H_, zone=Z.grey, center=(s * .16, -RR - .025, (D0 + HL.Z_SKIN) / 2 - O - .03)))
+for z in np.arange(HL.Z_SKIN + .15, D0 - .08, .38): ct.add(tube([(-.16, -RR - .05, float(z) - O), (.16, -RR - .05, float(z) - O)], .012, 5, zone=Z.steel))
+P.mesh('crewtrack', ct, P.det, smooth_angle=40)
 # ---------------- airlock bay
 XB = HL.R * math.sin(math.radians(HL.DOOR_AZ)); YB = HL.BAY_BACK; az_s = [i * 3.75 - HL.DOOR_AZ for i in range(11)]
 for z, flip in ((D0, False), (D1, True)):

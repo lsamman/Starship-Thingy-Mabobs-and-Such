@@ -12,9 +12,13 @@ The parts and a craft file (`Ships/VAB/Starship HLS.craft`), modelled on the NAS
 | **Landing Leg** (`STMS_HLS_Leg`) | Use four |
 | **Elevator** (`STMS_HLS_Lift`) | Goes on the `lift` node in the airlock; a Breaking Ground piston, 22.3 m |
 
+## Two elevators
+
+**Elevator** rides the rails on the hull. **Elevator (Cable)** (`STMS_HLS_LiftCable`), after the NASA/SpaceX render, is an open cage on four cables: it goes on the same `lift` node, and the **Elevator track** switches on the core and the crew section go to None. Run Cage Out, then Target Extension -22.3. Without the rails there is no ladder either.
+
 ## Two styles
 
-The core and crew section have a **Style** switch: **Original** (black base, leg panels, tall band; the default, so saved ships keep their look) and **2024 render** (all white, thin band, faired legs, after SpaceX's cargo lander render). Both have a solid tank wall with the rails and ladder outside it. Use **Landing Leg** with the original, **Landing Leg (Faired)** with the 2024 render. The jettisonable shrouds belong to the original.
+The core and crew section have a **Style** switch: **Original** (black base, leg panels, tall band; the default, so saved ships keep their look) and **2024 render** (all white, thin band, faired legs, after SpaceX's cargo lander render). Both have a solid tank wall with the rails and ladder outside it. Use **Landing Leg** with the original, **Landing Leg (Faired)** with the 2024 render. The jettisonable shrouds belong to the original; **Leg Pod Cover** closes the pods of the 2024 render, on the same nodes, and is jettisoned before the leg comes down.
 
 ## Cargo versions
 
@@ -62,6 +66,6 @@ On the ground: Open Airlock Door, Lower Deck, then slide the elevator's Target E
 
 ## Other parts made alongside
 
-- **Block 3 Landing Leg, aeroshielded** (`STMS_Ship_Leg`): the HLS leg under a shell that rides out with it, steel or tiles. Four nodes are added to SEP's Block 3 core; it also surface-attaches.
+- **Block 3 Landing Leg** (`STMS_Ship_Leg`): the HLS leg in the ship's bare steel, no shell. Four nodes are added to SEP's Block 3 core; it also surface-attaches.
 - **Ship Quick Disconnect Arm** goes on the free rear node of SLE's own tower core, and **Crew Access Arm** attaches radially beside the rear column (azimuth -37 face, the collider is one square box), floor level with the EVA hatch sill. Both reach round the chopstick carriage and swing back clear of it. No extra tower part is needed.
 - **Crew Access Arm** and **Ship Quick Disconnect Arm**: for those nodes. Heights and reach fit a SEP Block 3 stack on SLE's table with the ship's window side to the tower (`its/scripts/tower_layout.py`). The white room meets the EVA hatch of both crew noses; the other arm meets SEP's QD plate, holds the booster with a claw, and can load propellant. With StagedAnimation installed it retracts when staged: jaws open, plate and claw pull back, then it swings about 130 degrees, 3.5 s in all. `its/scripts/check_arms.py` runs both retractions against booster, ship and nose. They share the tower's sides with SLE's chopsticks, whose carriage passes through them if driven past.
