@@ -202,6 +202,6 @@ P.hull_collider('col_floor', [cp(a, z, -.02) for a in list(range(0, 360, 20)) fo
 P.hull_collider('col_nose', [cp(a, z) for a in range(0, 360, 30) for z in (40.5, 43, 46, 48, 49.2)])
 P.node('bottom', (0, 0, Z0), (0, 0, -1), 6)
 P.node('cargo', (0, 0, fz + .14), (0, 0, 1), 3)
-P.node('crane', (0, 0, cz), (0, 0, -1), 1)
+P.node('crane', (0, 0, cz), (0, 0, -1), 3)
 P.bake_clips(0)
 finish(P)

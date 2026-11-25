@@ -25,5 +25,5 @@ P.mesh('frame', f, P.det, smooth_angle=45)
 P.hull_collider('col_deck', [(x, y, z) for x in (-HW, HW) for y in (-HD, HD) for z in (0, -TH - .12)])
 for s in (-1, 1):
     x = s * (HW - .06); P.hull_collider(f'col_rail{s + 1}', [(x + a * .03, y, z) for a in (-1, 1) for y in (-HD, HD) for z in (0, .87)])
-P.node('top', (0, 0, L.CR_APEX), (0, 0, 1), 1); P.node('cargo', (0, 0, 0), (0, 0, 1), 1)
+P.node('top', (0, 0, L.CR_APEX), (0, 0, 1), 3); P.node('cargo', (0, 0, 0), (0, 0, 1), 3)
 finish(P)

@@ -15,7 +15,7 @@ def channel(g, x, w, y0, y1, z0, z1, zone, t=.02):
 
 def rig(name, P, M, owner_anchor, owner_servo, anchor_pos, servo_pos, skin, weights, far):
     """An armature with a fixed bone and the piston bone, and one skinned mesh (see StarshipThingyMabobsAndSuch). KSP writes the servo
-    transform's localPosition, so the armature carries the rest position and the piston bone sits at zero inside it.
+    transform's localPosition, and in flight drops its parent's position: the armature and the bone both sit at the part's origin.
     `far` adds a zero-area triangle so Unity's culling bounds cover the full travel."""
     arm = bpy.data.armatures.new(name); ao = bpy.data.objects.new(name, arm)
     P.coll.objects.link(ao); P.place(ao, T(*servo_pos), P.model)

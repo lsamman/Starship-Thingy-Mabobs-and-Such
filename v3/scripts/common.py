@@ -28,8 +28,9 @@ def rig(name, P, M, owner_anchor, owner_servo, anchor_pos, servo_pos, skin, weig
     """An armature with a fixed bone and the piston bone, and one skinned mesh. weights[i] is the piston's share of
     vertex i. `far` adds a zero-area triangle on the fixed bone: Unity culls a skinned mesh by its rest bounds, and
     without this the moved end would vanish whenever the rest position is off screen.
-    KSP writes the servo transform's localPosition as axis * extension, dropping anything authored there, so the
-    armature object carries the rest position and the piston bone sits at zero inside it, like stock TopJoint."""
+    KSP writes the servo transform's localPosition as axis * extension, so the piston bone sits at zero in the armature. And in flight
+    its joint's anchor is servoParentTransform * Vector3, which Unity takes with w = 0: the parent's own position is lost. So the armature
+    must sit at the part's origin too (servo_pos = the origin), or the stages jump by its offset as soon as physics starts."""
     arm = bpy.data.armatures.new(name)
     ao = bpy.data.objects.new(name, arm)
     P.coll.objects.link(ao)

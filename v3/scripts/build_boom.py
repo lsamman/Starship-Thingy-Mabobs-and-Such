@@ -38,6 +38,6 @@ for s in (-1, 1):
     add(g, 1.0)
 g = Geo(); bar(g, -L.RAIL_X - .1, L.RAIL_X + .1, L.CENTRE_Y - .11, L.CENTRE_Y + .11, *L.BEAM_Z, FR); add(g, 1.0)
 far = (0, L.CENTRE_Y - L.BOOM_TRAVEL - .2, L.BEAM_Z[0])
-rig('boom', P, M, 'BoomAnchor', 'BoomServo', (0, 0, L.CEILING_Z), (0, L.CENTRE_Y, L.BEAM_Z[0]), skin, w, far)
+rig('boom', P, M, 'BoomAnchor', 'BoomServo', (0, .2, L.CEILING_Z), (0, 0, L.CEILING_Z), skin, w, far)      # the servo at the part's origin
 P.model.location = -O
 P.export(out); P.save_blend(out)

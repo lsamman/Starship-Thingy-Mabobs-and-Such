@@ -12,6 +12,10 @@ The parts and a craft file (`Ships/VAB/Starship HLS.craft`), modelled on the NAS
 | **Landing Leg** (`STMS_HLS_Leg`) | Use four |
 | **Elevator** (`STMS_HLS_Lift`) | Goes on the `lift` node in the airlock; a Breaking Ground piston, 22.3 m |
 
+## Cargo version
+
+**Cargo Section** (`STMS_HLS_Cargo`) goes on the HLS core instead of the crew section: SEP's Block 3 cargo section from your install, in white, without tiles or flaps, with body-mounted solar panels and bay lights. Put the Cargo Winch on its ceiling node; with the boom out the platform reaches the ground at about -25.7. A copy of SEP's part, in `its/patches/STMS_Variants.cfg`.
+
 ## SEP compatibility
 
 - Engines are SEP's own `SEP_26_R3_SL_C` and `SEP_26_R3_VAC`, at the positions SEP's Block 3 ship uses.
