@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import layout as L
 addon_utils.enable('io_object_mu', default_set=True)
 a = sys.argv[sys.argv.index('--') + 1:]
-out = a.pop(0); opt = dict(res='1400x1000', view='25,8,60,0,0,0', sun='60,35', lens='60', sky='studio', only='', hide='', pose='', samples='48', ortho='', livery='')
+out = a.pop(0); opt = dict(res='1400x1000', view='25,8,60,0,0,0', sun='60,35', lens='60', sky='studio', only='', hide='', pose='', samples='48', ortho='', livery='', tilt='0')
 files = []
 while a:
     x = a.pop(0)
@@ -121,6 +121,8 @@ def model(path, skip=(), clip=None):
                     if tr.name.split('.')[0] == clip or act.name.split('.')[0] == clip or clip == '*':
                         ad.action = act; sc.frame_set(int(act.frame_range[1]))
         bpy.context.view_layer.update()
+    for o in new:
+        if base(o) == 'tilt' and float(opt['tilt']): o.rotation_mode = 'QUATERNION'; o.rotation_quaternion = o.rotation_quaternion @ Quaternion((1, 0, 0), math.radians(float(opt['tilt'])))      # arrays hanging down
     for o in new:                                    # freeze the pose, so another part's clip can't move it
         if o.animation_data:
             m = o.matrix_basis.copy(); o.animation_data_clear(); o.matrix_basis = m

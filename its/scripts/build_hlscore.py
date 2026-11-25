@@ -6,7 +6,7 @@ B0, B1 = HL.BAND; CELL = HL.PITCH
 bores = [g + k * CELL for g in HL.GROUPS for k in (-1, 0, 1)]
 inb = lambda az: any(abs(wrap(az - b)) < CELL / 2 for b in bores)
 zs = [0, .30, HL.Z_BLACK, 2.2, 3.5, HL.PANEL_TOP, 8, 12, 16, B0, B1, HL.Z_SKIN]
-hull = skin(zs, 'core', keep=lambda a, z: not (abs(wrap(a)) < HL.TRACK or (B0 < z < B1 and inb(a))))
+hull = skin(zs, 'core', keep=lambda a, z: not (B0 < z < B1 and inb(a)))
 zm = (B0 + B1) / 2; d = Geo(); bell = Geo(); ND = []
 for b in bores:
     # patch: the cell's rectangle down to an ellipse, sampled where the facets change so nothing gaps
@@ -53,36 +53,29 @@ ho = P.mesh('hull', hull, MH, smooth_angle=30)
 import bmesh                                             # weld the patches to the skin so the shading runs across
 bm = bmesh.new(); bm.from_mesh(ho.data); bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=2e-4); bm.to_mesh(ho.data); bm.free()
 P.mesh('bells', bell, P.det, smooth_angle=60)
-# ---------------- elevator track: recessed channel, rails, rungs
-TR = HL.TRACK; RR = HL.TRACK_R; ZT = HL.Z_SKIN
-d.add(fac(RR, 0, ZT, -TR, TR, Z.white))
+# ---------------- elevator track: rails, rungs and stiles on the outside of the tank wall, a mesh of their own so they can be left off
+TR = HL.TRACK; RR = HL.R; ZT = HL.Z_SKIN; tk = Geo()
 for s in (-1, 1):
-    p = [hp(s * TR, 0), hp(s * TR, 0, r=RR), hp(s * TR, ZT, r=RR), hp(s * TR, ZT)]
-    quad(p if s > 0 else p[::-1], Z.white, d)
-    x = s * (RR * math.sin(math.radians(TR)) - .035); y = -RR
-    d.add(box(.05, .09, ZT - .02, zone=Z.alu, bevel=.01, center=(x, y - .03, ZT / 2)))
-    d.add(box(.02, .05, ZT - .02, zone=Z.steel, center=(x - s * .02, y - .075, ZT / 2)))
-    for z in np.arange(1.0, ZT - .3, 1.6): d.add(box(.09, .03, .12, zone=Z.grey, bevel=.008, center=(x, y - .01, float(z))))
-for z in np.arange(.35, ZT - .05, .38): d.add(tube([(-.16, -RR - .05, float(z)), (.16, -RR - .05, float(z))], .012, 5, zone=Z.steel))
-for s in (-1, 1): d.add(box(.02, .07, ZT - .2, zone=Z.grey, center=(s * .16, -RR - .025, ZT / 2)))
+    x = s * (HL.TRACK_R * math.sin(math.radians(TR)) - .035); y = -RR
+    tk.add(box(.05, .09, ZT - .06, zone=Z.alu, bevel=.01, center=(x, y - .03, ZT / 2)))
+    tk.add(box(.02, .05, ZT - .06, zone=Z.steel, center=(x - s * .02, y - .075, ZT / 2)))
+    for z in np.arange(1.0, ZT - .3, 1.6): tk.add(box(.09, .05, .12, zone=Z.grey, bevel=.008, center=(x, y - .0, float(z))))
+    tk.add(box(.02, .07, ZT - .2, zone=Z.grey, center=(s * .16, -RR - .025, ZT / 2)))
+for z in np.arange(.35, ZT - .05, .38): tk.add(tube([(-.16, -RR - .05, float(z)), (.16, -RR - .05, float(z))], .012, 5, zone=Z.steel))
+P.mesh('track', tk, P.det, smooth_angle=40)
 # ---------------- base: lip, inner skirt, stringers, engine plate with wells for SEP's vacuum Raptors
 ZP = HL.Z_SL; RI = 2.77
-d.add(lathe([(HL.R, 0), (HL.R - .16, 0)], HL.SIDES, TR, 360 - TR, zone=Z.alu, flip=True))
-d.add(lathe([(RI - .035, 0), (RI - .035, .05), (RI, .05)], HL.SIDES, TR, 360 - TR, zone=Z.dark, flip=True))
-d.add(lathe([(RI, .05), (RI, ZP)], HL.SIDES, TR, 360 - TR, zone=Z.wall, flip=True))
-d.add(fac(RR - .03, 0, ZP, -TR, TR, Z.wall, flip=True))
-for s in (-1, 1):
-    q_ = s * (TR + .5); p = [hp(q_, 0, r=RR - .03), hp(q_, 0, r=RI), hp(q_, ZP, r=RI), hp(q_, ZP, r=RR - .03)]; quad(p if s > 0 else p[::-1], Z.wall, d)
-quad([hp(-TR, 0, r=RR - .03), hp(TR, 0, r=RR - .03), hp(TR, 0, r=RR), hp(-TR, 0, r=RR)], Z.alu, d)
+d.add(lathe([(HL.R, 0), (HL.R - .16, 0)], HL.SIDES, zone=Z.alu, flip=True))
+d.add(lathe([(RI - .035, 0), (RI - .035, .05), (RI, .05)], HL.SIDES, zone=Z.dark, flip=True))
+d.add(lathe([(RI, .05), (RI, ZP)], HL.SIDES, zone=Z.wall, flip=True))
 for k in range(48):
     az = 3.75 + 7.5 * k
-    if abs(wrap(az)) < TR + 3: continue
     d.add(box(.045, .05, ZP - .1, zone=Z.alu, bevel=.008), on_cyl(az, ZP / 2, RI - .012) @ Matrix(((1, 0, 0, 0), (0, 0, 1, 0), (0, -1, 0, 0), (0, 0, 0, 1))))
     a, c = on_cyl(az - 3, .09, RI - .022).translation, on_cyl(az + 3, .36, RI - .022).translation
     d.add(strut(a, c, .013, Z.grey, 5)); d.add(strut(on_cyl(az + 3, .09, RI - .022).translation, on_cyl(az - 3, .36, RI - .022).translation, .013, Z.grey, 5))
-d.add(ring(RI - .035, RI, .36, .42, Z.alu, 96, 10, 350)); d.add(ring(RI - .04, RI, 1.12, 1.18, Z.alu, 96, 10, 350))
+d.add(ring(RI - .035, RI, .36, .42, Z.alu, 96)); d.add(ring(RI - .04, RI, 1.12, 1.18, Z.alu, 96))
 vac = [(HL.R_VAC * math.sin(math.radians(a)), -HL.R_VAC * math.cos(math.radians(a))) for a in (60, 180, 300)]
-outer = [(p.x, p.y) for p in (hp(a, 0, r=RI) for a in np.arange(TR, 360 - TR + .1, 3.75))] + [(p.x, p.y) for p in (hp(a, 0, r=RR - .03) for a in (-TR, -3.75, 0, 3.75, TR))]
+outer = [(p.x, p.y) for p in (hp(a, 0, r=RI) for a in np.arange(0, 359.9, 3.75))]
 WR = .56
 d.add(plate(outer, [circ(WR, 32, *v) for v in vac], ZP, Z.dome))
 for i, (x, y) in enumerate(vac):
@@ -98,9 +91,9 @@ for a in (0, 120, 240):                                  # feed lines and boxes 
     d.add(box(.5, .34, .13, zone=Z.white, bevel=.02), Rz(a) @ T(0, -2.42, ZP - .06) if a else Rz(0) @ T(.55, -2.2, ZP - .06))
     d.add(tube([on_cyl(a + 33, ZP + .01, 1.16).translation, on_cyl(a + 33, ZP - .08, 1.3).translation, on_cyl(a + 33, ZP + .01, 1.44).translation], .04, 8, zone=Z.copper))
 # ---------------- forward dome
-d.add(lathe([(2.76, 20.1), (2.76, 20.35), (2.6, 20.52), (2.36, 20.67)], 96, TR, 360 - TR, zone=Z.alu))
+d.add(lathe([(2.76, 20.1), (2.76, 20.35), (2.6, 20.52), (2.36, 20.67)], 96, zone=Z.alu))
 d.add(lathe([(2.36, 20.1), (2.36, 20.67), (2.2, 20.76), (1.6, 20.95), (.9, 21.06), (0, 21.1)], 96, zone=Z.dome))
-d.add(lathe([(HL.R - .004, HL.Z_SKIN), (2.76, HL.Z_SKIN), (2.76, 20.1)], 96, TR, 360 - TR, zone=Z.alu))
+d.add(lathe([(HL.R - .004, HL.Z_SKIN), (2.76, HL.Z_SKIN), (2.76, 20.1)], 96, zone=Z.alu))
 # ---------------- leg hinges, lights, flush details
 for az in HL.LEG_AZ:
     for s in (-1, 1): d.add(lay(box(.10, .55, .05, zone=Z.black, bevel=.015), az + s * 6.2, HL.HINGE[1], L_=.2))
@@ -143,8 +136,6 @@ for az in HL.LEG_AZ:
     for s in (-1, 1): P.hull_collider('col_pod%d%s' % (az, 'ab'[s > 0]), [tuple(M @ V(p)) for z in (.0, 4.6) for p in ((s * pw(z, 2), hy(pw(z, 2)), z), (s * pw(z, 3), fy_(z), z), (s * OW, fy_(z), z), (s * OW, hy(OW), z))])
     P.hull_collider('col_pod%dt' % az, [tuple(M @ V(p)) for s in (-1, 1) for z in (4.66, 4.95, 6.85) for p in ((s * pw(z, 2), hy(pw(z, 2)), z), (s * pw(z, 3), fy_(z), z))])
 P.mesh('legpods', pod, P.det, smooth_angle=25); P.mesh('legpods_in', pin, P.det, smooth_angle=40)
-# ---------------- flush cover over the elevator track, for the cargo lander
-P.mesh('trackcover', skin(zs, 'core', keep=lambda a, z: abs(wrap(a)) < HL.TRACK), MH, smooth_angle=30)
 P.mesh('details', d, P.det, smooth_angle=40)
 # ---------------- nodes and colliders
 P.node('top', (0, 0, HL.Z_TOP), (0, 0, 1), 5); P.node('bottom', (0, 0, 0), (0, 0, -1), 5)
@@ -153,12 +144,10 @@ for i, az in enumerate(HL.LEG_AZ):
     p = on_cyl(az, HL.HINGE[1], HL.R); P.node(f'leg{i + 1}', p.translation, p.to_3x3() @ V((0, 0, 1)), 1); P.node(f'shroud{i + 1}', p.translation + p.to_3x3() @ V((0, 0, .0)), p.to_3x3() @ V((0, 0, 1)), 2)
 def arcs(a0, a1, r0, r1, z0, z1, n):
     return [tuple(hp(a0 + (a1 - a0) * i / n, z, r=r)) for i in range(n + 1) for r in (r0, r1) for z in (z0, z1)]
-# four convex quarters outside the track, so kerbals on the ladder are not pushed out of the channel
-for i, (a0, a1) in enumerate(((7.5, 90), (90, 180), (180, 270), (270, 352.5))):
+for i, (a0, a1) in enumerate(((0, 90), (90, 180), (180, 270), (270, 360))):
     P.hull_collider(f'col_body{i}', [tuple(hp(a0 + (a1 - a0) * k / 8, z)) for k in range(9) for z in (ZP, HL.Z_SKIN)] + [(0, 0, ZP), (0, 0, HL.Z_SKIN)])
-P.hull_collider('col_track', [tuple(hp(a, z, r=RR)) for a in (-TR, TR) for z in (ZP, HL.Z_SKIN)] + [(0, 0, ZP), (0, 0, HL.Z_SKIN)])
 for k in range(16):
-    a0, a1 = max(7.5, 22.5 * k), min(352.5, 22.5 * (k + 1)); P.hull_collider(f'col_skirt{k}', arcs(a0, a1, HL.R, RI, 0, ZP, 2))
+    a0, a1 = 22.5 * k, 22.5 * (k + 1); P.hull_collider(f'col_skirt{k}', arcs(a0, a1, HL.R, RI, 0, ZP, 2))
 P.hull_collider('col_dome', [tuple(hp(a, z, r=r)) for a in range(0, 360, 30) for z, r in ((20.5, 2.6), (20.95, 1.6))])
 P.box_trigger('ladder', climb_frame((0, -RR - .14, HL.Z_SKIN / 2 + .3), (0, -1, 0)), (.5, .3, HL.Z_SKIN - .3), 'Ladder')
-finish(P, ({'legpods', 'legpods_in'}, {'trackcover'}))
+finish(P)

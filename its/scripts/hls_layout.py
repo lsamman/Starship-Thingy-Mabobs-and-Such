@@ -30,13 +30,14 @@ CANT = 50                   # exhaust axis: degrees below the outward normal
 LIGHT_AZ = (61.875, 120, 240, 298.125)
 # ---- elevator track and airlock
 TRACK = 7.5                 # half-width, degrees
-TRACK_R = 2.40
+TRACK_R = 2.40               # where the elevator is stowed, inside the airlock; the rails are on the hull, SLIDE further out
+SLIDE = R - TRACK_R
 DOOR = (21.75, 23.25); DOOR_AZ = 18.75
 BAY_BACK = -1.25
 # ---- windows
 WIN_Z, WIN_N, WIN_SPAN, WIN = 25.48, 10, 36.0, (.31, .74)
 # ---- solar bays
-SOL_AZ = (56.25, 101.25, 258.75, 303.75); SOL_HW = 18.75; SOL_DP = 1.62; SOL_Z = (22.95, 23.8)
+SOL_AZ = (56.25, 101.25, 258.75, 303.75); SOL_HW = 18.75; SOL_DP = 1.62; SOL_Z = (22.95, 23.8); SOL_OUT, SOL_HATCH = 1.27, 150     # how far the carriage runs out, how far the hatch swings up
 # ---- legs (plane of one leg: r outward, z)
 HINGE = (2.87, 4.35); SOLE = -1.0; FOOT_R = 5.35; FOOT_STOW = .52
 SHELL = ((.26, .05), (.32, .30), (.46, .58), (.8, .74), (1.4, .80), (2.2, .78), (3.2, .74), (3.9, .72), (4.25, .70), (4.6, .60), (4.9, .42), (5.2, .21), (5.45, .03), (5.5, 0))   # blister over a stowed leg: (z, height off the hull)

@@ -43,7 +43,7 @@ d.add(box(1.5, 1.5, .02, zone=Z.alu, bevel=.008, center=(0, 0, CE - .008)))     
 d.add(lathe([(R_(ZB) - .004, ZB), (2.765, ZB), (2.765, ZB + .25), (2.36, -3.26), (1.6, -3.0), (0, -2.85)], 96, zone=Z.wall, flip=True))
 # ---------------- door: hinged along its top edge; the curved sides tuck down into the opening as it comes up
 HY, HZ = -R_(H0) + .02, H0 - .03; hf = T(0, HY, HZ); door = P.empty('door', hf, P.model); ds, di = Geo(), Geo(); e = .22
-dz_ = [S0 + .022] + [z for z in zs if S0 < z < H0] + [H0 - .008]; da = [-AZ + i * SI for i in range(29)]; cl = lambda a: max(-AZ + e, min(AZ - e, a)); DT = .10
+dz_ = [S0 + .055] + [z for z in zs if S0 < z < H0] + [H0 - .008]; da = [-AZ + i * SI for i in range(29)]; cl = lambda a: max(-AZ + e, min(AZ - e, a)); DT = .10
 for z0, z1 in zip(dz_, dz_[1:]):
     for a0, a1 in zip(da, da[1:]):
         q = [(a0, z0), (a1, z0), (a1, z1), (a0, z1)]; n = len(ds.v); ds.v += [tuple(h(cl(a), z)) for a, z in q]; ds.face(range(n, n + 4), [huv(abs(a), z + O, 'cargo') for a, z in q])
@@ -61,7 +61,7 @@ rib = np.arange(S0 + .35, H0 - .3, .62)
 for i, (z0, z1) in enumerate(zip(rib[-4:], rib[-3:])):
     for a0, a1 in ((-36, -18), (-18, 0), (0, 18), (18, 36)):
         p, q = ((a0, z0), (a1, z1)) if i % 2 else ((a1, z0), (a0, z1)); di.add(strut(h(p[0], float(p[1]), R_(p[1]) - DT - .04), h(q[0], float(q[1]), R_(q[1]) - DT - .04), .025, Z.white, 5))
-for a in np.arange(-AZ + 4, AZ - 3, 7): di.add(box(.07, .05, .10, zone=Z.steel, bevel=.01), T(*h(float(a), S0 + .07, R_(S0) - DT - .02)) @ Rz(float(a)))      # latches along the lower edge
+for a in np.arange(-AZ + 4, AZ - 3, 7): di.add(box(.07, .05, .10, zone=Z.steel, bevel=.01), T(*h(float(a), S0 + .13, R_(S0) - DT - .02)) @ Rz(float(a)))      # latches along the lower edge
 for x in (-.9, 0, .9): di.add(box(.16, .12, .14, zone=Z.white, bevel=.02), T(x, -math.sqrt(max(.1, (R_(H0) - .13) ** 2 - x * x)) + .02, HZ - .08))
 P.mesh('doorskin', ds, MH, parent=door, frame=hf, smooth_angle=30); P.mesh('doorframe', di, P.det, parent=door, frame=hf)
 q0 = P.rest_quat(door)

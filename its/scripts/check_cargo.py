@@ -58,7 +58,7 @@ for b in (0, 1, 2, 3, 4, 4.4):
         if n in ('Boom0.5', 'Boom0') and b: continue
         h = [m for m in out if t.overlap(tree(out, (m,))[0])]; h = [m for m in h if not (n.startswith('Boom') and m == 'details' and b < 5)]
         ok(not h, 'boom %.1f: %s %s' % (b, n, h))
-core = load(mu('STMS_HLS_Core')); tc = tree(core, [n for n in core if n != 'trackcover'], Matrix.Translation((0, 0, -HL.Z_OGIVE)))[0]; leg = load(mu('STMS_HLS_Leg'), 'legDeploy', True); LW = Matrix.Translation((0, 0, -HL.Z_OGIVE))
+core = load(mu('STMS_HLS_Core')); tc = tree(core, [n for n in core if n != 'track'], Matrix.Translation((0, 0, -HL.Z_OGIVE)))[0]; leg = load(mu('STMS_HLS_Leg'), 'legDeploy', True); LW = Matrix.Translation((0, 0, -HL.Z_OGIVE))
 tl = [tree(leg, None, LW @ Matrix.Rotation(math.radians(a), 4, 'Z') @ Matrix.Translation((0, -HL.R, HL.HINGE[1])))[0] for a in HL.LEG_AZ]
 for h in (.5, 1, 2, 4, 8, 12, 16, 20, 22, 23, 24):
     t, v = winch(4.4, h)['Platform']; ok(not (t.overlap(tree(out)[0]) or t.overlap(tc) or any(t.overlap(x) for x in tl)), 'platform %.1f down, underside %.2f above the soles' % (h, min(q.z for q in v) + HL.Z_OGIVE - HL.SOLE))

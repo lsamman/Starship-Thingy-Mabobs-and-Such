@@ -4,7 +4,7 @@ The parts and a craft file (`Ships/VAB/Starship HLS.craft`), modelled on the NAS
 
 | Part | What it does |
 |---|---|
-| **Core** (`STMS_HLS_Core`) | 322 t of methalox, 3 sea-level + 3 vacuum Raptor 3 nodes, 18 landing thrusters in the black band, 4 leg nodes, elevator track and ladder, RCS, floodlights |
+| **Core** (`STMS_HLS_Core`) | 322 t of methalox, 3 sea-level + 3 vacuum Raptor 3 nodes, 18 landing thrusters in a thin black band, 4 faired leg nodes (the fairings are a switch, and do not go with the jettisonable shrouds), elevator rails and ladder on the hull (a switch), RCS, floodlights |
 | **Crew Section** (`STMS_HLS_Crew`) | 8 crew, ten windows, airlock bay with an awning door, four solar bays, nose cap over a flat seat for a docking port (shielded while shut) |
 | **Solar Array** (`STMS_HLS_Solar`) | One per solar bay, four in all |
 | **Leg Shroud** (`STMS_HLS_LegShroud`) | Jettisonable, one over each folded leg |
@@ -14,7 +14,11 @@ The parts and a craft file (`Ships/VAB/Starship HLS.craft`), modelled on the NAS
 
 ## Cargo version
 
-**Cargo Section** (`STMS_HLS_Cargo`) goes on the HLS core instead of the crew section: SEP's Block 3 cargo section from your install, in white, without tiles or flaps, with body-mounted solar panels and bay lights. Put the Cargo Winch on its ceiling node; with the boom out the platform reaches the ground at about -25.7. A copy of SEP's part, in `its/patches/STMS_Variants.cfg`.
+**Cargo Section** (`STMS_HLS_Cargo`) goes on the HLS core instead of the crew section, after SpaceX's cargo lander render of April 2024. One wide door swings up over the bay; the crane frame leans out over the load (it is for looks, the Cargo Winch on the ceiling node does the lifting). Open the door, lean the frame out, run the boom to -4.4, then the hoist: the deck is on the ground at about -23.8. Set the core's **Elevator track** to None. Body-mounted solar panels round the back.
+
+## Solar arrays
+
+Each array has **Lock Tracking** and **Rotate Array Down** (right-click, or action groups), from the small plugin in `its/plugin`. Rotating down turns tracking off, centres the array and hangs it along the hull; it stays locked until it is out again, and Retract raises it first. Hanging, it passes over the landing thrusters, so do it after landing.
 
 ## SEP compatibility
 
@@ -34,7 +38,7 @@ On the ground: Open Airlock Door, Lower Deck, then slide the elevator's Target E
 - No NASA or SpaceX logos; a flag on the door (switchable).
 - The renders show no solar arrays, only outlined hatches; the roll-out arrays are our reading of those.
 - Press describes a dozen landing engines; the renders space them for six groups of three, so 18.
-- The band sits about a metre lower (real scale), to stay on the core's side of SEP's joint. The track is recessed deeper, so the folded elevator fits behind the door.
+- The band sits about a metre lower (real scale), to stay on the core's side of SEP's joint. The elevator is stowed inside the airlock; Lower Deck slides it out over the sill onto the rails first.
 
 ## Interiors
 
