@@ -20,19 +20,20 @@ def write(G):
     land_fx = block('landing', block('AUDIO', 'channel = Ship', 'clip = sound_vent_medium', 'volume = 0 0', 'volume = 1 0.9', 'pitch = 0 0.6', 'pitch = 1 0.9', 'loop = true'),
                     block('MODEL_MULTI_PARTICLE', 'modelName = Squad/FX/Monoprop_small', 'transformName = landingThrust', 'emission = 0 0', 'emission = 0.05 0.3', 'emission = 1 1', 'speed = 0 0.6', 'speed = 1 1', 'localRotation = 0, 0, 0'))
     fx = [x for x in RCS_FX]; fx = fx[:-1] + ['\t' + l for l in land_fx] + fx[-1:]
+    eng_on = block('MODULE', block('IDENTIFIER', 'name = ModuleEnginesFX', 'engineID = landing'), 'moduleActive = true')      # B9 leaves a module off once a subtype turns it off, unless the others turn it back on
     part('STMS_HLS_Core', 'Starship HLS Core', 'The Moon-bound ship\'s tanks, engine bay and legwork. White instead of a heat shield, no flaps, and a black belt of eighteen landing thrusters two thirds of the way up, so the last hundred metres are flown without digging a crater under yourself. Mounts three sea-level and three vacuum Raptor 3s from SEP, stacks on SEP\'s Block 3 booster, and takes SEP\'s ship-to-ship docking hardware on the far side from the elevator.',
          T + ' core tank methalox engine mount landing thruster', 21.0, 31000, 'FuelTank', 'veryHeavyRocketry', profiles='size4p5', crash=20, tmax=2000, skin=2000, brk=5000,
          extra=['fuelCrossFeed = True', 'vesselType = Ship', fx],
          modules=[tank(82000),
                   mod('ModuleEnginesFX', 'engineID = landing', 'thrustVectorTransformName = landingThrust', 'runningEffectName = landing', 'exhaustDamage = False', 'ignitionThreshold = 0.1', 'minThrust = 0', 'maxThrust = 540',
-                      'heatProduction = 0', 'EngineType = LiquidFuel', 'allowShutdown = True', 'stagingEnabled = False', 'engineAccelerationSpeed = 6', 'engineDecelerationSpeed = 8', 'useEngineResponseTime = True',
+                      'heatProduction = 0', 'EngineType = LiquidFuel', 'allowShutdown = True', 'stagingEnabled = True', 'engineAccelerationSpeed = 6', 'engineDecelerationSpeed = 8', 'useEngineResponseTime = True',
                       block('PROPELLANT', 'name = LqdMethane', 'ratio = 3', 'DrawGauge = True'), block('PROPELLANT', 'name = Oxidizer', 'ratio = 1'), block('atmosphereCurve', 'key = 0 340', 'key = 1 220', 'key = 6 0.001')),
                   rcs(34), command(0), sas(), res('ElectricCharge', 3000), wheel(150, 1.5), antenna(500000), light('baseLight'),
                   cc(['lampglow', 'navgreen', 'navred'], 'Exterior Lights: On', 'Exterior Lights: Off', 'Exterior Lights'),
                   mod('ModuleToggleCrossfeed', 'crossfeedStatus = true', 'toggleEditor = true', 'toggleFlight = true'),
                   mod('ModuleB9PartSwitch', 'moduleID = HLS_Style', 'switcherDescription = Style', 'affectDragCubes = false', 'affectFARVoxels = false',
                       *[block('SUBTYPE', f'name = {n}', f'title = {t}', f'primaryColor = {c}', *[f'transform = {x}' for x in tr], *off) for n, t, c, tr, off in (
-                          ('Original', 'Original', 'black', ['hull_o', 'bells_o', 'ducts_o'], ()), ('R2024', '2024 render', 'white', ['hull', 'bells', 'ducts', 'legpods', 'legpods_in'] + [f'col_pod{a}{k}' for a in HL.LEG_AZ for k in 'abt'], ()),
+                          ('Original', 'Original', 'black', ['hull_o', 'bells_o', 'ducts_o'], (eng_on,)), ('R2024', '2024 render', 'white', ['hull', 'bells', 'ducts', 'legpods', 'legpods_in'] + [f'col_pod{a}{k}' for a in HL.LEG_AZ for k in 'abt'], (eng_on,)),
                           ('Depot', 'Depot (no landing thrusters)', 'gray', ['hull_d'], (block('MODULE', block('IDENTIFIER', 'name = ModuleEnginesFX', 'engineID = landing'), 'moduleActive = false'),)))]),
                   G['livery']('HLS_Track', 'Elevator track', [('Rails', 'Rails and ladder', 'gray', ['track', 'ladder']), ('None', 'None (cable elevator, cargo)', 'white', [])])])
     anim = lambda a, on, off, what, grp='None': mod('ModuleAnimateGeneric', f'animationName = {a}', f'actionGUIName = Toggle {what}', f'startEventGUIName = {on}', f'endEventGUIName = {off}', f'defaultActionGroup = {grp}', 'allowDeployLimit = false', 'evaDistance = 6')
