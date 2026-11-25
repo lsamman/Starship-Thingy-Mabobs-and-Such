@@ -35,5 +35,17 @@ P.key('deckFold', deck, 0, rotation_quaternion=fold); P.key('deckFold', deck, 50
 P.hull_collider('col_deck', [(x, y, z) for x in (-DW / 2, DW / 2) for y in (y0, y1) for z in (UP, UP - .07)], parent=deck, frame=hf)
 P.hull_collider('col_tongue', [(x, y, z) for x in (-.21, .21) for y in (HG.y, y0) for z in (UP, UP - .05)], parent=deck, frame=hf)
 for s in (-1, 1): P.hull_collider('col_rail%d' % (s > 0), [(s * x, y, z) for x in (DW / 2 - .05, DW / 2 - .01) for y in (y0, y1) for z in (UP, UP + .64)], parent=deck, frame=hf)
+# ---------------- guide: the top of the track. It rides out with the carriage on two drawer slides in the airlock floor and stands over the fixed
+# rails on the hull, so the carriage always has rails behind it; it stays up there when the carriage goes down
+guide = P.empty('guide', None, P.model); gl0 = guide.location.copy(); gg = Geo(); fx = Geo(); GX = HL.TRACK_R * math.sin(math.radians(HL.TRACK)) - .035
+for f, y in ((0, 0), (50, -HL.SLIDE), (F, -HL.SLIDE)): P.key('deckFold', guide, f, location=gl0 + V((0, y, 0)))
+for s in (-1, 1):
+    x = s * GX; gg.add(box(.05, .09, 1.17, zone=Z.alu, bevel=.01, center=(x, -.03, .605))); gg.add(box(.02, .05, 1.17, zone=Z.steel, center=(x - s * .02, -.075, .605)))
+    gg.add(box(.032, .56, .034, zone=Z.steel, bevel=.005, center=(x, .25, .030))); gg.add(strut((x, .005, .62), (x, .34, .05), .018, Z.alu, 8)); gg.add(box(.05, .09, .05, zone=Z.grey, bevel=.008, center=(x, .35, .055))); gg.add(box(.05, .06, .07, zone=Z.grey, bevel=.008, center=(x, .005, .62)))
+    for q in (-1, 1): fx.add(box(.014, .86, .055, zone=Z.alu, bevel=.004, center=(x + q * .026, .15, .0275)))          # outer channel, bolted to the floor
+    for y in (-.24, .15, .54): fx.add(box(.13, .05, .010, zone=Z.grey, bevel=.004, center=(x, y, .005))); [fx.add(cyl(.011, .014, 8, zone=Z.steel), T(x + q * .052, y, .012)) for q in (-1, 1)]
+gg.add(box(2 * GX, .05, .05, zone=Z.alu, bevel=.008, center=(0, -.005, 1.165))); gg.add(box(2 * GX, .04, .04, zone=Z.alu, bevel=.008, center=(0, .40, .055)))
+fx.add(box(.11, .16, .09, zone=Z.dark, bevel=.015, center=(0, .52, .045))); fx.add(cyl(.016, .78, 10, zone=Z.steel), T(0, .13, .05) @ Rx(90)); gg.add(box(.07, .07, .06, zone=Z.grey, bevel=.01, center=(0, .40, .05)))     # screw drive
+P.mesh('guidemesh', gg, P.det, parent=guide); P.mesh('guidebase', fx, P.det)
 P.node('mount', (0, 0, 0), (0, 1, 0), 1); P.node('cargo', (0, yc - HL.SLIDE, UP), (0, 0, 1), 0)
 P.bake_clips(0); finish(P)

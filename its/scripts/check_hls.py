@@ -59,6 +59,12 @@ for i, a in enumerate(HL.SOL_AZ):
     for b in HL.SOL_AZ[i + 1:]: ok(not hangs[a].overlap(hangs[b]), f'hanging arrays {a} and {b} apart') if hangs[a].overlap(hangs[b]) else None
 L0 = Matrix.Translation((0, -HL.TRACK_R, HL.DOOR[0])); l0, l1 = load(mu('STMS_HLS_Lift'), 'deckFold'), load(mu('STMS_HLS_Lift'), 'deckFold', True)
 t, v = tree(l0, ('carriage', 'deckmesh'), L0); ok(not t.overlap(td), 'folded elevator clear of the shut door (%d hits)' % len(t.overlap(td))); ok(not t.overlap(tb), 'folded elevator clear of the bay (%d hits)' % len(t.overlap(tb)))
+crew1 = load(mu('STMS_HLS_Crew'), 'doorOpen', True); DM = ('strutcyl', 'strutrod', 'doorhinge', 'doorlug', 'doorskin', 'doorframe'); to_ = tree(crew1, DM, Tz(HL.Z_TOP))[0]; tst = tree(crew, DM, Tz(HL.Z_TOP))[0]
+ok(not tree(l0, None, L0)[0].overlap(tst), 'stowed elevator and guide clear of the shut door, its hinges and struts'); ok(not tree(l1, None, L0)[0].overlap(to_), 'extended elevator clear of the open door and struts')
+gs, ge = tree(l0, ('guidemesh',), L0)[0], tree(l1, ('guidemesh',), L0)[0]; wheels = ('carriage', 'deckmesh')
+ok(not gs.overlap(tb) and not ge.overlap(tb) and not ge.overlap(tc), 'guide clear of bay, sill and rails, in and out %d %d %d' % (len(gs.overlap(tb)), len(ge.overlap(tb)), len(ge.overlap(tc))))
+for k in range(0, 25): h_ = ge.overlap(tree(l1, wheels, L0 @ Tz(-k / 10))[0]); ok(not h_, f'carriage {k / 10} m down clear of the guide ({len(h_)})') if h_ else None
+ok(not gs.overlap(tree(l0, wheels, L0)[0]), 'carriage clear of the guide stowed')
 hit = {}
 for k in range(0, int(HL.LIFT_TRAVEL * 4) + 1):
     t, v = tree(l1, ('carriage', 'deckmesh'), L0 @ Tz(-k / 4))

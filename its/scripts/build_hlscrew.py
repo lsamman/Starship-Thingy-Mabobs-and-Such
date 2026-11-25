@@ -29,7 +29,7 @@ for z, flip in ((D0, False), (D1, True)):
         f = [V((p.x, p.y, z)), V((q.x, q.y, z)), V((q.x, YB, z)), V((p.x, YB, z))]; put(f[::-1] if flip else f, Z.deck if not flip else Z.white)
 for s in (-1, 1):
     e = hp(s * HL.DOOR_AZ, D0); p = [V((e.x, e.y, D0)), V((e.x, YB, D0)), V((e.x, YB, D1)), V((e.x, e.y, D1))]; put(p if s < 0 else p[::-1], Z.white)
-    for z in (D0 + .35, D0 + .95): d.add(tube([(s * (XB - .07), -2.3, z - O), (s * (XB - .07), -1.5, z - O)], .018, 6, zone=Z.grey)); [d.add(box(.07, .03, .03, zone=Z.grey, center=(s * (XB - .035), y, z - O))) for y in (-2.25, -1.55)]
+    for z in (D0 + .35, D0 + .70): d.add(tube([(s * (XB - .07), -2.3, z - O), (s * (XB - .07), -1.5, z - O)], .018, 6, zone=Z.grey)); [d.add(box(.07, .03, .03, zone=Z.grey, center=(s * (XB - .035), y, z - O))) for y in (-2.25, -1.55)]
 put([V((-XB, YB, D0)), V((XB, YB, D0)), V((XB, YB, D1)), V((-XB, YB, D1))], Z.white)
 BF = Matrix(((1, 0, 0, 0), (0, 0, -1, YB), (0, 1, 0, (D0 + D1) / 2 - O), (0, 0, 0, 1)))      # +Z toward the door
 d.add(rounded_rect_ring(.98, 1.28, .22, .09, .06, 6, zone=Z.alu), BF)
@@ -78,6 +78,27 @@ fl.add(lay(quad_patch(.62, .33, FZ, nx=6, ny=2), 0, 22.72, O, sink=-.006)); P.me
 q0 = P.rest_quat(dpiv); NA = 60
 for f, a in ((0, 0), (NA, -108)): P.key('doorOpen', dpiv, f, rotation_quaternion=q0 @ Quaternion((1, 0, 0), math.radians(a)))
 P.hull_collider('col_door', [tuple(dv(a, z, r)) for a in (-18.75, -9, 0, 9, 18.75) for z in (D0 + .01, D1 - .01) for r in (HL.R, HL.R - .06)], parent=dpiv, frame=hf)
+# hinges: pads on the hull over the opening, lugs out to the pin, straps down the door; two struts from the bay's walls hold it up
+for x in (-.55, 0, .55):
+    yh = -math.sqrt(HL.R ** 2 - x * x); z0 = HZ - O
+    d.add(box(.22, .05, .12, zone=Z.alu, bevel=.012), T(x, yh - .012, z0 + .125)); [d.add(box(.026, abs(HY - yh) + .07, .15, zone=Z.alu, bevel=.008), T(x + q, (HY + yh) / 2 + .005, z0 + .075)) for q in (-.075, .075)]
+    for q in (-.075, .075): d.add(cyl(.036, .032, 18, zone=Z.grey, bevel=.006), T(x + q, HY, z0) @ Ry(90)); [d.add(cyl(.012, .02, 8, zone=Z.steel), T(x + q, yh - .04, z0 + .15) @ Rx(90))]
+    d.add(cyl(.018, .21, 12, zone=Z.steel), T(x, HY, z0) @ Ry(90))
+    hd = Geo(); hd.add(cyl(.034, .10, 18, zone=Z.white, bevel=.006), T(x, HY, z0) @ Ry(90)); hd.add(box(.09, abs(HY - yh) + .05, .06, zone=Z.white, bevel=.008), T(x, (HY + yh) / 2 + .005, z0 - .035)); hd.add(box(.10, .022, .34, zone=Z.white, bevel=.008), T(x, yh - .006, z0 - .20))
+    for zz in (-.12, -.30): hd.add(cyl(.013, .012, 8, zone=Z.steel), T(x, yh - .02, z0 + zz) @ Rx(90))
+    P.mesh('doorhinge', hd, P.det, parent=dpiv, frame=hf)
+PV = V((0, HY, HZ - O))
+for s in (-1, 1):
+    X = s * .815; A = V((X, -1.31, HZ - O - .64)); B0 = V((X, -2.50, HZ - O - .55)); L0 = (B0 - A).length; e = (B0 - A).normalized()
+    d.add(box(.10, .12, .12, zone=Z.grey, bevel=.015), T(s * (XB - .045), A.y, A.z)); d.add(cyl(.03, .05, 14, zone=Z.steel), T(X, A.y, A.z) @ Ry(90))
+    db_ = Geo(); db_.add(box(.05, .17, .07, zone=Z.white, bevel=.01), T(X, B0.y - .085, B0.z)); db_.add(cyl(.026, .05, 14, zone=Z.steel), T(X, B0.y, B0.z) @ Ry(90)); P.mesh('doorlug', db_, P.det, parent=dpiv, frame=hf)
+    n_ = 'LR'[s > 0]; fa, fb = T(*A), T(*B0); cy, ro = P.empty('strutCyl' + n_, fa, P.model), P.empty('strutRod' + n_, fb, P.model)
+    P.mesh('strutcyl', strut(A, A + e * (L0 - .04), .026, Z.dark, 12), P.det, parent=cy, frame=fa); P.mesh('strutrod', strut(B0, B0 - e * (L0 - .04), .014, Z.steel, 10), P.det, parent=ro, frame=fb)
+    qa, qb, lb = P.rest_quat(cy), P.rest_quat(ro), ro.location.copy()
+    for f in range(0, NA + 1, 4):
+        B = PV + Quaternion((1, 0, 0), math.radians(-108 * f / NA)) @ (B0 - PV); B.x = X; v_ = B - A; th = math.atan2(v_.z, v_.y) - math.atan2(e.z, e.y); R_ = Quaternion((1, 0, 0), th)
+        P.key('doorOpen', cy, f, rotation_quaternion=qa @ R_); P.key('doorOpen', ro, f, location=lb + (B - B0), rotation_quaternion=qb @ R_)
+    print('STRUT shut %.2f open %.2f' % (L0, (B - A).length))
 # ---------------- windows
 wf = Geo(); WW, WHt = HL.WIN
 for i in range(HL.WIN_N):
