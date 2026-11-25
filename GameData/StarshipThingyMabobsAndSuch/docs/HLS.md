@@ -4,7 +4,7 @@ The parts and a craft file (`Ships/VAB/Starship HLS.craft`), modelled on the NAS
 
 | Part | What it does |
 |---|---|
-| **Core** (`STMS_HLS_Core`) | 322 t of methalox, 3 sea-level + 3 vacuum Raptor 3 nodes, 18 landing thrusters in a thin black band, 4 faired leg nodes (the fairings are a switch, and do not go with the jettisonable shrouds), elevator rails and ladder on the hull (a switch), RCS, floodlights |
+| **Core** (`STMS_HLS_Core`) | 322 t of methalox, 3 sea-level + 3 vacuum Raptor 3 nodes, 18 landing thrusters in the black band, 4 leg nodes, elevator rails and ladder on the hull (a switch), RCS, floodlights |
 | **Crew Section** (`STMS_HLS_Crew`) | 8 crew, ten windows, airlock bay with an awning door, four solar bays, nose cap over a flat seat for a docking port (shielded while shut) |
 | **Solar Array** (`STMS_HLS_Solar`) | One per solar bay, four in all |
 | **Leg Shroud** (`STMS_HLS_LegShroud`) | Jettisonable, one over each folded leg |
@@ -12,9 +12,14 @@ The parts and a craft file (`Ships/VAB/Starship HLS.craft`), modelled on the NAS
 | **Landing Leg** (`STMS_HLS_Leg`) | Use four |
 | **Elevator** (`STMS_HLS_Lift`) | Goes on the `lift` node in the airlock; a Breaking Ground piston, 22.3 m |
 
-## Cargo version
+## Two styles
 
-**Cargo Section** (`STMS_HLS_Cargo`) goes on the HLS core instead of the crew section, after SpaceX's cargo lander render of April 2024. One wide door swings up over the bay; the crane frame leans out over the load (it is for looks, the Cargo Winch on the ceiling node does the lifting). Open the door, lean the frame out, run the boom to -4.4, then the hoist: the deck is on the ground at about -23.8. Set the core's **Elevator track** to None. Body-mounted solar panels round the back.
+The core and crew section have a **Style** switch: **Original** (black base, leg panels, tall band; the default, so saved ships keep their look) and **2024 render** (all white, thin band, faired legs, after SpaceX's cargo lander render). Both have a solid tank wall with the rails and ladder outside it. Use **Landing Leg** with the original, **Landing Leg (Faired)** with the 2024 render. The jettisonable shrouds belong to the original.
+
+## Cargo versions
+
+- **Cargo Section (Bay Doors)** (`STMS_HLS_Cargo`): SEP's Block 3 cargo section in white. Winch boom on the ceiling node; the platform reaches the ground at about -25.7.
+- **Cargo Section (Awning Door)** (`STMS_HLS_CargoAwning`): our own, one wide door that swings up. Put the **Crane Frame** (`STMS_HLS_Crane`) on the node by the sill and the Cargo Winch Hoist on the node under its crossbar; open the door, slide the frame's Target Extension to -4.4, then lower the hoist (ground at about -23.5). Or use the winch boom on the ceiling node instead; not both. Set the core's **Elevator track** to None.
 
 ## Solar arrays
 

@@ -1,58 +1,61 @@
 """HLS core: tanks, engine bay for SEP's Raptors, black leg panels, landing thruster band, elevator track."""
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hls_common import *
-P = start('STMS_HLS_Core'); MH = hull_mat(P, 'hls_core')
-B0, B1 = HL.BAND; CELL = HL.PITCH
+P = start('STMS_HLS_Core'); MH = None
+CELL = HL.PITCH; d = Geo(); import bmesh
 bores = [g + k * CELL for g in HL.GROUPS for k in (-1, 0, 1)]
 inb = lambda az: any(abs(wrap(az - b)) < CELL / 2 for b in bores)
-zs = [0, .30, HL.Z_BLACK, 2.2, 3.5, HL.PANEL_TOP, 8, 12, 16, B0, B1, HL.Z_SKIN]
-hull = skin(zs, 'core', keep=lambda a, z: not (B0 < z < B1 and inb(a)))
-zm = (B0 + B1) / 2; d = Geo(); bell = Geo(); ND = []
-for b in bores:
-    # patch: the cell's rectangle down to an ellipse, sampled where the facets change so nothing gaps
-    w = math.degrees(HL.BORE[0] / HL.R); h = HL.BORE[1]; HW, HH = CELL / 2, (B1 - B0) / 2
-    pts = [(-HW + t * CELL / 3, -HH) for t in (0, 1, 2)]
-    pts += [(HW, -HH + t * 2 * HH / 5) for t in range(5)] + [(HW - t * CELL / 3, HH) for t in range(3)] + [(-HW, HH - t * 2 * HH / 5) for t in range(5)]
-    def ell(x, y):
-        t = math.atan2(y / HH, x / HW); return w * math.cos(t), h * math.sin(t)
-    N = len(pts); fine = []
-    for i in range(N):                                   # two ellipse points per outer edge
-        a, c = pts[i], pts[(i + 1) % N]
-        fine += [(a[0] + (c[0] - a[0]) * t / 2, a[1] + (c[1] - a[1]) * t / 2) for t in range(2)]
-    M = len(fine); n0 = len(hull.v); uvf = lambda x, y: huv(b + x, zm + y, 'core')
-    inner = [ell(*p) for p in fine]
-    for lst in (fine, inner): hull.v += [tuple(hp(b + x, zm + y)) for x, y in lst]
-    for i in range(M):
-        j = (i + 1) % M
-        hull.face([n0 + i, n0 + j, n0 + M + j, n0 + M + i], [uvf(*fine[i]), uvf(*fine[j]), uvf(*inner[j]), uvf(*inner[i])])
-    # oblique duct to a bell whose axis is canted down
-    a = math.radians(b); out = V((math.sin(a), -math.cos(a), 0)); c_ = math.radians(HL.CANT)
-    ax = out * math.cos(c_) + V((0, 0, -1)) * math.sin(c_)
-    c0 = hp(b, zm); q = frame_axes(c0, ax, x=V((math.cos(a), math.sin(a), 0)))
-    rim = [hp(b + x, zm + y) for x, y in inner]
-    loc = [q.inverted() @ p for p in rim]
-    rows = [rim]
-    for dep, f in ((-.40, .93), (-.48, .96), (-.62, .80), (-.80, .56), (-.95, .33), (-1.02, .24)):
-        rows.append([q @ V((p.x / max(1e-6, math.hypot(p.x, p.y)) * HL.BORE[0] * f, p.y / max(1e-6, math.hypot(p.x, p.y)) * HL.BORE[0] * f, dep)) for p in loc])
-    def band_(g, r0, r1, zone, t0, t1):
-        n = len(g.v); g.v += [tuple(p) for p in r0 + r1]
+for SH_, SX, (B0, B1), BORE_ in (('core', '', HL.BAND, HL.BORE), ('core_o', '_o', HL.O_BAND, HL.O_BORE)):      # the 2024 render's skin, and the original's
+    zs = [0, .30, HL.Z_BLACK, 2.2, 3.5, 4.85, 8, 12, 16, B0, B1, HL.Z_SKIN]
+    hull = skin(zs, SH_, keep=lambda a, z: not (B0 < z < B1 and inb(a)))
+    zm = (B0 + B1) / 2; bell = Geo(); dk = Geo()
+    for b in bores:
+        # patch: the cell's rectangle down to an ellipse, sampled where the facets change so nothing gaps
+        w = math.degrees(BORE_[0] / HL.R); h = BORE_[1]; HW, HH = CELL / 2, (B1 - B0) / 2
+        pts = [(-HW + t * CELL / 3, -HH) for t in (0, 1, 2)]
+        pts += [(HW, -HH + t * 2 * HH / 5) for t in range(5)] + [(HW - t * CELL / 3, HH) for t in range(3)] + [(-HW, HH - t * 2 * HH / 5) for t in range(5)]
+        def ell(x, y):
+            t = math.atan2(y / HH, x / HW); return w * math.cos(t), h * math.sin(t)
+        N = len(pts); fine = []
+        for i in range(N):                                   # two ellipse points per outer edge
+            a, c = pts[i], pts[(i + 1) % N]
+            fine += [(a[0] + (c[0] - a[0]) * t / 2, a[1] + (c[1] - a[1]) * t / 2) for t in range(2)]
+        M = len(fine); n0 = len(hull.v); uvf = lambda x, y: huv(b + x, zm + y, SH_)
+        inner = [ell(*p) for p in fine]
+        for lst in (fine, inner): hull.v += [tuple(hp(b + x, zm + y)) for x, y in lst]
         for i in range(M):
             j = (i + 1) % M
-            g.face([n + i, n + j, n + M + j, n + M + i], [zone.uv(i / M, t0), zone.uv((i + 1) / M, t0), zone.uv((i + 1) / M, t1), zone.uv(i / M, t1)])
-    band_(d, rows[0], rows[1], Z.black, 0, .4); band_(d, rows[1], rows[2], Z.steel, 0, .1)
-    for k in range(2, len(rows) - 1): band_(bell, rows[k], rows[k + 1], Z.invar, (k - 2) / 5, (k - 1) / 5)
-    n = len(bell.v); bell.v += [tuple(p) for p in rows[-1]] + [tuple(sum(rows[-1], V()) / M)]
-    for i in range(M): bell.face([n + i, n + (i + 1) % M, n + M], [Z.black.uv(.2, .2), Z.black.uv(.3, .2), Z.black.uv(.25, .3)])
-    # thrust transform: KSP pushes along -forward; Unity forward is Blender local +Y here
-    P.empty('landingThrust', None, P.model)
-    e = bpy.data.objects[[o.name for o in P.coll.objects if o.name.startswith('landingThrust')][-1]]
-    y = ax.normalized(); x = V((math.cos(a), math.sin(a), 0)); z_ = x.cross(y); m = Matrix((x, y, z_)).transposed().to_4x4(); m.translation = c0 - ax * .44
-    if 75 < b < 109 or 251 < b < 285: m = Rz(1.875 if b > 180 else -1.875) @ m      # the beam groups sit a half facet off; their thrust does not, so it balances
-    P.place(e, m, P.model)
-ho = P.mesh('hull', hull, MH, smooth_angle=30)
-import bmesh                                             # weld the patches to the skin so the shading runs across
-bm = bmesh.new(); bm.from_mesh(ho.data); bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=2e-4); bm.to_mesh(ho.data); bm.free()
-P.mesh('bells', bell, P.det, smooth_angle=60)
+            hull.face([n0 + i, n0 + j, n0 + M + j, n0 + M + i], [uvf(*fine[i]), uvf(*fine[j]), uvf(*inner[j]), uvf(*inner[i])])
+        # oblique duct to a bell whose axis is canted down
+        a = math.radians(b); out = V((math.sin(a), -math.cos(a), 0)); c_ = math.radians(HL.CANT)
+        ax = out * math.cos(c_) + V((0, 0, -1)) * math.sin(c_)
+        c0 = hp(b, zm); q = frame_axes(c0, ax, x=V((math.cos(a), math.sin(a), 0)))
+        rim = [hp(b + x, zm + y) for x, y in inner]
+        loc = [q.inverted() @ p for p in rim]
+        rows = [rim]
+        for dep, f in ((-.40, .93), (-.48, .96), (-.62, .80), (-.80, .56), (-.95, .33), (-1.02, .24)):
+            rows.append([q @ V((p.x / max(1e-6, math.hypot(p.x, p.y)) * BORE_[0] * f, p.y / max(1e-6, math.hypot(p.x, p.y)) * BORE_[0] * f, dep)) for p in loc])
+        def band_(g, r0, r1, zone, t0, t1):
+            n = len(g.v); g.v += [tuple(p) for p in r0 + r1]
+            for i in range(M):
+                j = (i + 1) % M
+                g.face([n + i, n + j, n + M + j, n + M + i], [zone.uv(i / M, t0), zone.uv((i + 1) / M, t0), zone.uv((i + 1) / M, t1), zone.uv(i / M, t1)])
+        band_(dk, rows[0], rows[1], Z.black, 0, .4); band_(dk, rows[1], rows[2], Z.steel, 0, .1)
+        for k in range(2, len(rows) - 1): band_(bell, rows[k], rows[k + 1], Z.invar, (k - 2) / 5, (k - 1) / 5)
+        n = len(bell.v); bell.v += [tuple(p) for p in rows[-1]] + [tuple(sum(rows[-1], V()) / M)]
+        for i in range(M): bell.face([n + i, n + (i + 1) % M, n + M], [Z.black.uv(.2, .2), Z.black.uv(.3, .2), Z.black.uv(.25, .3)])
+        # thrust transform: KSP pushes along -forward; Unity forward is Blender local +Y here
+        if SH_ == 'core_o': continue
+        P.empty('landingThrust', None, P.model)
+        e = bpy.data.objects[[o.name for o in P.coll.objects if o.name.startswith('landingThrust')][-1]]
+        y = ax.normalized(); x = V((math.cos(a), math.sin(a), 0)); z_ = x.cross(y); m = Matrix((x, y, z_)).transposed().to_4x4(); m.translation = c0 - ax * .44
+        if 75 < b < 109 or 251 < b < 285: m = Rz(1.875 if b > 180 else -1.875) @ m      # the beam groups sit a half facet off; their thrust does not, so it balances
+        P.place(e, m, P.model)
+    ho = P.mesh('hull' + SX, hull, hull_mat(P, 'hls_' + SH_), smooth_angle=30)
+    # weld the patches to the skin so the shading runs across
+    bm = bmesh.new(); bm.from_mesh(ho.data); bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=2e-4); bm.to_mesh(ho.data); bm.free()
+    P.mesh('bells' + SX, bell, P.det, smooth_angle=60); P.mesh('ducts' + SX, dk, P.det, smooth_angle=40)
+B0, B1 = HL.BAND; zm = (B0 + B1) / 2
 # ---------------- elevator track: rails, rungs and stiles on the outside of the tank wall, a mesh of their own so they can be left off
 TR = HL.TRACK; RR = HL.R; ZT = HL.Z_SKIN; tk = Geo()
 for s in (-1, 1):
@@ -100,8 +103,8 @@ for az in HL.LEG_AZ:
 for az in HL.LIGHT_AZ: d.add(lay(rounded_rect_ring(.11, .36, .05, .03, .025, 4, zone=Z.dark), az, zm))
 LM = lamp_mat(P); lamp = Geo(); rd = Geo(); gr = Geo()
 for s in (-1, 1):                                        # base floodlights either side of the track
-    d.add(lay(box(.34, .13, .10, zone=Z.white, bevel=.02), s * 12.5, HL.PANEL_TOP + .05)); lamp.add(lay(box(.28, .02, .06, zone=Z.lamp), s * 12.5, HL.PANEL_TOP - .02, sink=-.04))
-    add_spot(P, 'baseLight', hp(s * 12.5, HL.PANEL_TOP - .05, .12), (0, -.35, -1), power=260, angle=95, reach=14)
+    d.add(lay(box(.34, .13, .10, zone=Z.white, bevel=.02), s * 12.5, 4.85 + .05)); lamp.add(lay(box(.28, .02, .06, zone=Z.lamp), s * 12.5, 4.85 - .02, sink=-.04))
+    add_spot(P, 'baseLight', hp(s * 12.5, 4.85 - .05, .12), (0, -.35, -1), power=260, angle=95, reach=14)
 for az in HL.LIGHT_AZ: (gr if az < 180 else rd).add(lay(box(.05, .28, .016, zone=Z.lamp), az, zm))
 P.mesh('lampglow', lamp, LM); P.mesh('navgreen', gr, P.material('hls_det', nrm='its_det', shader='KSP/Emissive/Bumped Specular', spec=(.12, .12, .12), shininess=.3, emissive='hls_green_emit', name='hls_green'))
 P.mesh('navred', rd, P.material('hls_det', nrm='its_det', shader='KSP/Emissive/Bumped Specular', spec=(.12, .12, .12), shininess=.3, emissive='hls_red_emit', name='hls_red'))
@@ -142,7 +145,7 @@ for az in HL.LEG_AZ:
     o = owz(OT); pq(pin, [(-o, fy_(OT), OT), (-o, hy(o) + .02, OT), (o, hy(o) + .02, OT), (o, fy_(OT), OT)], M, Z.black)
     for s in (-1, 1): P.hull_collider('col_pod%d%s' % (az, 'ab'[s > 0]), [tuple(M @ V(p)) for z in (.0, 4.6) for p in ((s * pw(z, 2), hy(pw(z, 2)), z), (s * pw(z, 3), fy_(z), z), (s * OW, fy_(z), z), (s * OW, hy(OW), z))])
     P.hull_collider('col_pod%dt' % az, [tuple(M @ V(p)) for s in (-1, 1) for z in (4.66, 4.95, 6.85) for p in ((s * pw(z, 2), hy(pw(z, 2)), z), (s * pw(z, 3), fy_(z), z))])
-lp_ = P.mesh('legpods', pod, MH, smooth_angle=20); import bmesh; bm = bmesh.new(); bm.from_mesh(lp_.data); bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=2e-4); bm.to_mesh(lp_.data); bm.free(); P.mesh('legpods_in', pin, P.det, smooth_angle=40)
+lp_ = P.mesh('legpods', pod, hull_mat(P, 'hls_core'), smooth_angle=20); bm = bmesh.new(); bm.from_mesh(lp_.data); bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=2e-4); bm.to_mesh(lp_.data); bm.free(); P.mesh('legpods_in', pin, P.det, smooth_angle=40)
 P.mesh('details', d, P.det, smooth_angle=40)
 # ---------------- nodes and colliders
 P.node('top', (0, 0, HL.Z_TOP), (0, 0, 1), 5); P.node('bottom', (0, 0, 0), (0, 0, -1), 5)
@@ -157,4 +160,4 @@ for k in range(16):
     a0, a1 = 22.5 * k, 22.5 * (k + 1); P.hull_collider(f'col_skirt{k}', arcs(a0, a1, HL.R, RI, 0, ZP, 2))
 P.hull_collider('col_dome', [tuple(hp(a, z, r=r)) for a in range(0, 360, 30) for z, r in ((20.5, 2.6), (20.95, 1.6))])
 P.box_trigger('ladder', climb_frame((0, -RR - .14, HL.Z_SKIN / 2 + .3), (0, -1, 0)), (.5, .3, HL.Z_SKIN - .3), 'Ladder')
-finish(P)
+finish(P, ({'hull', 'bells', 'ducts', 'legpods', 'legpods_in'}, {'hull_o', 'bells_o', 'ducts_o'}))

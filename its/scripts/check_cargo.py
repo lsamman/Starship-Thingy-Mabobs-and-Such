@@ -7,7 +7,7 @@ src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'check_hls.p
 SEP = ''
 def posed(clips):
     for o in list(bpy.data.objects): bpy.data.objects.remove(o)
-    bpy.ops.import_object.ksp_mu(filepath=mu('STMS_HLS_Cargo')); acts = {}
+    bpy.ops.import_object.ksp_mu(filepath=mu('STMS_HLS_CargoAwning')); acts = {}
     for o in bpy.data.objects:
         ad = o.animation_data
         for t in list(ad.nla_tracks) if ad else []:
@@ -21,7 +21,22 @@ def posed(clips):
         if o.type == 'MESH' and o.muproperties.collider == 'MU_COL_NONE' and o.data.polygons: out.setdefault(base(o), []).append(([o.matrix_world @ v.co for v in o.data.vertices], [list(p.vertices) for p in o.data.polygons]))
     return out
 rad_ = lambda z: float(__import__('numpy').interp(z, *zip(*HL.OGIVE)))
-DOOR = ('doorskin', 'doorframe'); FR = ('craneFrame', 'craneTop')
+DOOR = ('doorskin', 'doorframe'); FR = ('crane',)
+CR = load(mu('STMS_HLS_Crane')); YB = HL.CR_IN - HL.CR_Y; CO = V((0, HL.CR_Y, HL.CG_FLOOR))
+def crane(b):
+    out = []; tip = V((0, YB - b, HL.CR_BAR)); foot = V((0, 0, HL.CR_FOOT)); t0 = V((0, YB, HL.CR_BAR))
+    a0, a1 = [math.atan2(q.z, q.y) for q in (t0 - foot, tip - foot)]; R_ = Matrix.Rotation(a1 - a0, 4, 'X')
+    for n, l in CR.items():
+        for vs, fs in l:
+            if n.startswith('craneLowMesh'): w = [foot + R_ @ (q - foot) for q in vs]
+            elif n.startswith('craneTopMesh'): w = [tip + R_ @ (q - t0) for q in vs]
+            elif n == 'cranebar': w = [q + V((0, -b, 0)) for q in vs]
+            else: w = vs
+            out.append(([q + CO for q in w], fs))
+    return out
+_posed = posed
+def posed(c):
+    d_ = _posed({'CargoDoor': c['CargoDoor']}); d_['crane'] = crane(4.4 * c['craneFrameOut']); return d_
 p = posed({'CargoDoor': 0, 'craneFrameOut': 0}); st = [n for n in p if n not in DOOR + FR]; print('      meshes', list(p))
 body = tree(p, st)[0]; print('      shut door touches', [n for n in st if tree(p, DOOR)[0].overlap(tree(p, (n,))[0])])
 ok(not tree(p, FR)[0].overlap(tree(p, DOOR)[0]), 'stowed frame clear of the shut door'); ok(not tree(p, FR)[0].overlap(tree(p, ('hull',))[0]), 'stowed frame clear of the hull')
@@ -48,25 +63,29 @@ def winch(b, h):
     return r
 shut = posed({'CargoDoor': 0, 'craneFrameOut': 0}); ts = tree(shut)[0]
 for n, (t, v) in winch(0, 0).items():
-    h = [m for m in shut if t.overlap(tree(shut, (m,))[0])]; print('      stowed', n, 'z %.2f..%.2f y %.2f..%.2f x %.2f' % (min(q.z for q in v), max(q.z for q in v), min(q.y for q in v), max(q.y for q in v), max(abs(q.x) for q in v)), h); ok(not set(h) & set(DOOR + FR + ('hull',)), 'winch stowed, door shut: ' + n)
-out = posed({'CargoDoor': 1, 'craneFrameOut': 1})
-v = tree(out, FR)[1]; print('      frame out: y %.2f, top z %.2f' % (min(q.y for q in v), max(q.z for q in v)))
-for k in (0, .25, .5, .75, 1):
-    q = posed({'CargoDoor': 1, 'craneFrameOut': k}); w_ = [m for m in DOOR + ('hull',) if tree(q, FR)[0].overlap(tree(q, (m,))[0])]; ok(not w_, 'frame at %.2f clear of door and hull %s' % (k, w_))
+    h = [m for m in shut if t.overlap(tree(shut, (m,))[0])]; print('      stowed', n, 'z %.2f..%.2f y %.2f..%.2f x %.2f' % (min(q.z for q in v), max(q.z for q in v), min(q.y for q in v), max(q.y for q in v), max(abs(q.x) for q in v)), h); ok(not set(h) & set(DOOR + ('hull',)), 'winch stowed, door shut: ' + n)
+HD = HL.CG_FLOOR + HL.CR_BAR - .125 - 3.38
+for e in range(0, 45, 4):                                 # the winch on the crane's crossbar: in behind the shut door, then out with it
+    q = posed({'CargoDoor': 0 if e == 0 else 1, 'craneFrameOut': e / 44}); b = e / 10
+    for n, o_ in (('Hoist', 0), ('Platform', 0)):
+        t, v = tree(W[n][0], None, Matrix.Translation((0, -.5 - b, (3.38 if n == 'Hoist' else .87) + HD))); h = [m for m in q if t.overlap(tree(q, (m,))[0]) and not (n == 'Hoist' and m == 'crane')]; ok(not h, 'crane %.1f: %s %s z %.2f..%.2f' % (b, n, h, min(x.z for x in v), max(x.z for x in v)))
+    w_ = [m for m in DOOR + ('hull',) if tree(q, FR)[0].overlap(tree(q, (m,))[0])]; ok(not w_, 'crane out %.1f clear of door and hull %s' % (b, w_))
+CT = posed({'CargoDoor': 1, 'craneFrameOut': 1})
+out = _posed({'CargoDoor': 1})
 for b in (0, 1, 2, 3, 4, 4.4):
     for n, (t, v) in winch(b, 0).items():
         if n in ('Boom0.5', 'Boom0') and b: continue
         h = [m for m in out if t.overlap(tree(out, (m,))[0])]; h = [m for m in h if not (n.startswith('Boom') and m == 'details' and b < 5)]
         ok(not h, 'boom %.1f: %s %s' % (b, n, h))
-core = load(mu('STMS_HLS_Core')); tc = tree(core, [n for n in core if n != 'track'], Matrix.Translation((0, 0, -HL.Z_OGIVE)))[0]; leg = load(mu('STMS_HLS_Leg'), 'legDeploy', True); LW = Matrix.Translation((0, 0, -HL.Z_OGIVE))
+core = load(mu('STMS_HLS_Core')); tc = tree(core, [n for n in core if n != 'track'], Matrix.Translation((0, 0, -HL.Z_OGIVE)))[0]; leg = load(mu('STMS_HLS_LegFaired'), 'legDeploy', True); LW = Matrix.Translation((0, 0, -HL.Z_OGIVE))
 tl = [tree(leg, None, LW @ Matrix.Rotation(math.radians(a), 4, 'Z') @ Matrix.Translation((0, -HL.R, HL.HINGE[1])))[0] for a in HL.LEG_AZ]
 for h in (.5, 1, 2, 4, 8, 12, 16, 20, 22, 23, 24):
     t, v = winch(4.4, h)['Platform']; ok(not (t.overlap(tree(out)[0]) or t.overlap(tc) or any(t.overlap(x) for x in tl)), 'platform %.1f down, underside %.2f above the soles' % (h, min(q.z for q in v) + HL.Z_OGIVE - HL.SOLE))
-t, v = tree(p, st); tk = load(mu('STMS_HLS_CargoKit')); k = tree(tk)[0]; print('      kit touches', [m for m in p if k.overlap(tree(p, (m,))[0])]); ok(not k.overlap(tree(out, DOOR + FR)[0]), 'solar kit clear of door and frame')
-leg0 = load(mu('STMS_HLS_Leg'), 'legDeploy'); pods = ('legpods', 'legpods_in')
+t, v = tree(p, st); tk = load(mu('STMS_HLS_CargoKit')); k = tree(tk)[0]; print('      kit touches', [m for m in p if k.overlap(tree(p, (m,))[0])]); ok(not k.overlap(tree(out, DOOR)[0]), 'solar kit clear of door')
+leg0 = load(mu('STMS_HLS_LegFaired'), 'legDeploy'); pods = ('legpods', 'legpods_in')
 for i in range(0, 121, 8):
     for o in list(bpy.data.objects): bpy.data.objects.remove(o)
-    bpy.ops.import_object.ksp_mu(filepath=mu('STMS_HLS_Leg'))
+    bpy.ops.import_object.ksp_mu(filepath=mu('STMS_HLS_LegFaired'))
     for o in bpy.data.objects:
         ad = o.animation_data
         for t_ in list(ad.nla_tracks) if ad else []: t_.mute = True; ad.action = t_.strips[0].action

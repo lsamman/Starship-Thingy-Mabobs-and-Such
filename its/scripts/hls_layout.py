@@ -19,7 +19,7 @@ CAP = ((7.40, .951), (7.67, .803), (7.93, .65), (8.14, .52), (8.29, .42), (8.38,
 # ---- paint
 Z_BLACK = .97               # a ring of vertices; the base itself is white
 LEG_AZ = (45, 135, 225, 315)
-PANEL_TOP, PANEL_W = 4.75, (.78, .78)    # dark recess behind a leg: top, half-widths at base and top (arc length)
+PANEL_TOP, PANEL_W = 5.0, (.78, .78)    # dark recess behind a leg: top, half-widths at base and top (arc length)
 # leg pods, faceted: rows of (z, depth off the hull, half-width at the hull, half-width of the flat face), and the arched opening
 POD = ((0, .66, 1.08, .93), (4.95, .86, 1.02, .86), (6.9, .0, .685, .66)); POD_OPEN = (.76, 4.74, .34)      # half-width, top, corner radius
 # ---- landing thrusters: six groups of three between the elevator track and the docking side
@@ -49,12 +49,15 @@ SHIP_SHELL = ((.30, .03), (.36, .34), (.43, .60), (.50, .73), (.8, .77), (1.4, .
 SHIP_SHELL_W = ((.30, .56), (.5, .76), (.95, .76), (1.5, .66), (2.1, .42), (2.5, .345), (3.2, .345), (3.9, .42), (4.5, .42), (5.0, .28), (5.45, .06))
 COLLAR = .72               # drag strut collar, up the strut from the ankle (deployed)
 LIFT_TRAVEL = 22.3
-SHEET = {'core': (0.0, Z_SKIN), 'crew': (Z_SKIN, Z_OGIVE + 7.40), 'cargo': (Z_SKIN, Z_OGIVE + 7.40)}
+# ---- the original style (NASA/SpaceX renders 11-2024): black base and leg panels, tall band. Same thruster centres.
+O_BAND, O_BORE = (19.0, 20.25), (.262, .415)
+O_PANEL_TOP, O_PANEL_W = 4.85, (1.02, .62)
+SHEET = {'core': (0.0, Z_SKIN), 'crew': (Z_SKIN, Z_OGIVE + 7.40), 'cargo': (Z_SKIN, Z_OGIVE + 7.40), 'core_o': (0.0, Z_SKIN), 'crew_o': (Z_SKIN, Z_OGIVE + 7.40)}
 # ---- cargo section, in its own frame (z = 0 at Z_OGIVE): door, bay, crane frame
 CG_SILL, CG_HEAD, CG_AZ = -2.70, 2.70, 52.5
 CG_FLOOR, CG_CEIL = -2.80, 2.24
 CG_SWING = 112
-FRAME_X, FRAME_Y, FRAME_Z, FRAME_L, FRAME_OUT, FRAME_LEAN = 1.74, -1.72, -2.45, 4.20, 1.42, 30     # crane frame: pivots, length folded, how far it telescopes, lean
-FRAME_TOPX = 1.74
+CR_X, CR_Y, CR_FOOT, CR_BAR, CR_TRAVEL = 1.74, -1.72, .34, 4.36, 4.4     # crane frame: legs either side, pivots' y, pivot and crossbar heights over the bay floor, travel
+CR_IN = -.5                  # where the crossbar stands when it is in (the hoist and its platform fit behind the shut door there)
 WINCH_DZ = CG_CEIL - 3.97
 PAD = .003
