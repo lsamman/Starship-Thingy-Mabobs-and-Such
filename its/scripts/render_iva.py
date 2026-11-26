@@ -7,13 +7,14 @@ import addon_utils
 addon_utils.enable('io_object_mu', default_set=True)
 a = sys.argv[sys.argv.index('--') + 1:]
 out, cfgp, G = a[0], a[1], a[2]
-res = (1000, 760); cam = None; samples = 40; lens = 16
+res = (1000, 760); cam = None; samples = 40; lens = 16; sub = None
 i = 3
 while i < len(a):
     if a[i] == '--res': res = tuple(int(v) for v in a[i + 1].split('x')); i += 2
     elif a[i] == '--cam':
         v = [float(x) for x in a[i + 1].split(',')]; cam = v; i += 2
     elif a[i] == '--samples': samples = int(a[i + 1]); i += 2
+    elif a[i] == '--sub': sub = a[i + 1]; i += 2      # a docking door subtype: apply the FreeIva patch's B9PSConditionalProp rules as KSP would
     else: i += 1
 if len(cam) > 6: lens = cam[6]
 R_IVA = Matrix(((-1, 0, 0), (0, 0, -1), (0, -1, 0)))
@@ -103,7 +104,20 @@ def setup(objs, dirn):
             nt.links.new(last, cull.inputs[1]); nt.links.new(cull.outputs[0], ou.inputs[0])
 # internal model
 t = open(cfgp).read()
-model = re.search(r'model\s*=\s*StarshipThingyMabobsAndSuch/ITS/Parts/(\S+)', t).group(1)
+for b in re.split(r'^PROP\s*$', t, flags=re.M)[1:]:          # the cabin's own props (the door switch's groups), from our build
+    n = re.search(r'^\s*name\s*=\s*(\S+)', b, re.M); m = re.search(r'model\s*=\s*StarshipThingyMabobsAndSuch/ITS/Parts/(\S+)', b)
+    if n and m: propmu[n.group(1)] = os.path.join(os.path.dirname(cfgp), '..', 'mu', m.group(1) + '.mu')
+if sub:
+    import itertools
+    fp = os.path.join(os.path.dirname(cfgp), '..', 'patches', os.path.basename(cfgp)[:-4] + '_FreeIva.cfg'); ft = open(fp).read()
+    blocks = re.findall(r'^\t(@?PROP)(\[[^\]]+\])?\s*\n\t\{(.*?)^\t\}', ft, flags=re.M | re.S)
+    keep = lambda body: 'B9PSConditionalProp' not in body or sub in re.findall(r'subtype = (\S+)', body)
+    for op, sel, body in blocks:
+        if op == '@PROP' and not keep(body):             # drop the first matching prop, as ModuleManager edits the first match
+            nm = sel[1:-1]; t = re.sub(r'PROP\s*\{\s*name = %s\s*position.*?\n\t\}' % re.escape(nm), '', t, count=1, flags=re.S)
+        elif op == 'PROP' and keep(body) and 'position' in body:
+            t += '\nPROP\n{' + body + '}\n'
+model = re.search(r'model\s*=\s*StarshipThingyMabobsAndSuch/ITS/Parts/(\S+)', t[t.index('INTERNAL'):]).group(1)
 mu = os.path.join(os.path.dirname(cfgp), "..", "mu", model + ".mu")
 bpy.ops.import_object.ksp_mu(filepath=mu)
 setup(list(bpy.data.objects), os.path.dirname(mu))

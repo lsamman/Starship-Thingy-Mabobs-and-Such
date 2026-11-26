@@ -52,6 +52,29 @@ def build(variant):
     def light(p, e=800, reach=2.8, col=(1, .965, .90)): LIGHTS.append((p, e, reach, col))
     def bar_arc(g, r, z, a0, a1, rad, zone, n=24): g.add(tube([tuple(pos(a0 + (a1 - a0) * i / n, r, z)) for i in range(n + 1)], rad, 8, zone=Z[zone]))
     wall_, floor_, ceil_, fur, soft, led, scr, glass, ped = [Geo() for _ in range(9)]
+    # The Block 3 noses' docking door switch (v3/scripts/layout.py NOSE_DOORS): what differs between its subtypes goes in groups,
+    # each exported as a prop of its own and shown by FreeIva for the matching subtypes. S: the side door's tunnel and the wall
+    # over the four windows it covers; W: those windows; C: the centred door's hatch; E: the EVA chamber (crew-cargo, where the
+    # centred door takes its place). Without FreeIva the interior keeps the side-door layout (S and E only).
+    DOORSW = variant in ('crew', 'crewcargo'); SW = {}; XPROPS = []
+    SUBS = {'S': ('Side',), 'W': ('Centre', 'None'), 'C': ('Centre',), 'E': ('Side', 'None')}
+    def grp(k): return SW.setdefault(k, dict(wall=Geo(), fur=Geo(), glass=Geo(), cols=[]))
+    def boxcol(k, c, size, x=(1, 0, 0), y=(0, 1, 0)):      # a box collider in group k: centre, size along x, y and z
+        x = V(x).normalized(); y = V(y).normalized(); grp(k)['cols'].append((V(c), V(size), Matrix((x, y, x.cross(y))).transposed()))
+    def xprop(subs, *a, mods=()):                       # a prop only FreeIva places, shown for the subtypes given
+        prop(*a); XPROPS.append(PROPS.pop() + (subs, mods))
+    def centre_hatch(zf, floor_eva=False):
+        """The centred docking door's hatch: a housing against the wall at az 0 over the port, which is below this floor, with a
+        CBM hatch on its top facing up. On the crew-cargo nose the airlock is in the cargo bay below too: a floor hatch leads to it."""
+        g = grp('C')['fur']; zt = zf + .50; r1 = ri(zf) - .01; r0 = 1.90; wd = 1.0; ym = -(r0 + r1) / 2
+        g.add(box(wd, r1 - r0, zt - zf, zone=Z['white'], bevel=.02), T(0, ym, (zf + zt) / 2)); g.add(box(wd + .04, r1 - r0 + .03, .03, zone=Z['grey'], bevel=.01), T(0, ym, zt))
+        for s_ in (-1, 1): g.add(tube([(s_ * .44, ym + .2, zt + .015), (s_ * .44, ym + .2, zt + .07), (s_ * .44, ym - .2, zt + .07), (s_ * .44, ym - .2, zt + .015)], .014, 6, zone=Z['black']))
+        boxcol('C', (0, ym, (zf + zt) / 2), (wd, r1 - r0, zt - zf))
+        xprop(('Centre',), 'htProps_HatchCBM', (0, ym, zt + .016), (0, 0, 1), (0, -1, 0), .75, mods=(('HatchConfig', ('attachNodeId = ctrport', 'hideDoorWhenConnected = true')),))
+        if floor_eva:
+            F = Matrix.Translation((0, -1.20, zf + .004)); g.add(rounded_rect_ring(.80, .80, .18, .07, .03, 6, zone=Z['white']), F); g.add(quad_patch(.68, .68, Z['door']), F @ T(0, 0, .006))
+            g.add(tube([tuple(F @ V((.10 * math.cos(t), .10 * math.sin(t), .03))) for t in np.linspace(0, TAU, 25)], .013, 8, zone=Z['metal']))
+            xprop(('Centre',), 'FreeIva_Hatch_Invisible_Handle', (0, -1.20, zf + .02), (0, 0, 1), (0, -1, 0), (.34, .08, .34), mods=(('HatchConfig', ('airlockName = stms_airlock',)),))
     decks = S_['decks']; top = decks[0]; full = lambda a0, a1, n: [a0 + (a1 - a0) * i / n for i in range(n + 1)]
 
     def curved(g, a0, a1, prof, zone, n, toward_axis=True):
@@ -75,8 +98,10 @@ def build(variant):
         if big:
             B = outer.big; zc = B['z1'] + .25
         # ---- wall: columns by azimuth, rows by height, holes for the windows
-        azs = {round(a, 4) for a in np.arange(-180, 180.01, 7.5)}; zs = {zf, zc}
-        if D.get('eva'): holes = [h for h in holes if abs(h[0]) > 12.8 and not 9 < h[0] < 51]
+        azs = {round(a, 4) for a in np.arange(-180, 180.01, 7.5)}; zs = {zf, zc}; swin = set()
+        if D.get('eva'):
+            holes = [h for h in holes if abs(h[0]) > 12.8]; swin = {h for h in holes if 9 < h[0] < 51}      # those four: the side docking door's
+            if not DOORSW: holes = [h for h in holes if h not in swin]; swin = set()
         for az, z0, w, h in holes:
             ha = math.degrees(w / 2 / ri(z0)); azs |= {round(az - ha, 4), round(az + ha, 4)}; zs |= {z0 - h / 2, z0 + h / 2}
         if big: WA = math.degrees(B["ha"] / ri(B["z0"])) - .01; azs |= {round(a, 4) for a in np.linspace(-WA, WA, 65)}; zs |= {B['z0'], 3.36}
@@ -85,11 +110,11 @@ def build(variant):
         zs |= {z for z in BREAKS if zf + .02 < z < zc - .02 and not any(abs(z - q) < .02 for q in zs)}
         azs, zs = sorted(azs), sorted(zs); zs2 = [z for z in zs]
         def ring_uv(a, z): s = ((a + 180) / 60) % 1.00001; return Z['panel'].uv(min(1, s), (z - zf) / (zc - zf))
-        def cell(a0, a1, pts):
+        def cell(a0, a1, pts, g=None):
             t0 = math.floor(((a0 + a1) / 2 + 180) / 60) * 60 - 180
             uv = [Z['panel'].uv(1 - (a - t0) / 60, min(1, max(0, (z - zf) / (zc - zf)))) for a, z in pts]
             if MZ and all(abs(a) < 40.6 and 3.92 < z < 4.83 for a, z in pts): uv = [Z['black'].uv(.4, .4), Z['black'].uv(.6, .4), Z['black'].uv(.6, .6), Z['black'].uv(.4, .6)]      # the dark surround of the windows
-            q4(wall_, [pos(a, ri(z), z) for a, z in pts], None, (0, 0, (pts[0][1] + pts[2][1]) / 2), uv)
+            q4(g or wall_, [pos(a, ri(z), z) for a, z in pts], None, (0, 0, (pts[0][1] + pts[2][1]) / 2), uv)
         def arch(a):
             x = abs(math.radians(a)) * ri(B['z0']); return B['z0'] + (B['z1'] - B['z0']) * max(0, 1 - (x / B['ha']) ** 2) ** .5 if x < B['ha'] else None
         for a0, a1 in zip(azs, azs[1:]):
@@ -102,16 +127,20 @@ def build(variant):
                 continue
             for z0, z1 in zip(zs2, zs2[1:]):
                 zm = (z0 + z1) / 2
-                if any(abs(am - az) < math.degrees(w / 2 / ri(hz)) and abs(zm - hz) < h / 2 for az, hz, w, h in holes): continue
+                hit = [h_ for h_ in holes if abs(am - h_[0]) < math.degrees(h_[2] / 2 / ri(h_[1])) and abs(zm - h_[1]) < h_[3] / 2]
+                if hit:
+                    if hit[0] in swin: cell(a0, a1, [(a0, z0), (a1, z0), (a1, z1), (a0, z1)], grp('S')['wall'])      # the wall over it, with the side door
+                    continue
                 cell(a0, a1, [(a0, z0), (a1, z0), (a1, z1), (a0, z1)])
-        for az, hz, w, h in holes:
+        for hl in holes:
+            az, hz, w, h = hl; fg, gg = (grp('W')['fur'], grp('W')['glass']) if hl in swin else (fur, glass)
             ha = math.degrees(w / 2 / ri(hz)); zl, zh = hz - h / 2, hz + h / 2; rr = lambda z: ro(z) - .012
-            for z, tw in ((zl, 1), (zh, -1)): q4(fur, [pos(az - ha, ri(z), z), pos(az + ha, ri(z), z), pos(az + ha, rr(z), z), pos(az - ha, rr(z), z)], Z['black'], pos(az, ri(z), z + tw))
-            for a, tw in ((az - ha, 2), (az + ha, -2)): q4(fur, [pos(a, ri(zl), zl), pos(a, ri(zh), zh), pos(a, rr(zh), zh), pos(a, rr(zl), zl)], Z['black'], pos(a + tw, ri(hz), hz))
-            q4(glass, [pos(az - ha, rr(zl) - .01, zl), pos(az + ha, rr(zl) - .01, zl), pos(az + ha, rr(zh) - .01, zh), pos(az - ha, rr(zh) - .01, zh)], Zone(0, 0, 64, 64, atlas=64), (0, 0, hz))
+            for z, tw in ((zl, 1), (zh, -1)): q4(fg, [pos(az - ha, ri(z), z), pos(az + ha, ri(z), z), pos(az + ha, rr(z), z), pos(az - ha, rr(z), z)], Z['black'], pos(az, ri(z), z + tw))
+            for a, tw in ((az - ha, 2), (az + ha, -2)): q4(fg, [pos(a, ri(zl), zl), pos(a, ri(zh), zh), pos(a, rr(zh), zh), pos(a, rr(zl), zl)], Z['black'], pos(a + tw, ri(hz), hz))
+            q4(gg, [pos(az - ha, rr(zl) - .01, zl), pos(az + ha, rr(zl) - .01, zl), pos(az + ha, rr(zh) - .01, zh), pos(az - ha, rr(zh) - .01, zh)], Zone(0, 0, 64, 64, atlas=64), (0, 0, hz))
             sl = math.atan2(ri(zh) - ri(zl), zh - zl); F = inw(az, hz, ri(hz) * math.cos(math.radians(ha)) - .004) @ Rx(math.degrees(-sl))
-            fur.add(rounded_rect_ring(w + .06, h + .06, min(.08, h * .25), .035, .016, 4, zone=Z['black']), F)
-            if h > .5: fur.add(box(w, .03, .03, zone=Z['black']), F @ T(0, -.05, -.05))
+            fg.add(rounded_rect_ring(w + .06, h + .06, min(.08, h * .25), .035, .016, 4, zone=Z['black']), F)
+            if h > .5: fg.add(box(w, .03, .03, zone=Z['black']), F @ T(0, -.05, -.05))
         if big:                                          # the lattice, seen from inside
             ribs = []; sd = B['side']; hg = sd * .866; s1 = B['z1'] - B['z0']
             ins = lambda x, s: 0 <= s <= s1 and abs(x) < B['ha'] * max(0, 1 - (s / s1) ** 2) ** .5
@@ -206,15 +235,23 @@ def build(variant):
                 a = (-52, -38, -24, 62)[k]; d = pos(a, 1, 0); p = d * (ri(zf + .5) - .62); seat(p.x, p.y, zf, d, 'Observation Deck')
             for a0_, a1_ in ((-58, -13),): curved(fur, a0_, a1_, [(ri(zf + .5) - .24, zf + .42), (ri(zf + .5) - .24, zf + .46), (ri(zf + .5), zf + .46), (ri(zf + .5), zf + .42)], 'wood', 8)
             e0, e1, ex, ey = IL.EVA; ex += .03; ey += .03; yo = -ri(zf + .5)            # the airlock chamber, with the hatch on its inner face
-            for s in (-1, 1): q4(fur, [(s * ex, yo, zf), (s * ex, ey, zf), (s * ex, ey, zc), (s * ex, yo, zc)], Z['hex'], (s * 9, ey, zf + .5))
-            q4(fur, [(-ex, ey, zf), (ex, ey, zf), (ex, ey, zc), (-ex, ey, zc)], Z['hex'], (0, 9, zf + .5))
-            Fh = Matrix(((-1, 0, 0, 0), (0, 0, 1, ey), (0, 1, 0, (e0 + e1) / 2), (0, 0, 0, 1))); fur.add(quad_patch(.52, .94, Z['door']), Fh @ T(0, 0, .012)); fur.add(rounded_rect_ring(.62, 1.04, .14, .07, .04, 6, zone=Z['white']), Fh)
-            fur.add(tube([tuple(Fh @ V((.10 * math.cos(t), .10 * math.sin(t), .05))) for t in np.linspace(0, TAU, 25)], .013, 8, zone=Z['metal'])); [fur.add(tube([tuple(Fh @ V((s * .30, y, z))) for y, z in ((-.2, 0), (-.2, .05), (.2, .05), (.2, 0))], .012, 6, zone=Z['black'])) for s in (-1, 1)]
-            ad = math.radians(30); o3, t3 = V((math.sin(ad), -math.cos(ad), 0)), V((math.cos(ad), math.sin(ad), 0)); rb_ = 2.30; hw_ = .50; bb = lambda x, r_, z: o3 * r_ + t3 * x + V((0, 0, z))      # the docking tunnel's inner end
-            for s in (-1, 1): q4(fur, [bb(s * hw_, 2.75, zf), bb(s * hw_, rb_, zf), bb(s * hw_, rb_, zc), bb(s * hw_, 2.75, zc)], Z['white'], bb(s * 9, rb_, zf + .5))
-            q4(fur, [bb(-hw_, rb_, zf), bb(hw_, rb_, zf), bb(hw_, rb_, zc), bb(-hw_, rb_, zc)], Z['panel'], (0, 0, zf + .5)); prop('htProps_HatchCBM', bb(0, rb_ - .004, 1.32), -o3, (0, 0, 1), 1.15)
-            fur.add(tube([tuple(bb(s_ * .43, rb_ - .02, z_)) for s_, z_ in ((-1, 1.0), (-1, 1.7))], .014, 6, zone=Z['black'])); fur.add(tube([tuple(bb(s_ * .43, rb_ - .02, z_)) for s_, z_ in ((1, 1.0), (1, 1.7))], .014, 6, zone=Z['black']))
+            fe = grp('E')['fur'] if variant == 'crewcargo' else fur
+            for s in (-1, 1): q4(fe, [(s * ex, yo, zf), (s * ex, ey, zf), (s * ex, ey, zc), (s * ex, yo, zc)], Z['hex'], (s * 9, ey, zf + .5))
+            q4(fe, [(-ex, ey, zf), (ex, ey, zf), (ex, ey, zc), (-ex, ey, zc)], Z['hex'], (0, 9, zf + .5))
+            Fh = Matrix(((-1, 0, 0, 0), (0, 0, 1, ey), (0, 1, 0, (e0 + e1) / 2), (0, 0, 0, 1))); fe.add(quad_patch(.52, .94, Z['door']), Fh @ T(0, 0, .012)); fe.add(rounded_rect_ring(.62, 1.04, .14, .07, .04, 6, zone=Z['white']), Fh)
+            fe.add(tube([tuple(Fh @ V((.10 * math.cos(t), .10 * math.sin(t), .05))) for t in np.linspace(0, TAU, 25)], .013, 8, zone=Z['metal'])); [fe.add(tube([tuple(Fh @ V((s * .30, y, z))) for y, z in ((-.2, 0), (-.2, .05), (.2, .05), (.2, 0))], .012, 6, zone=Z['black'])) for s in (-1, 1)]
+            if variant == 'crewcargo':                       # the chamber's walls, for FreeIva (in the shell on the crew nose)
+                for s in (-1, 1): boxcol('E', ((s * ex), (yo + ey) / 2, (zf + zc) / 2), (.04, abs(yo - ey), zc - zf))
+                boxcol('E', (0, ey, (zf + zc) / 2), (2 * ex, .04, zc - zf))
+            ad = math.radians(30); o3, t3 = V((math.sin(ad), -math.cos(ad), 0)), V((math.cos(ad), math.sin(ad), 0)); rb_ = 2.30; hw_ = .50; bb = lambda x, r_, z: o3 * r_ + t3 * x + V((0, 0, z))      # the side docking tunnel's inner end
+            ft = grp('S')['fur']
+            for s in (-1, 1): q4(ft, [bb(s * hw_, 2.75, zf), bb(s * hw_, rb_, zf), bb(s * hw_, rb_, zc), bb(s * hw_, 2.75, zc)], Z['white'], bb(s * 9, rb_, zf + .5))
+            q4(ft, [bb(-hw_, rb_, zf), bb(hw_, rb_, zf), bb(hw_, rb_, zc), bb(-hw_, rb_, zc)], Z['panel'], (0, 0, zf + .5)); prop('htProps_HatchCBM', bb(0, rb_ - .004, 1.32), -o3, (0, 0, 1), 1.15)
+            ft.add(tube([tuple(bb(s_ * .43, rb_ - .02, z_)) for s_, z_ in ((-1, 1.0), (-1, 1.7))], .014, 6, zone=Z['black'])); ft.add(tube([tuple(bb(s_ * .43, rb_ - .02, z_)) for s_, z_ in ((1, 1.0), (1, 1.7))], .014, 6, zone=Z['black']))
+            for s in (-1, 1): boxcol('S', bb(s * hw_, (2.75 + rb_) / 2, (zf + zc) / 2), (.04, 2.75 - rb_, zc - zf), t3, o3)
+            boxcol('S', bb(0, rb_, (zf + zc) / 2), (2 * hw_, .04, zc - zf), t3, o3)
             HATCH = (0, ey + .03, (e0 + e1) / 2, 'stms_airlock')
+            if variant == 'crewcargo': centre_hatch(zf, floor_eva=True)
             for k, a in enumerate((62, 78, 94)):           # hydroponics
                 F = inw(a, zf + .6, ri(zf + .6) - .02); fur.add(box(.58, 1.0, .12, zone=Z['white'], bevel=.01), F)
                 for y in (-.30, 0, .30):
@@ -332,6 +369,7 @@ def build(variant):
                     for i in range(12): cg.face([2 * i + 1, 2 * i + 3, 2 * i + 2, 2 * i], [Z['curtain'].uv(i / 12, 1), Z['curtain'].uv((i + 1) / 12, 1), Z['curtain'].uv((i + 1) / 12, 0), Z['curtain'].uv(i / 12, 0)])
                     soft.add(cg, F @ T(0, 0, -.03)); on_panel(F @ T(0, hh * .55, -.55), ('htProps_cargoBag_small_blue', 'htProps_cargoBag_small_white', 'htProps_cargoBag_small_red')[(k + j) % 3], .2 - .1 * (k % 3), 0, 0, .7)
             for k in range(D['seats']): a = (-24, 24)[k]; d = pos(a, 1, 0); p = d * (ri(zf + .5) - .66); seat(p.x, p.y, zf, d, 'Passenger')
+            if variant == 'crew' and di == len(decks) - 1: centre_hatch(zf)      # the crew nose's centred port is under this deck
             curved(fur, -50, 50, [(ri(zf + .5) - .24, zf + .42), (ri(zf + .5) - .24, zf + .46), (ri(zf + .5), zf + .46), (ri(zf + .5), zf + .42)], 'wood', 14)
             for a in (-60, 60): F = inw(a, zf + .5, ri(zf + .5) - .04); on_panel(F, 'htProps_cargoBag_small_white', 0, 0, .03, 1.2); on_panel(F, 'htProps_airVent01', 0, .4, .02, 1.2)
         if th == 'airlock':
@@ -374,6 +412,16 @@ def build(variant):
     for o in P.coll.objects:
         if o not in (P.root, P.model): o.muproperties.layer = 16
     P.export(out); tris = sum(P.meta['tris'].values())
+    for k, G in sorted(SW.items()):                      # the door switch's groups, as props in internal space (origin and rotation as the cabin)
+        Q = Part(f'{name}_{k}'); MQ = Q.material('stms_iva', spec=(.25, .25, .25), shininess=.3); MGq = Q.material('stms_ivaglass', shader='KSP/Alpha/Translucent', name='iva_glass')
+        for nm, g, mt in (('wall', G['wall'], MQ), ('furnishings', G['fur'], MQ), ('glass', G['glass'], MGq)):
+            if g.f: Q.mesh(nm, g, mt, smooth_angle=40)
+        for j, (c, sz, R) in enumerate(G['cols']):
+            F = R.to_4x4(); F.translation = c; o = Q.empty(f'col{j}', F, Q.model); m = o.muproperties; m.collider = 'MU_COL_BOX'; m.isTrigger = False; m.size = tuple(sz); m.center = (0, 0, 0)
+        Q.model.rotation_mode = 'QUATERNION'; Q.model.rotation_quaternion = R_IVA.to_quaternion(); bpy.context.view_layer.update()
+        for o in Q.coll.objects:
+            if o not in (Q.root, Q.model): o.muproperties.layer = 16
+        Q.export(out)
     assert len(SEATS) == sum(d['seats'] for d in decks), (len(SEATS), name)
     # ---- what FreeIva walks on: walls, floors and ceilings with the ladder well open, as one concave mesh
     S2 = Part(name + '_shell'); w = Geo(); n = 40
@@ -387,27 +435,38 @@ def build(variant):
         if D['theme'] == 'airlock': X = 2.6; q4(w, [(-X, -1.02, zf), (X, -1.02, zf), (X, -1.02, zt), (-X, -1.02, zt)], Z['white'], (0, 9, zf))
         if D.get('eva'):
             ex, ey = IL.EVA[2] + .03, IL.EVA[3] + .03
-            for s_ in (-1, 1): q4(w, [(s_ * ex, -2.7, zf), (s_ * ex, ey, zf), (s_ * ex, ey, zt), (s_ * ex, -2.7, zt)], Z['white'], (s_ * 9, ey, zf))
-            q4(w, [(-ex, ey, zf), (ex, ey, zf), (ex, ey, zt), (-ex, ey, zt)], Z['white'], (0, 9, zf))
-            ad = math.radians(30); o3, t3 = V((math.sin(ad), -math.cos(ad), 0)), V((math.cos(ad), math.sin(ad), 0)); bb = lambda x, r_, z: o3 * r_ + t3 * x + V((0, 0, z))
-            for s_ in (-1, 1): q4(w, [bb(s_ * .5, 2.7, zf), bb(s_ * .5, 2.3, zf), bb(s_ * .5, 2.3, zt), bb(s_ * .5, 2.7, zt)], Z['white'], bb(s_ * 9, 2.3, zf))
-            q4(w, [bb(-.5, 2.3, zf), bb(.5, 2.3, zf), bb(.5, 2.3, zt), bb(-.5, 2.3, zt)], Z['white'], (0, 0, zf))
+            if variant != 'crewcargo':                       # the crew-cargo chamber and the side tunnel are their props' colliders
+                for s_ in (-1, 1): q4(w, [(s_ * ex, -2.7, zf), (s_ * ex, ey, zf), (s_ * ex, ey, zt), (s_ * ex, -2.7, zt)], Z['white'], (s_ * 9, ey, zf))
+                q4(w, [(-ex, ey, zf), (ex, ey, zf), (ex, ey, zt), (-ex, ey, zt)], Z['white'], (0, 9, zf))
     me = w.to_mesh('shellCollider'); o = bpy.data.objects.new('shellCollider', me); S2.coll.objects.link(o); S2.place(o, Matrix(), S2.model); o.muproperties.collider = 'MU_COL_MESH'; o.muproperties.isConvex = False; o.hide_render = True
     S2.model.rotation_mode = 'QUATERNION'; S2.model.rotation_quaternion = R_IVA.to_quaternion(); bpy.context.view_layer.update()
     for x_ in S2.coll.objects:
         if x_ not in (S2.root, S2.model): x_.muproperties.layer = 16
     S2.export(out)
     f = lambda v: ', '.join(('%.5f' % x).rstrip('0').rstrip('.') for x in v)
-    L_ = ['// Generated by its/scripts/ivalib.py; edit there.', 'INTERNAL', '{', f'\tname = {name}', '\tMODEL', '\t{', f'\t\tmodel = StarshipThingyMabobsAndSuch/ITS/Parts/{name}', '\t}']
+    L_ = ['// Generated by its/scripts/ivalib.py; edit there.']
+    for k in sorted(SW):                                 # the door switch's groups: props of their own
+        L_ += ['PROP', '{', f'\tname = {name}_{k}', '\tproxy = 0, 0, 0, 0.1, 0.1, 0.1, 0.4, 0.4, 0.4', '\tMODEL', '\t{', f'\t\tmodel = StarshipThingyMabobsAndSuch/ITS/Parts/{name}_{k}', '\t}', '}']
+    L_ += ['INTERNAL', '{', f'\tname = {name}', '\tMODEL', '\t{', f'\t\tmodel = StarshipThingyMabobsAndSuch/ITS/Parts/{name}', '\t}']
+    gprop = lambda k: ['\tPROP', '\t{', f'\t\tname = {name}_{k}', '\t\tposition = 0, 0, 0', '\t\trotation = 0, 0, 0, 1', '\t\tscale = 1, 1, 1', '\t}']
+    for k in sorted(SW):
+        if 'Side' in SUBS[k]: L_ += gprop(k)              # without FreeIva the cabin keeps the side-door layout
     for n, t in SEATS: L_ += ['\tMODULE', '\t{', '\t\tname = InternalSeat', f'\t\tseatTransformName = {n}', '\t\tallowCrewHelmet = false', f'\t\tdisplayseatName = {t}', '\t}']
     for c_, n in CAMS: L_ += ['\tMODULE', '\t{', '\t\tname = InternalCameraSwitch', f'\t\tcolliderTransformName = {c_}', f'\t\tcameraTransformName = {n}', '\t}']
     for n, p, q, sc in PROPS: L_ += ['\tPROP', '\t{', f'\t\tname = {n}', f'\t\tposition = {f(p)}', f'\t\trotation = {f(q)}', f'\t\tscale = {f((sc,) * 3)}', '\t}']
+    cond = lambda subs: ['\t\tMODULE', '\t\t{', '\t\t\tname = B9PSConditionalProp', '\t\t\tmoduleID = STMS_DockDoor'] + [f'\t\t\tsubtype = {t}' for t in subs] + ['\t\t}']
     pos_ = lambda p: f([-c for c in p])
     part_ = {'hls': 'STMS_HLS_Crew', 'hlstall': 'STMS_HLS_CrewTall', 'crew': 'STMS_B3_NoseCrew', 'crewcargo': 'STMS_B3_NoseCrewCargo'}[variant]; PS = ':NEEDS[FreeIva]:LAST[StarshipThingyMabobsAndSuch]'
     FI = [f'@PART[{part_}]:HAS[!MODULE[ModuleFreeIva]]' + PS, '{', '\tMODULE', '\t{', '\t\tname = ModuleFreeIva', '\t}', '}', f'@INTERNAL[{name}]:HAS[!MODULE[InternalModuleFreeIva]]' + PS, '{', '\tMODEL', '\t{', f'\t\tmodel = StarshipThingyMabobsAndSuch/ITS/Parts/{name}_shell', '\t}',
           '\tMODULE', '\t{', '\t\tname = InternalModuleFreeIva', '\t\tshellColliderName = shellCollider', '\t\t// no depth mask mesh: the windows are real openings', '\t\tinternalDepthMaskName =', '\t\tShadows', '\t\t{', '\t\t\twall = TwoSided', '\t\t\tfloor = TwoSided', '\t\t\tceiling = TwoSided', '\t\t}', '\t}',
-          '\t@PROP[htProps_HatchCBM]', '\t{', '\t\tMODULE', '\t\t{', '\t\t\tname = HatchConfig', '\t\t\tattachNodeId = port', '\t\t\thideDoorWhenConnected = true', '\t\t}', '\t}',
-          '\tPROP', '\t{', '\t\tname = FreeIva_Hatch_Invisible_Handle', f'\t\tposition = {pos_(HATCH[:3])}', '\t\trotation = 1, 0, 0, 0', '\t\tscale = 0.34, 0.08, 0.34', '\t\tMODULE', '\t\t{', '\t\t\tname = HatchConfig', f'\t\t\tairlockName = {HATCH[3]}', '\t\t}', '\t}']
+          '\t@PROP[htProps_HatchCBM]', '\t{', '\t\tMODULE', '\t\t{', '\t\t\tname = HatchConfig', '\t\t\tattachNodeId = port', '\t\t\thideDoorWhenConnected = true', '\t\t}'] + (cond(('Side',)) if DOORSW else []) + ['\t}',
+          '\tPROP', '\t{', '\t\tname = FreeIva_Hatch_Invisible_Handle', f'\t\tposition = {pos_(HATCH[:3])}', '\t\trotation = 1, 0, 0, 0', '\t\tscale = 0.34, 0.08, 0.34', '\t\tMODULE', '\t\t{', '\t\t\tname = HatchConfig', f'\t\t\tairlockName = {HATCH[3]}', '\t\t}'] + (cond(SUBS['E']) if 'E' in SW else []) + ['\t}']
+    for k in sorted(SW):                                 # the groups: those FreeIva adds, and the switch on those already there
+        FI += ([f'\t@PROP[{name}_{k}]', '\t{'] if 'Side' in SUBS[k] else gprop(k)[:-1]) + cond(SUBS[k]) + ['\t}']
+    for n, p, q, sc, subs, mods in XPROPS:
+        FI += ['\tPROP', '\t{', f'\t\tname = {n}', f'\t\tposition = {f(p)}', f'\t\trotation = {f(q)}', f'\t\tscale = {f(sc if isinstance(sc, tuple) else (sc,) * 3)}']
+        for mn, ls in mods: FI += ['\t\tMODULE', '\t\t{', f'\t\t\tname = {mn}'] + [f'\t\t\t{l}' for l in ls] + ['\t\t}']
+        FI += cond(subs) + ['\t}']
     for z in np.arange(zlo + .16, zhi, .20): FI += ['\tPROP', '\t{', '\t\tname = HandRailInvisible', f'\t\tposition = {pos_((0, .37, float(z)))}', '\t\trotation = 0, 0, 0, 1', '\t\tscale = 0.3, 0.02, 0.02', '\t}']
     pdir = os.path.join(out, '..', 'patches'); os.makedirs(pdir, exist_ok=True); open(os.path.join(pdir, name + '_FreeIva.cfg'), 'w').write('// Generated by its/scripts/ivalib.py; edit there. Walk about inside with FreeIva.\n' + '\n'.join(FI + ['}', '']))
     idir = os.path.join(out, '..', 'iva'); os.makedirs(idir, exist_ok=True); open(os.path.join(idir, name + '.cfg'), 'w').write('\n'.join(L_ + ['}', '']))
