@@ -87,6 +87,7 @@ W = W // 2
 build('cargo', (24.0, 27.3, 29.6), 61)
 build('core_o', (2.2, 4.85, 7.4, 10.1, 12.8, 15.5, 18.2), 51)
 build('crew_o', (21.3, 24.0, 27.3, 29.6), 57)
+build('cargo_o', (24.0, 27.3, 29.6), 61)
 import its_lamp
 
 g = np.zeros((64, 64, 4), np.uint8); g[...] = (212, 212, 210, 175); tl.write_dds(g, 'stms_plainwhite_diff')          # white finish for SEP's docking hardware
