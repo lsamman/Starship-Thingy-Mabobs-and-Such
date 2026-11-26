@@ -20,7 +20,7 @@ if len(cam) > 6: lens = cam[6]
 R_IVA = Matrix(((-1, 0, 0), (0, 0, -1), (0, -1, 0)))
 # prop name -> mu
 propmu = {}
-for root in ('HabTechProps', 'Squad/Props', 'Benjee10_sharedAssets'):
+for root in ('HabTechProps', 'Squad/Props', 'Benjee10_sharedAssets', 'ASET', 'JSI'):
     for f in glob.glob(os.path.join(G, root, '**', '*.cfg'), recursive=True):
         t = open(f, errors='replace').read().replace('\r', '')
         for b in re.split(r'^\s*PROP\s*$', t, flags=re.M)[1:]:
@@ -31,7 +31,7 @@ for root in ('HabTechProps', 'Squad/Props', 'Benjee10_sharedAssets'):
             if m: p = os.path.join(G, m.group(1) + '.mu')
             elif me:
                 p = os.path.join(os.path.dirname(f), me.group(1)); p = p if p.endswith('.mu') else p + '.mu'
-            else: p = os.path.join(os.path.dirname(f), 'model.mu')
+            else: p = (sorted(glob.glob(os.path.join(os.path.dirname(f), '*.mu'))) or [os.path.join(os.path.dirname(f), 'model.mu')])[0]      # KSP takes the .mu beside the cfg
             propmu.setdefault(n.group(1), p)
 sc = bpy.context.scene
 for o in list(bpy.data.objects): bpy.data.objects.remove(o)
@@ -109,16 +109,19 @@ for b in re.split(r'^PROP\s*$', t, flags=re.M)[1:]:          # the cabin's own p
     if n and m: propmu[n.group(1)] = os.path.join(os.path.dirname(cfgp), '..', 'mu', m.group(1) + '.mu')
 if sub:
     import itertools
-    fp = os.path.join(os.path.dirname(cfgp), '..', 'patches', os.path.basename(cfgp)[:-4] + '_FreeIva.cfg'); ft = open(fp).read()
+    subs = sub.split(',')                               # e.g. Side,Avionics: one subtype per switch
+    ft = ''.join(open(os.path.join(os.path.dirname(cfgp), '..', 'patches', os.path.basename(cfgp)[:-4] + s_ + '.cfg')).read() for s_ in ('_FreeIva', '_Avionics') if os.path.exists(os.path.join(os.path.dirname(cfgp), '..', 'patches', os.path.basename(cfgp)[:-4] + s_ + '.cfg')))
+    for n_ in re.findall(r'^\t!PROP\[([^\]]+)\],\* \{\}', ft, flags=re.M): t = re.sub(r'PROP\s*\{\s*name = %s\s*position.*?\n\t\}' % re.escape(n_), '', t, flags=re.S)
     blocks = re.findall(r'^\t(@?PROP)(\[[^\]]+\])?\s*\n\t\{(.*?)^\t\}', ft, flags=re.M | re.S)
-    keep = lambda body: 'B9PSConditionalProp' not in body or sub in re.findall(r'subtype = (\S+)', body)
+    keep = lambda body: 'B9PSConditionalProp' not in body or any(x in re.findall(r'subtype = (\S+)', body) for x in subs)
     for op, sel, body in blocks:
         if op == '@PROP' and not keep(body):             # drop the first matching prop, as ModuleManager edits the first match
             nm = sel[1:-1]; t = re.sub(r'PROP\s*\{\s*name = %s\s*position.*?\n\t\}' % re.escape(nm), '', t, count=1, flags=re.S)
         elif op == 'PROP' and keep(body) and 'position' in body:
             t += '\nPROP\n{' + body + '}\n'
-model = re.search(r'model\s*=\s*StarshipThingyMabobsAndSuch/ITS/Parts/(\S+)', t[t.index('INTERNAL'):]).group(1)
-mu = os.path.join(os.path.dirname(cfgp), "..", "mu", model + ".mu")
+mm = re.search(r'model\s*=\s*StarshipThingyMabobsAndSuch/ITS/Parts/(\S+)', t[t.index('INTERNAL'):])
+if mm: mu = os.path.join(os.path.dirname(cfgp), "..", "mu", mm.group(1) + ".mu")
+else: mu = os.path.join(G, re.search(r'model\s*=\s*(\S+)', t[t.index('INTERNAL'):]).group(1) + '.mu')      # someone else's interior, e.g. ALCOR's, for reference
 bpy.ops.import_object.ksp_mu(filepath=mu)
 setup(list(bpy.data.objects), os.path.dirname(mu))
 bad = []
@@ -131,10 +134,8 @@ for m in re.finditer(r'PROP\s*\{\s*name = (\S+)\s*position = ([^\n]+)\s*rotation
     bpy.ops.import_object.ksp_mu(filepath=p)
     new = [o for o in bpy.data.objects if o not in before]
     setup(new, os.path.dirname(p))
-    for o in new:
-        if o.type == 'LIGHT' or o.type == 'CAMERA':
-            bpy.data.objects.remove(o)
-    new = [o for o in new if o.name in bpy.data.objects]
+    drop = [o for o in new if o.type in ('LIGHT', 'CAMERA')]; new = [o for o in new if o.type not in ('LIGHT', 'CAMERA')]
+    for o in drop: bpy.data.objects.remove(o)
     roots = [o for o in new if o.parent is None]
     for r in roots:
         r.rotation_mode = 'QUATERNION'

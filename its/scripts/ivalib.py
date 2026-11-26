@@ -4,7 +4,7 @@ import bpy, sys, os, math, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np
 from sl import *
-import iva_layout as IL, hls_layout as HL
+import iva_layout as IL, hls_layout as HL, avionics as AV
 V = Vector; R_IVA = Matrix(((-1, 0, 0), (0, 0, -1), (0, -1, 0)))
 Z = {k: Zone(*v, atlas=IL.ATLAS, ppm=300) for k, v in IL.ZONES.items()}
 T_WALL = .11; WELL = .44
@@ -36,9 +36,11 @@ def build(variant):
 
     def pos(az, r, z): a = math.radians(az); return V((r * math.sin(a), -r * math.cos(a), z))
     def inw(az, z, r): return on_cyl(az, z, r) @ Ry(180)
+    TAG = {'classic': False}; CLASSIC = set(); ROLE = ['CockpitLight']      # props of the classic cockpit (hidden with Avionics); the lights' names
     def prop(nm, origin, uy, uz, sc=1.0):
         uy = V(uy).normalized(); uz = V(uz); uz = (uz - uz.dot(uy) * uy).normalized(); bx = uz.cross(uy); q = (R_IVA @ Matrix((bx, uz, uy)).transposed()).to_quaternion(); p = V(origin)
         PROPS.append((nm, (-p.x, -p.y, -p.z), (-q.x, -q.z, -q.y, q.w), sc))
+        if TAG['classic']: CLASSIC.add(len(PROPS) - 1)
     def on_panel(F, nm, x=0, y=0, z=0, sc=1.0, roll=0): m = F @ T(x, y, z) @ Rz(roll); prop(nm, m.translation, m.to_3x3().col[2], -m.to_3x3().col[1], sc)
     def q4(g, pts, zone, toward, uvs=None):
         n = len(g.v); g.v += [tuple(p) for p in pts]; a, b, c = [V(p) for p in pts[:3]]; nrm = (b - a).cross(c - a); cen = sum((V(p) for p in pts), V()) / len(pts)
@@ -49,7 +51,7 @@ def build(variant):
         c = V((x, y, zf + .131)); fwd = V(fwd).normalized(); up = V((0, 0, 1)); F = Matrix((fwd.cross(up), fwd, up)).transposed().to_4x4(); F.translation = c
         n = len(SEATS) + 1; P.empty(f'seat{n}', F, P.model); prop('htProps_seat_Orion2', c, up, -fwd); SEATS.append((f'seat{n}', title))
         ped.add(cyl(.10, .06, 16, zone=Z['dark'], bevel=.01, center_z=False), T(x, y, zf)); ped.add(cyl(.035, .10, 12, zone=Z['metal'], center_z=False), T(x, y, zf + .02))
-    def light(p, e=800, reach=2.8, col=(1, .965, .90)): LIGHTS.append((p, e, reach, col))
+    def light(p, e=800, reach=2.8, col=(1, .965, .90)): LIGHTS.append((p, e, reach, col, ROLE[0]))      # named for ASET's light buttons
     def bar_arc(g, r, z, a0, a1, rad, zone, n=24): g.add(tube([tuple(pos(a0 + (a1 - a0) * i / n, r, z)) for i in range(n + 1)], rad, 8, zone=Z[zone]))
     wall_, floor_, ceil_, fur, soft, led, scr, glass, ped = [Geo() for _ in range(9)]
     # The Block 3 noses' docking door switch (v3/scripts/layout.py NOSE_DOORS): what differs between its subtypes goes in groups,
@@ -57,12 +59,26 @@ def build(variant):
     # over the four windows it covers; W: those windows; C: the centred door's hatch; E: the EVA chamber (crew-cargo, where the
     # centred door takes its place). Without FreeIva the interior keeps the side-door layout (S and E only).
     DOORSW = variant in ('crew', 'crewcargo'); SW = {}; XPROPS = []
-    SUBS = {'S': ('Side',), 'W': ('Centre', 'None'), 'C': ('Centre',), 'E': ('Side', 'None')}
-    def grp(k): return SW.setdefault(k, dict(wall=Geo(), fur=Geo(), glass=Geo(), cols=[]))
+    SUBS = {'S': ('STMS_DockDoor', ('Side',)), 'W': ('STMS_DockDoor', ('Centre', 'None')), 'C': ('STMS_DockDoor', ('Centre',)), 'E': ('STMS_DockDoor', ('Side', 'None')),
+            'K': ('STMS_Cockpit', ('Classic',)), 'A': ('STMS_Cockpit', ('Avionics',))}      # K, A: the cockpit switch (Avionics needs FreeIva and RasterPropMonitor)
+    BASE = lambda k: SUBS[k][1][0] in ('Side', 'Classic')      # groups in the cabin as built; the others only FreeIva adds
+    AVI = ('STMS_Cockpit', ('Avionics',))
+    def grp(k): return SW.setdefault(k, dict(wall=Geo(), fur=Geo(), glass=Geo(), cols=[], lights=[]))
     def boxcol(k, c, size, x=(1, 0, 0), y=(0, 1, 0)):      # a box collider in group k: centre, size along x, y and z
         x = V(x).normalized(); y = V(y).normalized(); grp(k)['cols'].append((V(c), V(size), Matrix((x, y, x.cross(y))).transposed()))
     def xprop(subs, *a, mods=()):                       # a prop only FreeIva places, shown for the subtypes given
-        prop(*a); XPROPS.append(PROPS.pop() + (subs, mods))
+        prop(*a); XPROPS.append(PROPS.pop() + (subs if subs[0].startswith('STMS_') else ('STMS_DockDoor', subs), mods))
+    def xprop_m(subs, nm, p, M3, sc):                    # the same, from the prop's axes in the part frame (x, -up, out)
+        q = (R_IVA @ M3).to_quaternion(); XPROPS.append((nm, (-p.x, -p.y, -p.z), (-q.x, -q.z, -q.y, q.w), sc, subs, ()))
+    def avionics(F, W, H, panels):
+        """Avionics panels on a board: F its frame in the part (x right as seen from the seat, y up, z out toward the seat), W x H."""
+        g = grp('A')['fur']; f, L = AV.layout(panels, W, H); F3 = F.to_3x3()
+        g.add(box(W + .02, H + .02, .006, zone=Z['black'], bevel=.002), F @ T(0, 0, .003))
+        for pn, x0, y0, w, h in L:
+            c = F @ T(x0 + w / 2 - W / 2, H / 2 - y0 - h / 2, .011); g.add(box(w, h, .010, zone=Z['dark'], bevel=.003), c)
+            for n, x, y, z, R_, sc in AV.props_of(pn, f, w):
+                xprop_m(AVI, n, F @ V((x0 + x - W / 2, H / 2 - y0 - y, .016 + z)), F3 @ Matrix((R_[0:3], R_[3:6], R_[6:9])), sc)
+        return f
     def centre_hatch(zf, floor_eva=False):
         """The centred docking door's hatch: a housing against the wall at az 0 over the port, which is below this floor, with a
         CBM hatch on its top facing up. On the crew-cargo nose the airlock is in the cargo bay below too: a floor hatch leads to it."""
@@ -176,7 +192,7 @@ def build(variant):
         bar_arc(fur, ri(zf) - .02, zf + .04, 0, 360, .022, 'dark', 72)
         for a in (30, 150, 270): light(pos(a, ri(zf) * .55, min(zc, zf + .85)), 900 if D['ceil'] is None else 600, 3.4 if D['ceil'] is None else 2.8)
         # ================================================================== themes
-        th = D['theme']; rw = ri(zf + .5)
+        th = D['theme']; rw = ri(zf + .5); ROLE[0] = 'CockpitLight' if th in ('flight', 'main') else 'EngineerDeckLight'
         if th == 'flight':
             pass
         if D['ceil'] is None and th in ('flight', 'lounge', 'main'):
@@ -196,10 +212,17 @@ def build(variant):
                 q4(fur, [pos(a1, rB + .05, zB - .10), pos(a0, rB + .05, zB - .10), pos(a0, rB + .20, zB - .10), pos(a1, rB + .20, zB - .10)], Z['dark'], (0, 0, zf - 3))
                 c = (Tl + Tr + Bl + Br) / 4; xax = (Br - Bl).normalized(); yax = ((Tl + Tr) / 2 - (Bl + Br) / 2).normalized(); F = Matrix((xax, yax, xax.cross(yax))).transposed().to_4x4(); F.translation = c
                 assert F.to_3x3().col[2].z > 0
+                TAG['classic'] = True
                 for k in (-1, 0, 1): on_panel(F, f'htProps_MFD_orion{(k + 1 + i) % 3 + 1}', k * .235, .045, .003, .92)
                 on_panel(F, 'htProps_translationController', .30, -.16, .003, 1.0)
                 for nm, x, sc in (('genericClusterSwitches01', -.22, 1.2), ('genericClusterButtons', 0, 1.2), ('genericClusterKnobs', .14, 1.1)): on_panel(F, nm, x, -.155, .004, sc)
                 if i == 1: on_panel(F, 'ButtonSquare', -.36, -.15, .004, 2.2); on_panel(F, 'throttle', .36, -.02, .004, .6)
+                TAG['classic'] = False
+                # Avionics: ASET panels over the sloped face, more on a board on the lockers below it (station order: left to right from the seats)
+                up_, lo_ = AV.STATIONS[nS - 1 - i]; avionics(F, (Br - Bl).length - .05, (Tl - Bl).length - .04, up_)
+                tg = (Br - Bl).normalized(); rk = (rB + .20) * math.cos(math.radians((a1 - a0) / 2)) - .004; zk0, zk1 = zf + .13, zB - .12; Fk = Matrix((tg, V((0, 0, 1)), tg.cross(V((0, 0, 1))))).transposed().to_4x4(); Fk.translation = pos(am, rk, (zk0 + zk1) / 2)      # on the lockers' face, a chord
+                avionics(Fk, 2 * rk * math.sin(math.radians((a1 - a0) / 2)) - .06, zk1 - zk0, lo_)
+                grp('A')['lights'].append((pos(am, rB - .25, zt + .30), 220, 1.4, 'FloodLight'))      # over the panels, on ASET's Flood Light button
                 # a wide display between the windows and the console top
                 fs = inw(am, zt + .10, ri(zt) - .13)
             curved(fur, -sp_ - 1.5, -sp_, [(rB, zf), (rB, zB), (rT, zt), (ri(zt), zt), (ri(zf), zf)], 'dark', 1); curved(fur, sp_, sp_ + 1.5, [(rB, zf), (rB, zB), (rT, zt), (ri(zt), zt), (ri(zf), zf)], 'dark', 1)
@@ -298,11 +321,22 @@ def build(variant):
                 d = pos(a, 1, 0); p = d * (ri(zm + .5) - .92); seat(p.x, p.y, zm, d, names[k]); t = V((d.y, -d.x, 0))
                 for u, v in ((.20, .24), (-.20, .24), (.20, -.30), (-.20, -.30)): q = p + t * u + d * v; fur.add(strut((p.x + t.x * u * .4, p.y + t.y * u * .4, zm + .16), (q.x, q.y, zm + .012), .016, Z['dark'], 6)); fur.add(cyl(.032, .014, 10, zone=Z['black']), T(q.x, q.y, zm + .008))
             curved(fur, -62, 62, [(ri(zm) - .16, zm), (ri(zm) - .16, zm + .17), (ri(zm) - .11, zm + .22), (ri(zm) + .0, zm + .22), (ri(zm), zm)], 'white', 24)
-            zd = zm + .56; F = inw(0, zd, ri(zd) - .40) @ Rx(-8); fur.add(box(1.02, .25, .03, zone=Z['black'], bevel=.01), F @ T(0, 0, -.018)); fur.add(box(1.04, .05, .05, zone=Z['dark'], bevel=.01), F @ T(0, -.145, 0))
+            zd = zm + .56; F = inw(0, zd, ri(zd) - .40) @ Rx(-8); gk = grp('K')['fur']; TAG['classic'] = True       # the classic cockpit's long display on its arm
+            gk.add(box(1.02, .25, .03, zone=Z['black'], bevel=.01), F @ T(0, 0, -.018)); gk.add(box(1.04, .05, .05, zone=Z['dark'], bevel=.01), F @ T(0, -.145, 0))
             for k in range(4): on_panel(F, f'htProps_MFD_orion{k % 3 + 1}', -.375 + k * .25, .0, .0, .92)
             for nm, x, sc in (('genericClusterSwitches01', -.36, .8), ('genericClusterButtons', -.12, .8), ('genericClusterKnobs', .12, .8)): on_panel(F, nm, x, -.145, .026, sc)
             on_panel(F, 'ButtonSquare', .30, -.145, .026, 1.4); on_panel(F, 'throttle', .50, -.12, .02, .45)
-            for s in (-1, 1): fur.add(tube([tuple(F @ V((s * .16, -.10, -.03))), tuple(F @ V((s * .12, -.22, -.18))), tuple(pos(s * 2.5, ri(zm + .2) - .12, zm + .21))], .016, 8, zone=Z['metal']))
+            for s in (-1, 1): gk.add(tube([tuple(F @ V((s * .16, -.10, -.03))), tuple(F @ V((s * .12, -.22, -.18))), tuple(pos(s * 2.5, ri(zm + .2) - .12, zm + .21))], .016, 8, zone=Z['metal']))
+            TAG['classic'] = False
+            # Avionics: a console on a pedestal before each seat (left to right from the seats: az 44, 13, -13, -44)
+            ga = grp('A')['fur']
+            for k, a in enumerate((44, 13, -13, -44)):
+                d = pos(a, 1, 0); rs = ri(zm + .5) - .92; tg = V((d.y, -d.x, 0)); up_, lo_ = AV.STATIONS[k]
+                F = Matrix.Translation(d * (rs + .66) + V((0, 0, zm + .52))) @ Matrix((tg, V((0, 0, 1)), -d)).transposed().to_4x4() @ Rx(-38)
+                avionics(F, .80, .40, up_); ga.add(box(.84, .44, .03, zone=Z['white'], bevel=.01), F @ T(0, 0, -.016))
+                Fk = Matrix.Translation(d * (rs + .78) + V((0, 0, zm + .27))) @ Matrix((tg, V((0, 0, 1)), -d)).transposed().to_4x4()
+                avionics(Fk, .80, .22, lo_); ga.add(box(.84, .50, .10, zone=Z['white'], bevel=.01), Fk @ T(0, 0, -.052)); ga.add(box(.84, .03, .26, zone=Z['dark'], bevel=.008), Fk @ T(0, -.25, -.13))
+                grp('A')['lights'].append((d * (rs + .30) + V((0, 0, zm + 1.0)), 220, 1.4, 'FloodLight'))
             light((0, -1.5, zm + 1.1), 700, 3.0)
             # wall: a dark ledge with a strip of displays, an access panel
             zh = zf + .80; R_ = lambda z: ri(z)
@@ -400,9 +434,9 @@ def build(variant):
     for k, (a, z) in enumerate(wins):
         d = pos(a, 1, 0); up = V((0, 0, 1)); F = Matrix((d.cross(up), d, up)).transposed().to_4x4(); F.translation = pos(a, ri(z) - .28, z); nm = f'windowCam{k}'; P.empty(nm, F, P.model)
         C = F.copy(); C.translation = pos(a, ro(z) - .03, z); o = P.empty(nm + 'collider', C, P.model); m = o.muproperties; m.collider = 'MU_COL_BOX'; m.isTrigger = False; m.size = (.34, .05, .28); m.center = (0, 0, 0); CAMS.append((nm + 'collider', nm))
-    for k, (p, e, reach, col) in enumerate(LIGHTS):
-        ld = bpy.data.lights.new(f'light{k}', 'POINT'); ld.energy = e; ld.color = col; ld.use_custom_distance = True; ld.cutoff_distance = reach; ld.mulightprop.cullingMask = [True] * 32
-        o = bpy.data.objects.new(f'light{k}', ld); P.coll.objects.link(o); P.place(o, Matrix.Translation(p), P.model)
+    for k, (p, e, reach, col, role_) in enumerate(LIGHTS):
+        ld = bpy.data.lights.new(role_, 'POINT'); ld.energy = e; ld.color = col; ld.use_custom_distance = True; ld.cutoff_distance = reach; ld.mulightprop.cullingMask = [True] * 32
+        o = bpy.data.objects.new(role_, ld); P.coll.objects.link(o); P.place(o, Matrix.Translation(p), P.model)
     fur.add(ped)
     for nm, g, mt, sa in (('wall', wall_, M, 30), ('floor', floor_, M, 5), ('ceiling', ceil_, M, 40), ('furnishings', fur, M, 40), ('soft', soft, M, 60), ('led', led, ML, 30), ('screens', scr, ML, 30), ('glass', glass, MG, 60)):
         for k in range(0, len(g.f), 12000):              # Unity's 65k vertex limit
@@ -418,6 +452,9 @@ def build(variant):
             if g.f: Q.mesh(nm, g, mt, smooth_angle=40)
         for j, (c, sz, R) in enumerate(G['cols']):
             F = R.to_4x4(); F.translation = c; o = Q.empty(f'col{j}', F, Q.model); m = o.muproperties; m.collider = 'MU_COL_BOX'; m.isTrigger = False; m.size = tuple(sz); m.center = (0, 0, 0)
+        for p_, e, reach, role_ in G['lights']:
+            ld = bpy.data.lights.new(role_, 'POINT'); ld.energy = e; ld.color = (1, .97, .92); ld.use_custom_distance = True; ld.cutoff_distance = reach; ld.mulightprop.cullingMask = [True] * 32
+            o = bpy.data.objects.new(role_, ld); Q.coll.objects.link(o); Q.place(o, Matrix.Translation(p_), Q.model)
         Q.model.rotation_mode = 'QUATERNION'; Q.model.rotation_quaternion = R_IVA.to_quaternion(); bpy.context.view_layer.update()
         for o in Q.coll.objects:
             if o not in (Q.root, Q.model): o.muproperties.layer = 16
@@ -450,23 +487,45 @@ def build(variant):
     L_ += ['INTERNAL', '{', f'\tname = {name}', '\tMODEL', '\t{', f'\t\tmodel = StarshipThingyMabobsAndSuch/ITS/Parts/{name}', '\t}']
     gprop = lambda k: ['\tPROP', '\t{', f'\t\tname = {name}_{k}', '\t\tposition = 0, 0, 0', '\t\trotation = 0, 0, 0, 1', '\t\tscale = 1, 1, 1', '\t}']
     for k in sorted(SW):
-        if 'Side' in SUBS[k]: L_ += gprop(k)              # without FreeIva the cabin keeps the side-door layout
+        if BASE(k): L_ += gprop(k)                       # without FreeIva the cabin keeps the side-door layout and the classic cockpit
     for n, t in SEATS: L_ += ['\tMODULE', '\t{', '\t\tname = InternalSeat', f'\t\tseatTransformName = {n}', '\t\tallowCrewHelmet = false', f'\t\tdisplayseatName = {t}', '\t}']
     for c_, n in CAMS: L_ += ['\tMODULE', '\t{', '\t\tname = InternalCameraSwitch', f'\t\tcolliderTransformName = {c_}', f'\t\tcameraTransformName = {n}', '\t}']
     for n, p, q, sc in PROPS: L_ += ['\tPROP', '\t{', f'\t\tname = {n}', f'\t\tposition = {f(p)}', f'\t\trotation = {f(q)}', f'\t\tscale = {f((sc,) * 3)}', '\t}']
-    cond = lambda subs: ['\t\tMODULE', '\t\t{', '\t\t\tname = B9PSConditionalProp', '\t\t\tmoduleID = STMS_DockDoor'] + [f'\t\t\tsubtype = {t}' for t in subs] + ['\t\t}']
+    cond = lambda ms: ['\t\tMODULE', '\t\t{', '\t\t\tname = B9PSConditionalProp', f'\t\t\tmoduleID = {ms[0]}'] + [f'\t\t\tsubtype = {t}' for t in ms[1]] + ['\t\t}']
     pos_ = lambda p: f([-c for c in p])
     part_ = {'hls': 'STMS_HLS_Crew', 'hlstall': 'STMS_HLS_CrewTall', 'crew': 'STMS_B3_NoseCrew', 'crewcargo': 'STMS_B3_NoseCrewCargo'}[variant]; PS = ':NEEDS[FreeIva]:LAST[StarshipThingyMabobsAndSuch]'
     FI = [f'@PART[{part_}]:HAS[!MODULE[ModuleFreeIva]]' + PS, '{', '\tMODULE', '\t{', '\t\tname = ModuleFreeIva', '\t}', '}', f'@INTERNAL[{name}]:HAS[!MODULE[InternalModuleFreeIva]]' + PS, '{', '\tMODEL', '\t{', f'\t\tmodel = StarshipThingyMabobsAndSuch/ITS/Parts/{name}_shell', '\t}',
           '\tMODULE', '\t{', '\t\tname = InternalModuleFreeIva', '\t\tshellColliderName = shellCollider', '\t\t// no depth mask mesh: the windows are real openings', '\t\tinternalDepthMaskName =', '\t\tShadows', '\t\t{', '\t\t\twall = TwoSided', '\t\t\tfloor = TwoSided', '\t\t\tceiling = TwoSided', '\t\t}', '\t}',
-          '\t@PROP[htProps_HatchCBM]', '\t{', '\t\tMODULE', '\t\t{', '\t\t\tname = HatchConfig', '\t\t\tattachNodeId = port', '\t\t\thideDoorWhenConnected = true', '\t\t}'] + (cond(('Side',)) if DOORSW else []) + ['\t}',
+          '\t@PROP[htProps_HatchCBM]', '\t{', '\t\tMODULE', '\t\t{', '\t\t\tname = HatchConfig', '\t\t\tattachNodeId = port', '\t\t\thideDoorWhenConnected = true', '\t\t}'] + (cond(SUBS['S']) if DOORSW else []) + ['\t}',
           '\tPROP', '\t{', '\t\tname = FreeIva_Hatch_Invisible_Handle', f'\t\tposition = {pos_(HATCH[:3])}', '\t\trotation = 1, 0, 0, 0', '\t\tscale = 0.34, 0.08, 0.34', '\t\tMODULE', '\t\t{', '\t\t\tname = HatchConfig', f'\t\t\tairlockName = {HATCH[3]}', '\t\t}'] + (cond(SUBS['E']) if 'E' in SW else []) + ['\t}']
-    for k in sorted(SW):                                 # the groups: those FreeIva adds, and the switch on those already there
-        FI += ([f'\t@PROP[{name}_{k}]', '\t{'] if 'Side' in SUBS[k] else gprop(k)[:-1]) + cond(SUBS[k]) + ['\t}']
-    for n, p, q, sc, subs, mods in XPROPS:
-        FI += ['\tPROP', '\t{', f'\t\tname = {n}', f'\t\tposition = {f(p)}', f'\t\trotation = {f(q)}', f'\t\tscale = {f(sc if isinstance(sc, tuple) else (sc,) * 3)}']
-        for mn, ls in mods: FI += ['\t\tMODULE', '\t\t{', f'\t\t\tname = {mn}'] + [f'\t\t\t{l}' for l in ls] + ['\t\t}']
-        FI += cond(subs) + ['\t}']
+    def xp(n, p, q, sc, subs, mods):
+        o = ['\tPROP', '\t{', f'\t\tname = {n}', f'\t\tposition = {f(p)}', f'\t\trotation = {f(q)}', f'\t\tscale = {f(sc if isinstance(sc, tuple) else (sc,) * 3)}']
+        for mn, ls in mods: o += ['\t\tMODULE', '\t\t{', f'\t\t\tname = {mn}'] + [f'\t\t\t{l}' for l in ls] + ['\t\t}']
+        return o + (cond(subs) if subs else []) + ['\t}']
+    for k in sorted(SW):                                 # the door groups: those FreeIva adds, and the switch on those already there
+        if SUBS[k][0] == 'STMS_DockDoor': FI += ([f'\t@PROP[{name}_{k}]', '\t{'] if BASE(k) else gprop(k)[:-1]) + cond(SUBS[k]) + ['\t}']
+    for x_ in XPROPS:
+        if x_[4][0] == 'STMS_DockDoor': FI += xp(*x_)
+    # ---- the Avionics cockpit (ASET props run by RasterPropMonitor): a B9 switch on the part; the classic cockpit's props come back
+    # with a condition, and the Avionics boards and props are added with theirs. Classic first, so saved ships keep their cabin.
+    AVP = ':NEEDS[FreeIva,RasterPropMonitor,ASET]:LAST[StarshipThingyMabobsAndSuchAvionics]'
+    AF = [f'@PART[{part_}]' + AVP, '{', '\tMODULE', '\t{', '\t\tname = ModuleB9PartSwitch', '\t\tmoduleID = STMS_Cockpit', '\t\tswitcherDescription = Cockpit', '\t\taffectDragCubes = false',
+          '\t\tSUBTYPE', '\t\t{', '\t\t\tname = Classic', '\t\t\ttitle = Classic', '\t\t}', '\t\tSUBTYPE', '\t\t{', '\t\t\tname = Avionics', '\t\t\ttitle = Avionics (ASET, RasterPropMonitor)', '\t\t}', '\t}',
+          '\tMODULE', '\t{', '\t\tname = RasterPropMonitorComputer',
+          f'\t\tstoredStrings = v 1.0 |2026|{S_["title"].upper()[:18]}|STARSHIP THINGY MABOBS|AND SUCH|STMS-{variant.upper()}|{S_["title"].upper()[:10]}|STMS', '\t}']
+    for k_, cn in enumerate(('stms_cam_down', 'stms_cam_out', 'stms_cam_up')):      # the hull cameras: ExtCam1-3 on the MFDs' camera pages (renumber in the part menu)
+        AF += ['\tMODULE', '\t{', '\t\tname = JSIExternalCameraSelector', f'\t\tcameraContainer = {cn}', '\t\tcameraIDPrefix = ExtCam', f'\t\tcurrent = {k_ + 1}', '\t\tmaximum = 8', '\t}']
+    AF += ['}',
+          f'@INTERNAL[{name}]' + AVP, '{']
+    cnames = sorted({PROPS[i][0] for i in CLASSIC})
+    for n in cnames: AF += [f'\t!PROP[{n}],* {{}}']
+    for i, (n, p, q, sc) in enumerate(PROPS):
+        if n in cnames: AF += xp(n, p, q, sc, SUBS['K'] if i in CLASSIC else None, ())
+    for k in ('K', 'A'):
+        if k in SW: AF += ([f'\t@PROP[{name}_{k}]', '\t{'] if BASE(k) else gprop(k)[:-1]) + cond(SUBS[k]) + ['\t}']
+    for x_ in XPROPS:
+        if x_[4][0] == 'STMS_Cockpit': AF += xp(*x_)
+    open(os.path.join(out, '..', 'patches', name + '_Avionics.cfg'), 'w').write('// Generated by its/scripts/ivalib.py; edit there. The Avionics cockpit: needs FreeIva, RasterPropMonitor and ASET Props/Avionics.\n' + '\n'.join(AF + ['}', '']))
     for z in np.arange(zlo + .16, zhi, .20): FI += ['\tPROP', '\t{', '\t\tname = HandRailInvisible', f'\t\tposition = {pos_((0, .37, float(z)))}', '\t\trotation = 0, 0, 0, 1', '\t\tscale = 0.3, 0.02, 0.02', '\t}']
     pdir = os.path.join(out, '..', 'patches'); os.makedirs(pdir, exist_ok=True); open(os.path.join(pdir, name + '_FreeIva.cfg'), 'w').write('// Generated by its/scripts/ivalib.py; edit there. Walk about inside with FreeIva.\n' + '\n'.join(FI + ['}', '']))
     idir = os.path.join(out, '..', 'iva'); os.makedirs(idir, exist_ok=True); open(os.path.join(idir, name + '.cfg'), 'w').write('\n'.join(L_ + ['}', '']))

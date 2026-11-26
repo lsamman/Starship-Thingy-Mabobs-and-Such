@@ -25,6 +25,14 @@ win = P.empty('stms_b3_winS', None, P.model)
 P.mesh('stms_b3_frames', fs, MF, parent=win, smooth_angle=40)
 P.mesh('stms_b3_glass', gs, MG, parent=win, smooth_angle=60)
 spots += ss
+# hull cameras for RasterPropMonitor's camera pages (JSIExternalCameraSelector, added by the Avionics patch): +Y looks, +Z is up
+cams = Geo()
+for nm, az, z, look in (('stms_cam_down', -30, -2.2, 'down'), ('stms_cam_out', 0, 2.36, 'out'), ('stms_cam_up', 58, 3.2, 'up')):
+    n = N.normal(az, z); upz = Vector((0, 0, 1)); tg = (upz - upz.dot(n) * n).normalized()
+    y_, z_ = {'down': (-tg, n), 'up': (tg, n), 'out': (n, tg)}[look]; Fc = Matrix((y_.cross(z_), y_, z_)).transposed().to_4x4(); Fc.translation = N.point(az, z, .07)
+    P.empty(nm, Fc, P.model); Fh = Matrix((tg.cross(n), tg, n)).transposed().to_4x4(); Fh.translation = N.point(az, z, -L.NOSE_SINK)
+    cams.add(box(.10, .14, .07, zone=Zone(0, 0, 256, 256, atlas=256), bevel=.012, center=(0, 0, .035)), Fh); cams.add(cyl(.028, .03, 12, zone=Zone(0, 0, 256, 256, atlas=256)), Fc @ Matrix.Rotation(math.pi / 2, 4, 'X') @ Matrix.Translation((0, 0, .0)))
+P.mesh('stms_b3_cams', cams, MF, smooth_angle=40)
 
 # KSP draws front faces only. Judge which side of each piece shows against a stand-in of SEP's shell
 # (from the same measured rings, 1 mm under it), then drop the stand-in so none of it is exported.

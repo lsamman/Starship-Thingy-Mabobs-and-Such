@@ -14,7 +14,7 @@ gd = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.environ.get('KSP_DIR'
 errs = []; warns = []
 STOCK = open(os.path.join(os.path.dirname(gd), 'KSP_x64_Data', 'Managed', 'Assembly-CSharp.dll'), 'rb').read() if os.path.exists(os.path.join(os.path.dirname(gd), 'KSP_x64_Data', 'Managed', 'Assembly-CSharp.dll')) else b''
 extra = b''
-for dll in ('B9PartSwitch', 'Waterfall', 'KAS', 'FreeIva', 'KSPCommunityPartModules'):
+for dll in ('B9PartSwitch', 'Waterfall', 'KAS', 'FreeIva', 'KSPCommunityPartModules', 'JSI'):
     for f in glob.glob(os.path.join(gd, dll, '**', '*.dll'), recursive=True):
         extra += open(f, 'rb').read()
 ASMS = STOCK + extra
@@ -108,6 +108,18 @@ for c in glob.glob(os.path.join(root, '**', '*.cfg'), recursive=True):
                 errs.append(f'{os.path.basename(c)}: tankType {v} undefined')
     if not STOCK:
         warns.append('stock assembly not found, module names unchecked')
+# ---- props the cabins place by name (ours, HabTechProps, stock, ASET, FreeIva's): each must be defined somewhere installed or in the package;
+# camera containers the Avionics patches name must be in the part's models
+pdefs = set()
+for c in glob.glob(os.path.join(root, '**', '*.cfg'), recursive=True) + glob.glob(os.path.join(gd, '**', '*.cfg'), recursive=True):
+    t = open(c, errors='replace').read()
+    if 'PROP' in t: pdefs |= set(re.findall(r'^\s*PROP\s*\{\s*name\s*=\s*(\S+)', t, re.M))
+for c in glob.glob(os.path.join(root, '**', 'STMS_IVA_*.cfg'), recursive=True):
+    t = open(c, errors='replace').read(); need = 'ASET' in t and not os.path.isdir(os.path.join(gd, 'ASET'))
+    for n in sorted(set(re.findall(r'^\t+(?:PROP|!PROP\[)\s*\{?\s*name\s*=\s*(\S+)', t, re.M) + re.findall(r'^\tPROP\s*\{\s*name\s*=\s*(\S+)', t, re.M))):
+        if n not in pdefs: (warns if need or n.startswith(('FreeIva_', 'HandRail')) else errs).append(f'{os.path.basename(c)}: prop {n} not defined in the package or {gd}')
+    for cn in re.findall(r'cameraContainer = (\S+)', t):
+        if not any(cn in names for names, _ in mu_info.values()): errs.append(f'{os.path.basename(c)}: camera container {cn} in no model')
 for w in sorted(set(warns)):
     print('WARN', w)
 for e in errs:

@@ -113,6 +113,15 @@ for rz, rn, rs_, rw, rh in HL.ROWS_TALL if TALL else ():
         az = -rs_ + 2 * rs_ * i / (rn - 1); wf.add(lay(rounded_rect_ring(rw + .05, rh + .05, min(rw, rh) * .34, .034, .018, 4, zone=Z.black), az, rz, O)); wg.add(lay(pane(rw, rh, min(rw, rh) * .28, (i * 5 + int(rz * 7)) % 8), az, rz, O, .06, -.004))
 d.add(wf)
 P.mesh('windows', wg, MG, smooth_angle=60)
+# hull cameras for RasterPropMonitor's camera pages (JSIExternalCameraSelector, added by the Avionics patch): +Y looks, +Z is up
+hr = lambda z: float(np.interp(z, [HL.Z_OGIVE + z_ for z_, _ in HL.OGIVE], [r for _, r in HL.OGIVE])) if z > HL.Z_OGIVE else HL.R
+cm = Geo()
+for nm, az, z, look in (('stms_cam_down', 90, 21.0, 'down'), ('stms_cam_out', 0, 24.3, 'out'), ('stms_cam_up', 60, 26.6, 'up')):
+    a_ = math.radians(az); n = V((math.sin(a_), -math.cos(a_), -(hr(z + .05) - hr(z - .05)) / .1)).normalized(); upz = V((0, 0, 1)); tg = (upz - upz.dot(n) * n).normalized()
+    y_, z_ = {'down': (-tg, n), 'up': (tg, n), 'out': (n, tg)}[look]; base = V((hr(z) * math.sin(a_), -hr(z) * math.cos(a_), z - O))
+    Fc = Matrix((y_.cross(z_), y_, z_)).transposed().to_4x4(); Fc.translation = base + n * .07; P.empty(nm, Fc, P.model)
+    Fh = Matrix((tg.cross(n), tg, n)).transposed().to_4x4(); Fh.translation = base - n * .01; cm.add(box(.10, .14, .08, zone=Z.dark, bevel=.012, center=(0, 0, .04)), Fh); cm.add(cyl(.028, .03, 12, zone=Z.black), Fc @ Rx(90))
+P.mesh('cams', cm, P.det, smooth_angle=40)
 # ---------------- solar bays: four pockets with a node each; the array part brings its own hatch
 for k, az0 in enumerate(HL.SOL_AZ):
     F = on_cyl(az0, (S0 + S1) / 2 - O, 0); HWx = HL.R * math.sin(math.radians(HL.SOL_HW)); Hh = (S1 - S0) / 2; DP = HL.SOL_DP; HWb = DP * math.sin(math.radians(HL.SOL_HW))   # local +Z out, +Y up

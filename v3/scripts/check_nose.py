@@ -78,6 +78,10 @@ for name in ('STMS_B3_WindowsCrew', 'STMS_B3_WindowsCrewCargo'):
     kit = vis(imp(path))
     print(name)
     for o in kit:
+        if 'cams' in base(o):                            # hull camera housings: on bare steel, and nothing more asked of them
+            v = np.array([o.matrix_world @ x.co for x in o.data.vertices]); az = np.degrees(np.arctan2(v[:, 0], -v[:, 1]))
+            hits = {s: {own[radial(t_, a_, z_)[2]] for a_, z_ in zip(az[::7], v[::7, 2]) if radial(t_, a_, z_)[2] is not None} - set(STEEL) for s, (t_, own) in states.items()}
+            check(not any(hits.values()), f'  cameras: over bare steel in both ablative subtypes' + ('' if not any(hits.values()) else f' (hits {hits})')); continue
         kind = 'glass' if 'glass' in base(o) else 'frames'
         m = o.matrix_world; v = np.array([m @ x.co for x in o.data.vertices])
         az = np.degrees(np.arctan2(v[:, 0], -v[:, 1])); z = v[:, 2]; rho = np.hypot(v[:, 0], v[:, 1])

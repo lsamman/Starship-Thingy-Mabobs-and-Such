@@ -72,3 +72,17 @@ On the ground: Open Airlock Door, Lower Deck, then slide the elevator's Target E
 - **Block 3 Landing Leg** (`STMS_Ship_Leg`): the HLS leg in the ship's bare steel, no shell. Four nodes are added to SEP's Block 3 core; it also surface-attaches.
 - **Ship Quick Disconnect Arm** goes on the free rear node of SLE's own tower core, and **Crew Access Arm** attaches radially beside the rear column (azimuth -37 face, the collider is one square box), floor level with the EVA hatch sill. Both reach round the chopstick carriage and swing back clear of it. No extra tower part is needed.
 - **Crew Access Arm** and **Ship Quick Disconnect Arm**: for those nodes. Heights and reach fit a SEP Block 3 stack on SLE's table with the ship's window side to the tower (`its/scripts/tower_layout.py`). The white room meets the EVA hatch of both crew noses; the other arm meets SEP's QD plate, holds the booster with a claw, and can load propellant. With StagedAnimation installed it retracts when staged: jaws open, plate and claw pull back, then it swings about 130 degrees, 3.5 s in all. `its/scripts/check_arms.py` runs both retractions against booster, ship and nose. They share the tower's sides with SLE's chopsticks, whose carriage passes through them if driven past.
+
+## Avionics cockpit
+
+With **FreeIva**, **RasterPropMonitor** (1.1 or later) and **ASET Props** and **ASET Avionics** installed, the HLS crew sections and the Block 3 crew noses get a **Cockpit** switch: **Classic** (the default, as before) or **Avionics**, an interactive cockpit after ASET's ALCOR. Its props are ASET's, placed by name; `its/scripts/avionics.py` lists the panels and which station carries them, and `its/data/aset_mounts.json` says how each prop sits on a panel (from ALCOR's cockpit; rebuilt by `its/scripts/aset_mounts.py` from an install with ALCOR).
+
+Each flight deck has four stations, left to right from the seats; each has panels on the desk and on a board below it (on the HLS, a console on a pedestal before each seat):
+
+1. 60x30 multifunction display; caution and warning lights with the terrain, slope, tumble and G warnings and the altitude alarm; gear, brakes, parachutes and lights; docking indicators.
+2. Two 40x20 displays; SAS on and all its modes, its speed selector, RCS, precision input, gimbal lock, clear target and node; staging (with its lock), guarded abort and undock, engines, engine mode, thrust limiter, throttle cut and full; rotation and throttle hand controllers.
+3. Two 40x20 displays; MechJeb: SmartASS modes and roll holds, the manoeuvre planner (Hohmann, circularise, change Ap and Pe, launch inclination and altitude, from the number input below), autopilots for ascent, rendezvous, docking and landing, execute node; comms (CommNet, Chatterer); action groups 1-10 and time warp.
+4. A 40x20 display; propellant, thrust, heat and Δv gauges and readouts; environment readouts; power (solar arrays, fuel cells, generators, output selector).
+
+The displays carry ALCOR's pages: flight display, orbit, landing and ascent with a camera, docking camera (from the docking port set as reference), target menu, the hull cameras (ExtCam1-3: down along the hull for landing, outward, up along the nose; renumber them in the part menu if a ship has several), flight log, crew, science, resources, and MechJeb's, SCANsat's and VesselView's pages where those are installed. Light buttons switch the flood lights over the panels and the deck lights. ASET's props add about 66 MB of textures; the displays render only while you are in IVA.
+
