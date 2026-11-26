@@ -68,7 +68,8 @@ def write(G):
                   anim('rampOut', 'Put Ramp Out', 'Fold Ramp In', 'Ramp'),
                   mod('ModuleB9PartSwitch', 'moduleID = HLS_Style', 'switcherDescription = Style', 'affectDragCubes = false',      # to match the core and crew section
                       block('SUBTYPE', 'name = Original', 'title = Original', 'primaryColor = black', block('TEXTURE', 'texture = StarshipThingyMabobsAndSuch/ITS/Parts/hls_cargo_o_diff', 'shaderProperty = _MainTex', 'transform = hull', 'transform = doorskin')),
-                      block('SUBTYPE', 'name = R2024', 'title = 2024 render', 'primaryColor = white'))])
+                      block('SUBTYPE', 'name = R2024', 'title = 2024 render', 'primaryColor = white')),
+                  mod('ModuleSTMSDoorGuard', 'animationName = CargoDoor', 'guardNode = crane', 'outLimit = -0.15')])
     part('STMS_HLS_Leg', 'Starship HLS Landing Leg', 'One of four. Hangs folded down its black panel, then swings out, telescopes and puts an octagonal pad on the regolith, held by a strut to either side. Use four, on the marked nodes.',
          T + ' landing leg gear ground', .6, 4500, 'Ground', 'veryHeavyRocketry', rules='1,0,0,0,0', profiles='srf, size1', crash=30, skin=2000, brk=3000,
          extra=[block('EFFECTS', block('deploy', SND('elev_start'), SND('elev_loop', True)), block('deployed', SND('elev_stop')), block('retract', SND('elev_start'), SND('elev_loop', True, .6)), block('retracted', SND('elev_stop', False, .75)))],

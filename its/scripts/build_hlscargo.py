@@ -68,6 +68,10 @@ for z0, z1 in zip(dz_, dz_[1:]):
     for a0, a1 in zip(da, da[1:]):
         q = [(a0, z0), (a1, z0), (a1, z1), (a0, z1)]; n = len(ds.v); ds.v += [tuple(h(cl(a), z)) for a, z in q]; ds.face(range(n, n + 4), [huv(abs(a), z + O, 'cargo') for a, z in q])
         sq(db, [h(cl(a), z, R_(z) - DT) for a, z in q[::-1]], [(math.radians(a) * 2.6, z) for a, z in q[::-1]])
+LP = .07                                                  # lip on the door's lower edge, standing just proud of the hull below the sill: no gap shows when shut
+for a0, a1 in zip(da, da[1:]):
+    q = [(a0, S0 - LP), (a1, S0 - LP), (a1, dz_[0]), (a0, dz_[0])]; n = len(ds.v); ds.v += [tuple(h(cl(a), z, R_(z) + .008)) for a, z in q]; ds.face(range(n, n + 4), [huv(abs(a), z + O, 'cargo') for a, z in q])
+    f = [h(cl(a0), S0 - LP, R_(S0 - LP) + .008), h(cl(a1), S0 - LP, R_(S0 - LP) + .008), h(cl(a1), S0 - LP, R_(S0 - LP) + .0015), h(cl(a0), S0 - LP, R_(S0 - LP) + .0015)]; n = len(di.v); di.v += [tuple(p) for p in f]; di.face(range(n, n + 4), [Z.white.uv(*t) for t in ((0, 0), (.1, 0), (.1, .1), (0, .1))])
 for s in (-1, 1):
     for z0, z1 in zip(dz_, dz_[1:]):
         f = [h(s * (AZ - e), z0), h(s * (AZ - e), z0, R_(z0) - DT), h(s * (AZ - e), z1, R_(z1) - DT), h(s * (AZ - e), z1)]; f = f if s < 0 else f[::-1]; n = len(di.v); di.v += [tuple(p) for p in f]; di.face(range(n, n + 4), [Z.white.uv(*t) for t in ((0, 0), (.1, 0), (.1, .1), (0, .1))])

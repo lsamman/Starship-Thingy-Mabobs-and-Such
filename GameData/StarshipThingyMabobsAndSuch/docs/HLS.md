@@ -26,6 +26,8 @@ The core and crew section have a **Style** switch: **Original** (black base, leg
 - **Cargo Section (Bay Doors)** (`STMS_HLS_Cargo`): SEP's Block 3 cargo section in white. Winch boom on the ceiling node; the platform reaches the ground at about -25.7.
 - **Cargo Section (Awning Door)** (`STMS_HLS_CargoAwning`): our own, one wide door that swings up. Put the **Crane Frame** (`STMS_HLS_Crane`) on the node by the sill and the Cargo Winch Hoist on the node under its crossbar; open the door, slide the frame's Target Extension to -4.4, then lower the hoist (ground at about -23.5). Or set **Boom mount** to Beams and use the winch boom on its node instead; not both. The bay is open up to the header tank, about 7 m over the floor. Set the core's **Elevator track** to None.
 
+The door and the crane frame guard each other: the door will not close while the frame is out, and the frame will not run out until the door is fully open.
+
 ## Several loads in one ship
 
 Awning-door cargo section with the crane frame, hoist and platform. Load 1 rides on the platform. **Cargo Floor (Mid)** goes on node `floor1` and carries load 2 over the stowed crane: up to about 2.2 m tall, or 1.3 m with a **Cargo Floor (Top)** on `floor2`, which takes a flat load 3 up to 0.8 m tall. Widths up to about 1.9 m (2.6 m on the platform), lengths about 2.9 m. Keep loads 2 and 3 on a decoupler or docking port until their floor is down.
