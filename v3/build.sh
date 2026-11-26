@@ -17,6 +17,7 @@ fi
 if [ -z "$SKIP_MODELS" ] && [ -f "$SEP/Assets/BL3/SEP_26_SHIP_NOSECONE.mu" ]; then       # cut copies of SEP's nose, into the ITS build (they share its detail atlas)
     mkdir -p ../its/build/mu
     for v in crew crewcargo; do "$B" -b --factory-startup --python-exit-code 1 -P scripts/derive_nose.py -- "$SEP/Assets/BL3" ../its/build/mu $v 2>&1 | grep -E "EXPORT|FACING|Error|Traceback"; done
+    "$B" -b --factory-startup --python-exit-code 1 -P scripts/derive_stringers.py -- "$SEP/Assets/BL3" ../its/build/mu 2>&1 | grep -E "EXPORT|Error|Traceback"     # the expendable core's windward stringers
 fi
 if [ -z "$SKIP_TEX" ]; then
     python3 -I scripts/tex_winch.py | tail -1

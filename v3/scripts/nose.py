@@ -209,19 +209,26 @@ def big_window(frame, glass, zone, sink=L.NOSE_SINK):
     frame.add(beam(rim, .038, .022)); frame.add(beam(fine((ha, s0), (-ha, s0)), .038, .022))
 
 
+def in_door(az, z, D, pad=7):
+    """Would a small window at (az, z) clash with the docking door D (layout.DOCK or DOCK_C)?"""
+    return D['az'] - D['hw'] - pad < az < D['az'] + D['hw'] + pad and z - .2 < D['z'][1] and z + .17 > D['z'][0]
+
+
 def windows(variant, zone):
     """Frames and glass for every window of a variant, laid on the shell: the big window, then the small rows.
-    Returns (frames, glass, small-window spots)."""
-    frames, glass, spots = Geo(), Geo(), []
+    Windows where the side docking door goes are kept apart, so the door switch can show them when the door is elsewhere.
+    Returns (frames, glass, small-window spots, side-door frames, side-door glass, their spots)."""
+    frames, glass, spots = Geo(), Geo(), []; fs, gs, ss = Geo(), Geo(), []
     big_window(frames, glass, zone)
     F = L.NOSE_FRAME; w, h = L.SMALL
     for row, (z, n, span) in enumerate(L.NOSE_SMALL_ROWS[:L.NOSE_SMALL_COUNT[variant]]):
         for i in range(n):
             az = -span + 2 * span * i / (n - 1) if n > 1 else 0.0
-            if L.DOCK['az'] - L.DOCK['hw'] - 7 < az < L.DOCK['az'] + L.DOCK['hw'] + 7 and z - .2 < L.DOCK['z'][1] and z + .17 > L.DOCK['z'][0]: continue          # the docking bay
             if abs(az) < L.EVA_HW + 6 and z - .3 < L.EVA_Z[1] and z + .3 > L.EVA_Z[0]: continue          # the EVA hatch is here
+            assert not ('centre' in L.NOSE_DOORS[variant] and in_door(az, z, L.DOCK_C[variant])), (variant, az, z)      # the centred door keeps clear of every window
+            side = in_door(az, z, L.DOCK)                   # under the side docking door: shown only when the door is elsewhere
             fw, fh = w + 2 * F, h + 2 * F
-            frames.add(stick(rounded_rect_ring(fw, fh, fh * .42, F + .004, L.NOSE_FRAME_H, 4, zone=zone), az, z))
-            glass.add(stick(pane(w, h, (i * 3 + row * 5) % 8), az, z, .08, -L.NOSE_GLASS_OFF))
-            spots.append((az, z, fw, fh))
-    return frames, glass, spots
+            (fs if side else frames).add(stick(rounded_rect_ring(fw, fh, fh * .42, F + .004, L.NOSE_FRAME_H, 4, zone=zone), az, z))
+            (gs if side else glass).add(stick(pane(w, h, (i * 3 + row * 5) % 8), az, z, .08, -L.NOSE_GLASS_OFF))
+            (ss if side else spots).append((az, z, fw, fh))
+    return frames, glass, spots, fs, gs, ss

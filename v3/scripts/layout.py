@@ -49,6 +49,18 @@ NOSE_BIG = dict(z0=2.65, z1=4.60, ha=2.1, side=.4875)     # side: the ITS lattic
 SMALL = (.3125, .2625)
 NOSE_SMALL_ROWS = ((1.70, 10, 41), (0.40, 9, 40), (-0.90, 11, 48))   # the first row leaves its middle to the EVA hatch
 DOCK = dict(az=30.0, hw=13.9, z=(.63, 1.97), plate=2.55, bulge=.13)   # side docking bay on the steel: azimuth, half-width (deg), heights, radius of the seat, how far its door stands proud over the port
+# The docking door has a B9 switch: Side (DOCK, the default, so saved ships keep their port), Centred (DOCK_C) or None.
+# Away from the side position, the windows and SEP's tile patch at +26..34 deg come back and the nose is symmetric.
+# Crew nose: the centred door is under the third window row, on the centre line, hinged along its top edge so it folds up
+# over the hull; its hinge gear reaches .24 m above that edge, so the door's top stays .3 m under the row.
+# Crew-cargo nose: the clamshell cargo doors fill the barrel below z 0, so the centred door takes the EVA hatch's place
+# (z .16-1.46, under the window row, hinged on its side like the side door). The hull hatch is then closed over and the
+# airlock moves into the cargo bay, under a hatch in its ceiling (EVA_BAY): with the cargo doors shut there is no way out.
+DOCK_C = {'crew': dict(az=0.0, hw=13.9, z=(-2.66, -1.36), plate=2.55, bulge=.13, top=True),
+          'crewcargo': dict(az=0.0, hw=13.9, z=(.16, 1.46), plate=2.55, bulge=.13, top=False)}
+NOSE_DOORS = {'crew': ('side', 'centre', 'none'), 'crewcargo': ('side', 'centre', 'none')}
+EVA_TRIG = (0.0, -2.55, 1.30)    # the airlock trigger at the EVA hatch (z: the hatch sill + .34)
+EVA_BAY = (0.0, -2.30, -0.80)   # the crew-cargo nose's airlock trigger in Centred mode: in the bay, by the cargo doors' opening
 EVA_Z, EVA_HW = (.96, 2.04), 6.8   # EVA hatch at az 0: heights, half-width in degrees; the access arm on the tower meets it
 NOSE_SMALL_COUNT = {'crew': 3, 'crewcargo': 1}
 NOSE_FRAME = .035           # frame border around a pane

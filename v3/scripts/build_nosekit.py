@@ -16,9 +16,15 @@ P = Part(NAME)
 MF = P.material('stms_b3_kit', spec=(.5, .5, .52), shininess=.4)
 MG = P.material('stms_b3_glass', shader='KSP/Emissive/Bumped Specular', spec=(1, 1, 1), shininess=.8, emissive='stms_b3_glass_emit')
 # names are unique to us: SEP's modules look transforms up by name across the whole part
-frames, glass, spots = N.windows(variant, Zone(0, 0, 256, 256, atlas=256))
+frames, glass, spots, fs, gs, ss = N.windows(variant, Zone(0, 0, 256, 256, atlas=256))
 P.mesh('stms_b3_frames', frames, MF, smooth_angle=40)
 P.mesh('stms_b3_glass', glass, MG, smooth_angle=60)
+# the windows under the side docking door, in a group the door switch shows when the door is elsewhere; the exporter drops
+# Blender's .001, so this glass is a second 'stms_b3_glass' and the cabin lights find it too
+win = P.empty('stms_b3_winS', None, P.model)
+P.mesh('stms_b3_frames', fs, MF, parent=win, smooth_angle=40)
+P.mesh('stms_b3_glass', gs, MG, parent=win, smooth_angle=60)
+spots += ss
 
 # KSP draws front faces only. Judge which side of each piece shows against a stand-in of SEP's shell
 # (from the same measured rings, 1 mm under it), then drop the stand-in so none of it is exported.

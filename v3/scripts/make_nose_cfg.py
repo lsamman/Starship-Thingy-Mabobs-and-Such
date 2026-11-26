@@ -26,13 +26,37 @@ SEPT = 'StarshipExpansionProject/Assets/BL3/'
 import math
 _a = math.radians(L.DOCK['az']); _r = L.DOCK['plate'] + .016; _z = sum(L.DOCK['z']) / 2
 PORT = '\tnode_stack_port = %.4f, %.4f, %.4f, %.4f, 0, %.4f, 1' % (_r * math.sin(_a), _z, -_r * math.cos(_a), math.sin(_a), -math.cos(_a))
+def centre(variant):
+    """The centred door's port: (x, y, z) in KSP's frame and the node line."""
+    D = L.DOCK_C[variant]; a = math.radians(D['az']); r = D['plate'] + .016; z = sum(D['z']) / 2
+    return (r * math.sin(a), z, -r * math.cos(a)), '\tnode_stack_ctrport = %.4f, %.4f, %.4f, %.4f, 0, %.4f, 1' % (r * math.sin(a), z, -r * math.cos(a), math.sin(a), -math.cos(a))
+
+
+def door_switch(variant):
+    """Docking door: Side (first, so saved ships keep theirs), Centred or None. Each shows its door group, closes the other openings
+    with their plugs, brings back the windows and tile patch under the side door when that door is not fitted, and enables its node.
+    The node name 'port' is kept for the side door; 'ctrport' does not start with it, which matters because B9 matches node prefixes."""
+    doors = L.NOSE_DOORS[variant]; centre = 'centre' in doors
+    cargo = variant == 'crewcargo'; eva = ['stms_evaG'] if cargo and centre else []      # crew-cargo: the centred door takes the EVA hatch's place
+    sub = {'side': ('Side', 'Side door', ['stms_dockS'] + (['stms_plugC'] if centre else []) + eva, 'port'),
+           'centre': ('Centre', 'Centred door', ['stms_dockC', 'stms_plugS', 'stms_b3_winS'] + (['stms_plugE', 'stms_evabayG'] if eva else []), 'ctrport'),
+           'none': ('None', 'No door', ['stms_plugS', 'stms_b3_winS'] + (['stms_plugC'] if centre else []) + eva, None)}
+    o = ['\tMODULE', '\t{', '\t\tname = ModuleB9PartSwitch', '\t\tmoduleID = STMS_DockDoor', '\t\tswitcherDescription = Docking door', '\t\taffectDragCubes = false']
+    for k in doors:
+        n, t, tr, nd = sub[k]
+        o += ['\t\tSUBTYPE', '\t\t{', f'\t\t\tname = {n}', f'\t\t\ttitle = {t}'] + [f'\t\t\ttransform = {x}' for x in tr] + ([f'\t\t\tnode = {nd}'] if nd else [])
+        if k == 'centre' and eva:                            # the one airlock moves into the bay (Unity axes: x, up, -leeward)
+            d = [b - a for a, b in zip(L.EVA_TRIG, L.EVA_BAY)]
+            o += ['\t\t\tTRANSFORM', '\t\t\t{', '\t\t\t\tname = stms_airlock', '\t\t\t\tpositionOffset = %.3f, %.3f, %.3f' % (d[0], d[2], d[1]), '\t\t\t}']
+        o += ['\t\t}']
+    return o + ['\t}']
 
 
 def anim(clip, what):
     return [f'\t\tanimationName = {clip}', f'\t\tactionGUIName = Toggle {what}', f'\t\tstartEventGUIName = Open {what}', f'\t\tendEventGUIName = Close {what}', '\t\tallowDeployLimit = true', '\t\trevClampDirection = true', '\t\tevaDistance = 6']
 
 
-def slots(cargo):
+def slots(cargo, variant):
     """A cargo bay finds its doors by module index, so the animations take over SEP's first two modules in place: its
     (doorless) bay and its Ablative switch, which comes back at the end."""
     first, second = (('stmsDoors', 'Cargo Doors'), ('stmsDock', 'Docking Door')) if cargo else (('stmsDock', 'Docking Door'), ('stmsEva', 'EVA Hatch'))
@@ -41,6 +65,7 @@ def slots(cargo):
          '\t@MODULE[ModuleB9PartSwitch]:HAS[#moduleID[SEP_Ablative]]', '\t{', '\t\t@name = ModuleAnimateGeneric', '\t\t!moduleID = DEL', '\t\t!switcherDescription = DEL', '\t\t!affectDragCubes = DEL', '\t\t!SUBTYPE,* {}'] + anim(*second) + ['\t}']
     if cargo: o += ['\tMODULE', '\t{', '\t\tname = ModuleAnimateGeneric'] + anim('stmsEva', 'EVA Hatch') + ['\t}'] + bay(0, 2.5, -1.3)
     o += bay(1 if cargo else 0, 0.75, round(_z, 3), _r * math.sin(_a), -_r * math.cos(_a))
+    if 'centre' in L.NOSE_DOORS[variant]: (x_, y_, z_), _ = centre(variant); o += bay(1 if cargo else 0, 0.75, round(y_, 3), x_, z_)      # the centred door's port, on the same door animation
     if cargo: o += ['\tMODULE', '\t{', '\t\tname = ModuleLight', '\t\tlightName = stms_baylight', '\t\tuseAnimationDim = true', '\t\tlightBrightenSpeed = 2.5', '\t\tlightDimSpeed = 2.5', '\t\tresourceAmount = 0.05', '\t\tuseResources = true', '\t}']
     o += ['\tMODULE', '\t{', '\t\tname = ModuleB9PartSwitch', '\t\tmoduleID = SEP_Ablative', '\t\tswitcherDescription = #LOC_SEP_switcher_Ablative_description', '\t\taffectDragCubes = false']
     for n, t in (('39', 'default'), ('43', 'extended')): o += ['\t\tSUBTYPE', '\t\t{', f'\t\t\tname = {n}', f'\t\t\ttitle = #LOC_SEP_switcher_{t}', f'\t\t\ttransform = Ablative {n}', '\t\t}']
@@ -49,7 +74,8 @@ def slots(cargo):
 
 def textures(cargo):
     """The cut pieces carry stand-in textures; B9 gives them SEP's own, from SEP's folder, so nothing loads twice."""
-    sets = [('Ship_Core_7', ['stms_nose', 'stms_dockskin', 'stms_evaskin'], True, True), ('TILES', ['stms_tilesA', 'stms_tilesB'], False, False)]
+    sets = [('Ship_Core_7', ['stms_nose', 'stms_dockskin', 'stms_evaskin', 'stms_plugskinS'] + (['stms_dockskinC', 'stms_plugskinC', 'stms_plugskinE'] if cargo else []), True, True), ('TILES', ['stms_tilesA', 'stms_tilesAR', 'stms_tilesB'], False, False)]
+    if not cargo: sets += [('Ship_Core_11', ['stms_barrel', 'stms_dockskinC', 'stms_plugskinC'], True, True), ('Ship_Core_11', ['stms_barrelin'], True, False), ('Ship_Core_1', ['stms_pin'], True, True)]      # the lower barrel, cut for the centred door
     if cargo: sets += [('Ship_Core_11', ['stms_barrel', 'stms_door0_1', 'stms_door1_1'], True, True), ('Ship_Core_11', ['stms_barrelin', 'stms_door0_0', 'stms_door1_0'], True, False), ('Ship_Core_1', ['stms_pin'], True, True)]
     o = ['\tMODULE', '\t{', '\t\tname = ModuleB9PartSwitch', '\t\tmoduleID = STMS_Hull', '\t\tswitcherDescription = Hull', '\t\taffectDragCubes = false', '\t\tSUBTYPE', '\t\t{', '\t\t\tname = SEP', '\t\t\ttitle = SEP steel']
     for nm, tr, metal, ao in sets:
@@ -65,15 +91,15 @@ def lines(variant):
     o = [f'+PART[SEP_26_SHIP_NOSECONE]:NEEDS[StarshipExpansionProject]:AFTER[StarshipExpansionProject]', '{',
          f'\t@name = {name}', '\t@author = Questin, Kari (nosecone); lsamman (cabin)',
          '\tMODEL', '\t{', f'\t\tmodel = {KIT}{kit}', '\t}', '\tMODEL', '\t{', f'\t\tmodel = {ITS}{hull}', '\t}',
-         PORT] + (['\tnode_stack_cargo = 0, -2.5159, 0, 0, 1, 0, 3', '\tnode_stack_cargotop = 0, -0.15, 0, 0, -1, 0, 2'] if cargo else []) + [
+         PORT] + ([centre(variant)[1]] if 'centre' in L.NOSE_DOORS[variant] else []) + (['\tnode_stack_cargo = 0, -2.5159, 0, 0, 1, 0, 3', '\tnode_stack_cargotop = 0, -0.15, 0, 0, -1, 0, 2'] if cargo else []) + [
          f'\t@title = {title}', '\t@manufacturer = Starship Thingy Mabobs and Such',
          f'\t@description = <#ef7b06>Needs SEP: this is its Block 3 nosecone with our windows on it.</color> {desc}',
          f'\t@tags = starship sep block3 v3 nose nosecone ship {tags}',
          f'\t@mass += {dm}', f'\t@cost += {dc}', f'\t@entryCost += {dc * 2}',
          f'\tCrewCapacity = {crew}', '\tINTERNAL', '\t{', '\t\tname = ' + {'crew': 'STMS_IVA_Crew', 'crewcargo': 'STMS_IVA_CrewCargo'}[variant], '\t}',
          # SEP's meshes that the cut copies in our hull model replace, and its box colliders, which would close the openings
-         '\tMODULE', '\t{', '\t\tname = ModuleB9DisableTransform'] + [f'\t\ttransform = {t}' for t in ['Nose_7_EXT', 'Tiles', '.Colliders', 'Interior_Mesh_10'] + (['Cylinder'] if cargo else [])] + ['\t}',
-         '\t!MODULE[MuMechModuleHullCameraZoom],* {}'] + slots(cargo) + textures(cargo) + [
+         '\tMODULE', '\t{', '\t\tname = ModuleB9DisableTransform'] + [f'\t\ttransform = {t}' for t in ['Nose_7_EXT', 'Tiles', '.Colliders', 'Interior_Mesh_10', 'Cylinder']] + ['\t}',
+         '\t!MODULE[MuMechModuleHullCameraZoom],* {}'] + slots(cargo, variant) + textures(cargo) + door_switch(variant) + [
          '\tMODULE', '\t{', '\t\tname = ModuleCommand', '\t\tminimumCrew = 1', '\t\tdefaultControlPointDisplayName = Forward', '\t\thasHibernation = True', '\t}',
          '\tMODULE', '\t{', '\t\tname = ModuleScienceExperiment', '\t\texperimentID = crewReport', '\t\texperimentActionName = #autoLOC_502009',
          '\t\tresetActionName = #autoLOC_502010', '\t\treviewActionName = #autoLOC_502200', '\t\tuseStaging = False', '\t\tuseActionGroups = True',

@@ -7,5 +7,5 @@ without limitation the rights to use, copy, modify, merge, publish, distribute, 
 this notice being included in all copies. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 The V3 mask textures (*_MASK_BARE.dds, built by v3/scripts/bake_masks.py) and the crew nose hulls (STMS_B3_Hull*.mu, built by
-v3/scripts/derive_nose.py) are derived from Starship Expansion Project art. They and the SEP models shown by the engine rings are All Rights Reserved by their
+v3/scripts/derive_nose.py) and the expendable core's windward stringers (STMS_B3_Stringers.mu, built by v3/scripts/derive_stringers.py) are derived from Starship Expansion Project art. They and the SEP models shown by the engine rings are All Rights Reserved by their
 authors and are not covered by the licences above.
