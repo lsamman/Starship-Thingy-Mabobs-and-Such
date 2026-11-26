@@ -27,6 +27,7 @@ sub(f, ("<#ef7b06>Goes on the four leg nodes this mod adds to SEP's Block 3 ship
 t = rd('ITS/Parts/STMS_HLS_Core.cfg'); n = re.sub(r'Mounts three sea-level and three vacuum Raptor 3s from SEP[^\n]*', 'Mounts three sea-level and three vacuum engines of your choice, with a docking node on the far side.', t); assert n != t; wr('ITS/Parts/STMS_HLS_Core.cfg', n)
 sub('ITS/Parts/STMS_B3_Depot.cfg', ('<#ef7b06>Goes on the Expendable Block 3 Core.</color>', '<#ef7b06>Goes on the Starship HLS Core.</color>'),
     ("Meets them with SEP's docking hardware on the core", 'Meets them with a docking port on the core'))
+sub('ITS/Parts/STMS_HLS_Depot.cfg', ('<#ef7b06>Goes on the Block 3 Expendable Core with its Hull set to White.</color>', '<#ef7b06>Goes on any 5.6 m tank.</color>'), (" Tankers dock to SEP's hardware on the core.", ''))
 sub('ITS/Parts/STMS_B3_FairingBase.cfg', ('Closes off the top of the Expendable Block 3 Core with', 'Closes off the top of the Starship HLS Core with'))
 sub('Parts/SEP_CW_Parts.cfg', ('winch node on the V3 cargo bay ceiling', 'winch node on the HLS cargo section ceiling'))
 sub('ITS/Patches/STMS_HLS.cfg', ("a tenth of the boiloff of SEP's tanks", 'little boiloff'))
