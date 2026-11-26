@@ -27,6 +27,8 @@ Download this repository (Code > Download ZIP) and copy `GameData/StarshipThingy
 
 Needs SEP, ModuleManager and B9PartSwitch. The winch and crane need Breaking Ground.
 
+The full list, with what each one is for and the optional Avionics cockpit, is in `dependencies.txt` next to the `GameData` folder in the release zip.
+
 With Community Category Kit installed, all parts are also under **Starship Thingy Mabobs** in the editor's Filter by Function list.
 
 ## Build
