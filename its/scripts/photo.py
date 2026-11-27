@@ -3,14 +3,14 @@ usage: blender -b -P photo.py -- out.png [--res WxH] [--view az,el,dist,tx,ty,tz
        [--only part,part] [--hide name] [--pose part:clip] [--mirror] [--livery Carbon] x.craft | part.mu[@x,y,z,yaw] ...
 --livery: the B9 subtype whose TEXTURE swaps to show, read from each part's build/cfg/<part>.cfg (as B9 applies them).
 A .mu path outside build/mu (SEP's nosecone, a v3 kit) is shown as it is, with --hide applied to it."""
-import bpy, sys, os, math, re, addon_utils
+import bpy, sys, os, math, re, glob, addon_utils
 import numpy as np
 from mathutils import Vector, Matrix, Quaternion
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import layout as L
 addon_utils.enable('io_object_mu', default_set=True)
 a = sys.argv[sys.argv.index('--') + 1:]
-out = a.pop(0); opt = dict(res='1400x1000', view='25,8,60,0,0,0', sun='60,35', lens='60', sky='studio', only='', hide='', pose='', samples='48', ortho='', livery='', tilt='0')
+out = a.pop(0); opt = dict(res='1400x1000', view='25,8,60,0,0,0', sun='60,35', lens='60', sky='studio', only='', hide='', pose='', samples='48', ortho='', livery='', tilt='0', extra='', fromcam='')
 files = []
 while a:
     x = a.pop(0)
@@ -145,9 +145,23 @@ def model(path, skip=(), clip=None):
     return c
 
 
+PLACED = {}
 def put(path, M, skip=(), clip=None):
     e = bpy.data.objects.new('i', None); e.instance_type = 'COLLECTION'; e.instance_collection = model(path, skip, clip); e.matrix_world = M
-    sc.collection.objects.link(e)
+    sc.collection.objects.link(e); PLACED.setdefault(os.path.basename(path)[:-3], []).append(e)
+
+
+# SEP's parts by their cfg's MODEL (the part names and the .mu names differ), and models our patches add to parts (--extra Part:Model,...)
+SEPMU = {}
+for f_ in glob.glob(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(SEP))), 'Parts', '**', '*.cfg'), recursive=True):
+    t_ = open(f_, errors='replace').read(); n_ = re.search(r'^\s*name\s*=\s*(\S+)', t_, re.M); m_ = re.search(r'model\s*=\s*(StarshipExpansionProject/\S+)', t_)
+    if n_ and m_: SEPMU[n_.group(1)] = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(SEP))), '..', m_.group(1) + '.mu')
+EXTRA = {}
+for x_ in opt['extra'].split(','):
+    if x_: k_, v_ = x_.split(':'); EXTRA.setdefault(k_, []).append(v_)
+def kitpath(n):
+    for d_ in (os.path.join(HERE, 'build/mu'), os.path.join(HERE, '../v3/build/mu')):
+        if os.path.exists(os.path.join(d_, n + '.mu')): return os.path.join(d_, n + '.mu')
 
 
 poses = dict(p.split(':') for p in opt['pose'].split(',') if p)
@@ -166,8 +180,9 @@ def place(part, M):
     elif part == 'ITS_RVac': put(SEP, M @ Matrix.Scale(L.RV_SCALE, 4), VAC)
     elif part == 'SEP_26_R3_VAC': put(SEP, M, VAC)
     elif part.startswith('SEP_26_R3'): put(SEP, M, CEN)
-    elif part.startswith('SEP_26'): put(SEP.replace('SEP_26_RAPTOR_3', part), M, hide)
+    elif part.startswith('SEP_26'): put(SEPMU.get(part) if part in SEPMU and os.path.exists(SEPMU[part]) else SEP.replace('SEP_26_RAPTOR_3', part), M, hide)
     else: put(os.path.join(HERE, 'build/mu', part + '.mu'), M, hide, poses.get(part))
+    for k_ in EXTRA.get(part, []): put(kitpath(k_), M, hide)
 
 
 for f in files:
@@ -214,6 +229,10 @@ d = Vector((math.cos(math.radians(elv)) * math.sin(math.radians(az)), -math.cos(
 cd = bpy.data.cameras.new('c'); cd.lens = float(opt['lens']); cd.clip_end = 3000; cd.clip_start = .05
 cam = bpy.data.objects.new('c', cd); sc.collection.objects.link(cam); sc.camera = cam
 cam.location = tgt + d * dist; cam.rotation_euler = (-d).to_track_quat('-Z', 'Y').to_euler()
+if opt['fromcam']:                                   # --fromcam Model:transform: the view from one of our camera transforms (+Y looks, +Z up)
+    k_, c_ = opt['fromcam'].split(':'); e_ = PLACED[k_][0]; o_ = next(o for o in e_.instance_collection.objects if base(o) == c_)
+    Mw = e_.matrix_world @ o_.matrix_world; R_ = Mw.to_3x3().normalized(); Mc = Matrix((R_.col[0], R_.col[2], -R_.col[1])).transposed().to_4x4(); Mc.translation = Mw.translation
+    cam.matrix_world = Mc; print('FROMCAM', tuple(round(x, 2) for x in Mw.translation), 'part at', tuple(round(x, 2) for x in e_.matrix_world.translation), 'looks', tuple(round(x, 2) for x in R_.col[1]))
 if opt['ortho']: cd.type = 'ORTHO'; cd.ortho_scale = float(opt['ortho'])
 sc.render.filepath = os.path.abspath(out); sc.render.image_settings.file_format = 'PNG'
 bpy.ops.render.render(write_still=True)

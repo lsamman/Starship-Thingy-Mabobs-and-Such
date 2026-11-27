@@ -71,14 +71,14 @@ for z in np.arange(-2.6, 5.7, .05):
             err.append(abs((6 - h[3]) - N.point(az, z).xy.length))
 check(max(err) < .002, f'faceted surface from the rings matches the shell: worst {max(err) * 1000:.1f} mm over {len(err)} rays')
 
-for name in ('STMS_B3_WindowsCrew', 'STMS_B3_WindowsCrewCargo'):
+for name in ('STMS_B3_WindowsCrew', 'STMS_B3_WindowsCrewCargo', 'STMS_Cams_B3Nose', 'STMS_Cams_B3NoseHull'):
     path = os.path.join(mu, name + '.mu')
     if not os.path.exists(path):
         check(False, f'{name}.mu not built'); continue
     kit = vis(imp(path))
     print(name)
     for o in kit:
-        if 'cams' in base(o):                            # hull camera housings: on bare steel, and nothing more asked of them
+        if 'campods' in base(o):                            # hull camera housings: on bare steel, and nothing more asked of them
             v = np.array([o.matrix_world @ x.co for x in o.data.vertices]); az = np.degrees(np.arctan2(v[:, 0], -v[:, 1]))
             hits = {s: {own[radial(t_, a_, z_)[2]] for a_, z_ in zip(az[::7], v[::7, 2]) if radial(t_, a_, z_)[2] is not None} - set(STEEL) for s, (t_, own) in states.items()}
             check(not any(hits.values()), f'  cameras: over bare steel in both ablative subtypes' + ('' if not any(hits.values()) else f' (hits {hits})')); continue
@@ -129,7 +129,11 @@ for name in ('STMS_B3_WindowsCrew', 'STMS_B3_WindowsCrewCargo'):
         check(inward == 0, f'  {kind}: {inward} faces turned into the hull')
     # clearances worth knowing in game
     fin = [o for o in bpy.data.objects if base(o).startswith('node_fin')][:2]
-    fr = [o for o in kit if 'frames' in base(o)][0]; v = np.array([fr.matrix_world @ x.co for x in fr.data.vertices])
+    frs = [o for o in kit if 'frames' in base(o)]
+    if not frs:
+        for o in kit: bpy.data.objects.remove(o)
+        continue
+    fr = frs[0]; v = np.array([fr.matrix_world @ x.co for x in fr.data.vertices])
     print(f'  nearest frame to a flap hinge node: {min(np.linalg.norm(v - np.array(f.matrix_world.translation), axis=1).min() for f in fin):.2f} m;'
           f' widest window edge at az {np.degrees(np.abs(np.arctan2(v[:, 0], -v[:, 1]))).max():.1f} deg (flap hinges at {L.NOSE_FLAP_AZ:.0f})')
     for o in kit:

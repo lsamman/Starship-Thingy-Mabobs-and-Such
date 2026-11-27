@@ -187,6 +187,19 @@ for az in HL.LEG_AZ:
     P.hull_collider('col_pod%dt' % az, [tuple(M @ V(p)) for s in (-1, 1) for z in (4.66, 4.95, 6.85) for p in ((s * pw(z, 2), hy(pw(z, 2)), z), (s * pw(z, 3), fy_(z), z))])
 lp_ = P.mesh('legpods', pod, hull_mat(P, 'hls_core'), smooth_angle=20); bm = bmesh.new(); bm.from_mesh(lp_.data); bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=2e-4); bm.to_mesh(lp_.data); bm.free(); P.mesh('legpods_in', pin, P.det, smooth_angle=40)
 P.mesh('details', d, P.det, smooth_angle=40)
+# hull cameras (its/patches/STMS_Cameras.cfg), numbered as on the ship: 1 landing (low, looking down past the legs), 2 engine bay,
+# 3 a leg and its footpad, 4 the docking hardware on the far side. +Y looks, +Z is the picture's up
+cm = Geo(); rad = lambda az: V((math.sin(math.radians(az)), -math.cos(math.radians(az)), 0))
+def camf(p, look, up):
+    y = V(look).normalized(); z = V(up); z = (z - z.dot(y) * y).normalized(); m = Matrix((y.cross(z), y, z)).transposed().to_4x4(); m.translation = V(p); return m
+for cid, az, z, look, pod in ((1, 0, 2.6, None, True), (3, 22, 7.6, rad(45) * HL.FOOT_R + V((0, 0, HL.SOLE + .3)), True), (4, 160, HL.Z_DOCK + 1.6, V((0, HL.R_DOCK + 1.5, HL.Z_DOCK)), True)):
+    p0 = rad(az) * (HL.R + .035) + V((0, 0, z)); lk = (V((0, 0, -1)) + rad(az) * .18) if look is None else (look - p0)
+    p = p0 + V((0, 0, .085 if lk.z > 0 else -.085))      # the camera at the housing's front face, the end it looks from
+    P.empty(f'stms_cam{cid}', camf(p, lk, rad(az) if look is None else V((0, 0, 1))), P.model)
+    Fh = Matrix((rad(az + 90), V((0, 0, 1)), rad(az))).transposed().to_4x4(); Fh.translation = rad(az) * (HL.R - .01) + V((0, 0, z))
+    cm.add(box(.11, .15, .08, zone=Z.dark, bevel=.014, center=(0, 0, .04)), Fh); cm.add(cyl(.03, .04, 12, zone=Z.black), camf(p, lk, V((0, 0, 1))) @ Rx(90))
+pe = rad(25) * (HL.R - .45) + V((0, 0, 1.6)); P.empty('stms_cam2', camf(pe, V((0, 0, -1.5)) - pe, -rad(25)), P.model)      # inside the engine bay, no pod
+P.mesh('stms_campods', cm, P.det, smooth_angle=40)
 # ---------------- nodes and colliders
 P.node('top', (0, 0, HL.Z_TOP), (0, 0, 1), 5); P.node('bottom', (0, 0, 0), (0, 0, -1), 5)
 P.node('docking', (0, HL.R_DOCK, HL.Z_DOCK), (0, 1, 0), 2)

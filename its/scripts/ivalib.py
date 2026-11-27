@@ -516,8 +516,7 @@ def build(variant):
           '\t\tSUBTYPE', '\t\t{', '\t\t\tname = Classic', '\t\t\ttitle = Classic', '\t\t}', '\t\tSUBTYPE', '\t\t{', '\t\t\tname = Avionics', '\t\t\ttitle = Avionics (ASET, RasterPropMonitor)', '\t\t}', '\t}',
           '\tMODULE', '\t{', '\t\tname = RasterPropMonitorComputer',
           f'\t\tstoredStrings = v 1.0 |2026|{S_["title"].upper()[:18]}|STARSHIP THINGY MABOBS|AND SUCH|STMS-{variant.upper()}|{S_["title"].upper()[:10]}|STMS', '\t}']
-    for k_, cn in enumerate(('stms_cam_down', 'stms_cam_out', 'stms_cam_up')):      # the hull cameras: ExtCam1-3 on the MFDs' camera pages (renumber in the part menu)
-        AF += ['\tMODULE', '\t{', '\t\tname = JSIExternalCameraSelector', f'\t\tcameraContainer = {cn}', '\t\tcameraIDPrefix = ExtCam', f'\t\tcurrent = {k_ + 1}', '\t\tmaximum = 8', '\t}']
+    # (the hull cameras' selectors are in its/patches/STMS_Cameras.cfg)
     AF += ['}',
           f'@INTERNAL[{name}]' + AVP, '{']
     cnames = sorted({PROPS[i][0] for i in CLASSIC})

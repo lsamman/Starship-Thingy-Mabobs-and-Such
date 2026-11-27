@@ -114,12 +114,12 @@ pdefs = set()
 for c in glob.glob(os.path.join(root, '**', '*.cfg'), recursive=True) + glob.glob(os.path.join(gd, '**', '*.cfg'), recursive=True):
     t = open(c, errors='replace').read()
     if 'PROP' in t: pdefs |= set(re.findall(r'^\s*PROP\s*\{\s*name\s*=\s*(\S+)', t, re.M)) | set(re.findall(r'^\+PROP\[[^\]]+\][^\n]*\n\{\s*@name\s*=\s*(\S+)', t, re.M))      # and copies made by ModuleManager
-for c in glob.glob(os.path.join(root, '**', 'STMS_IVA_*.cfg'), recursive=True):
+for c in glob.glob(os.path.join(root, '**', 'STMS_IVA_*.cfg'), recursive=True) + glob.glob(os.path.join(root, '**', 'STMS_Cameras.cfg'), recursive=True):
     t = open(c, errors='replace').read(); need = 'ASET' in t and not os.path.isdir(os.path.join(gd, 'ASET'))
     for n in sorted(set(re.findall(r'^\t+(?:PROP|!PROP\[)\s*\{?\s*name\s*=\s*(\S+)', t, re.M) + re.findall(r'^\tPROP\s*\{\s*name\s*=\s*(\S+)', t, re.M))):
         if n not in pdefs: (warns if need or n.startswith(('FreeIva_', 'HandRail')) else errs).append(f'{os.path.basename(c)}: prop {n} not defined in the package or {gd}')
     for cn in re.findall(r'cameraContainer = (\S+)', t):
-        if not any(cn in names for names, _ in mu_info.values()): errs.append(f'{os.path.basename(c)}: camera container {cn} in no model')
+        if cn.startswith('stms_') and not any(cn in names for names, _ in mu_info.values()): errs.append(f'{os.path.basename(c)}: camera container {cn} in no model')
 for w in sorted(set(warns)):
     print('WARN', w)
 for e in errs:
