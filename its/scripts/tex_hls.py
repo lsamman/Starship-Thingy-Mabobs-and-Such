@@ -75,7 +75,7 @@ def build(sheet, seams, seed):
                 c.albedo[:] = c.albedo * (1 - rg[..., None]) + .085 * rg[..., None]; h += .5 * rg
         _, ea = cells(az, 60, .0); k = line(np.radians(ea) * HL.R, .004, aa) * (np.abs(z - bm) < bh); h -= .7 * k * (sheet == 'core_o')
     elif sheet in ('crew', 'crew_o'):
-        for a0, hw, zc, hh_ in ((56.25, 18.9, sum(HL.SOL_Z) / 2, .44), (101.25, 18.9, sum(HL.SOL_Z) / 2, .44), (180, 9, 26.2, .5)):
+        for a0, hw, zc, hh_ in ((56.25, 18.9, sum(HL.SOL_Z) / 2, (HL.SOL_Z[1] - HL.SOL_Z[0]) / 2 + .015), (101.25, 18.9, sum(HL.SOL_Z) / 2, (HL.SOL_Z[1] - HL.SOL_Z[0]) / 2 + .015), (180, 18.9, sum(HL.SOL_Z) / 2, (HL.SOL_Z[1] - HL.SOL_Z[0]) / 2 + .015), (180, 9, 26.2, .5)):
             q = np.maximum(np.abs(np.radians(az - a0)) * r - np.radians(hw) * HL.R, np.abs(z - zc) - hh_); k = line(q, .009, aa); c.albedo *= (1 - .45 * k)[..., None]; h -= 1.0 * k
         s_ = line(z - HL.Z_OGIVE - 7.39, .012, aa); c.albedo *= (1 - .3 * s_)[..., None]; h -= s_
     c.height[:] = h; c.save('hls_' + sheet, nstrength=.5)

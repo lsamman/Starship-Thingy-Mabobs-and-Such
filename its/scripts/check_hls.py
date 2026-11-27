@@ -46,14 +46,14 @@ for o_ in (.1, .3, .6): ok(not tree(cv, None, MP(45, o_))[0].overlap(tree(pods)[
 so = load(mu('STMS_HLS_Solar'), 'solarDeploy'); so1 = load(mu('STMS_HLS_Solar'), 'solarDeploy', True); ZS = sum(HL.SOL_Z) / 2
 for az in HL.SOL_AZ:
     MS = Matrix.Rotation(math.radians(az), 4, 'Z') @ Matrix.Translation((0, -HL.R, ZS)); hh = ('hatchskin', 'hatchin'); tp, _ = tree(so, [n for n in so if n not in hh + ('rails',)], MS); t2, _ = tree(so, hh, MS); t3, _ = tree(so1, [n for n in so1 if n not in ('rails',)], MS)
-    pv = tree(so, None, MS)[1]; ok(not any(abs(q.x) < .93 and q.y < -1.2 and HL.DOOR[0] - .05 < q.z < HL.DOOR[1] + .05 for q in pv), f'solar {az}: nothing in the airlock bay'); ok(all(abs(math.degrees(math.atan2(q.x, -q.y)) - (az if az < 180 else az - 360)) < HL.SOL_HW + .4 for q in pv if math.hypot(q.x, q.y) < 2.7), f'solar {az}: inside its pocket')
+    pv = tree(so, None, MS)[1]; ok(not any(abs(q.x) < .93 and q.y < -1.2 and HL.DOOR[0] - .05 < q.z < HL.DOOR[1] + .05 for q in pv), f'solar {az}: nothing in the airlock bay'); ok(all(abs((math.degrees(math.atan2(q.x, -q.y)) - az + 180) % 360 - 180) < HL.SOL_HW + .4 for q in pv if math.hypot(q.x, q.y) < 2.7), f'solar {az}: inside its pocket')
     ok(not tp.overlap(t2), f'solar {az}: package clear of the shut hatch'); n = {k: len(tp.overlap(tree(crew, (k,), Tz(HL.Z_TOP))[0])) for k in crew}; print('      package touches', {k: c for k, c in n.items() if c}); n = {k: len(t3.overlap(tree(crew, (k,), Tz(HL.Z_TOP))[0])) for k in crew}; print('      deployed touches', {k: c for k, c in n.items() if c})
 # arrays hanging down: the panels, hub and pivot turned about the tilt axis, every 15 degrees, against hull, hatches, each other, legs and pods
-PN = [n for n in so1 if n.startswith('panel') or n == 'hub']; PIVR = HL.SOL_DP + .06 + .24 + HL.SOL_OUT; allcore, _ = tree(core); hangs = {}
+PN = [n for n in so1 if n.startswith('panel') or n == 'hub']; PIVR = HL.SOL_PIVR; allcore, _ = tree(core); hangs = {}
 for az in HL.SOL_AZ:
-    MS = Matrix.Rotation(math.radians(az), 4, 'Z') @ Matrix.Translation((0, -HL.R, ZS)); ax = Matrix.Translation((0, HL.R - PIVR, 0))
+    MS = Matrix.Rotation(math.radians(az), 4, 'Z') @ Matrix.Translation((0, -HL.R, ZS)); ax = Matrix.Translation((0, HL.R - PIVR, HL.SOL_PIVY))
     for deg in range(0, 91, 15):
-        TM = MS @ ax @ Matrix.Rotation(math.radians(deg), 4, 'X') @ ax.inverted(); t, v = tree(so1, PN, TM); rest, _ = tree(so1, ('hatchskin', 'hatchin', 'rails', 'armmesh'), MS)
+        TM = MS @ ax @ Matrix.Rotation(math.radians(deg), 4, 'X') @ ax.inverted(); t, v = tree(so1, PN, TM); rest, _ = tree(so1, ('hatchskin', 'hatchin', 'rails', 'carriage'), MS)
         h = [n for n, o in (('core', allcore), ('crew', tw), ('own hatch', rest)) if t.overlap(o)]; h += ['leg %d' % a for a in HL.LEG_AZ if t.overlap(tree(leg1, None, Matrix.Rotation(math.radians(a), 4, 'Z') @ W)[0])]
         if deg in (0, 90) or h: ok(not h, f'array {az} turned {deg} clear {h}; z {min(p.z for p in v):.2f}, innermost {min(math.hypot(p.x, p.y) for p in v) - HL.R:.3f} m off the hull')
     hangs[az] = t

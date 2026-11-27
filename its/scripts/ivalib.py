@@ -86,7 +86,10 @@ def build(variant):
         g.add(box(wd, r1 - r0, zt - zf, zone=Z['white'], bevel=.02), T(0, ym, (zf + zt) / 2)); g.add(box(wd + .04, r1 - r0 + .03, .03, zone=Z['grey'], bevel=.01), T(0, ym, zt))
         for s_ in (-1, 1): g.add(tube([(s_ * .44, ym + .2, zt + .015), (s_ * .44, ym + .2, zt + .07), (s_ * .44, ym - .2, zt + .07), (s_ * .44, ym - .2, zt + .015)], .014, 6, zone=Z['black']))
         boxcol('C', (0, ym, (zf + zt) / 2), (wd, r1 - r0, zt - zf))
-        xprop(('Centre',), 'htProps_HatchCBM', (0, ym, zt + .016), (0, 0, 1), (0, -1, 0), .75, mods=(('HatchConfig', ('attachNodeId = ctrport', 'hideDoorWhenConnected = true')),))
+        Ft = Matrix.Translation((0, ym, zt + .016)); g.add(rounded_rect_ring(.66, .66, .14, .07, .035, 6, zone=Z['white']), Ft); g.add(quad_patch(.54, .54, Z['door']), Ft @ T(0, 0, .006))
+        g.add(tube([tuple(Ft @ V((.11 * math.cos(t), .11 * math.sin(t), .035))) for t in np.linspace(0, TAU, 25)], .013, 8, zone=Z['metal']))
+        # drawn in the group, which the door switch hides; a FreeIva hatch prop would stay (B9PSConditionalProp does not hide those)
+        xprop(('Centre',), 'FreeIva_Hatch_Invisible_Handle', (0, ym, zt + .03), (0, 0, 1), (0, -1, 0), (.54, .08, .54), mods=(('HatchConfig', ('attachNodeId = ctrport',)),))
         if floor_eva:
             F = Matrix.Translation((0, -1.20, zf + .004)); g.add(rounded_rect_ring(.80, .80, .18, .07, .03, 6, zone=Z['white']), F); g.add(quad_patch(.68, .68, Z['door']), F @ T(0, 0, .006))
             g.add(tube([tuple(F @ V((.10 * math.cos(t), .10 * math.sin(t), .03))) for t in np.linspace(0, TAU, 25)], .013, 8, zone=Z['metal']))
@@ -271,7 +274,11 @@ def build(variant):
             ad = math.radians(30); o3, t3 = V((math.sin(ad), -math.cos(ad), 0)), V((math.cos(ad), math.sin(ad), 0)); rb_ = 2.30; hw_ = .50; bb = lambda x, r_, z: o3 * r_ + t3 * x + V((0, 0, z))      # the side docking tunnel's inner end
             ft = grp('S')['fur']
             for s in (-1, 1): q4(ft, [bb(s * hw_, 2.75, zf), bb(s * hw_, rb_, zf), bb(s * hw_, rb_, zc), bb(s * hw_, 2.75, zc)], Z['white'], bb(s * 9, rb_, zf + .5))
-            q4(ft, [bb(-hw_, rb_, zf), bb(hw_, rb_, zf), bb(hw_, rb_, zc), bb(-hw_, rb_, zc)], Z['panel'], (0, 0, zf + .5)); prop('htProps_HatchCBM', bb(0, rb_ - .004, 1.32), -o3, (0, 0, 1), 1.15)
+            q4(ft, [bb(-hw_, rb_, zf), bb(hw_, rb_, zf), bb(hw_, rb_, zc), bb(-hw_, rb_, zc)], Z['panel'], (0, 0, zf + .5))
+            Fs = Matrix((t3, V((0, 0, 1)), -o3)).transposed().to_4x4(); Fs.translation = bb(0, rb_ - .006, 1.40)      # the tunnel's hatch, facing the cabin
+            ft.add(rounded_rect_ring(.80, .96, .16, .08, .04, 6, zone=Z['white']), Fs); ft.add(quad_patch(.66, .82, Z['door']), Fs @ T(0, 0, .006))
+            ft.add(tube([tuple(Fs @ V((.12 * math.cos(t), .12 * math.sin(t), .04))) for t in np.linspace(0, TAU, 25)], .013, 8, zone=Z['metal']))
+            xprop(('Side',), 'FreeIva_Hatch_Invisible_Handle', bb(0, rb_ - .02, 1.40), -o3, (0, 0, 1), (.66, .08, .82), mods=(('HatchConfig', ('attachNodeId = port',)),))
             ft.add(tube([tuple(bb(s_ * .43, rb_ - .02, z_)) for s_, z_ in ((-1, 1.0), (-1, 1.7))], .014, 6, zone=Z['black'])); ft.add(tube([tuple(bb(s_ * .43, rb_ - .02, z_)) for s_, z_ in ((1, 1.0), (1, 1.7))], .014, 6, zone=Z['black']))
             for s in (-1, 1): boxcol('S', bb(s * hw_, (2.75 + rb_) / 2, (zf + zc) / 2), (.04, 2.75 - rb_, zc - zf), t3, o3)
             boxcol('S', bb(0, rb_, (zf + zc) / 2), (2 * hw_, .04, zc - zf), t3, o3)
@@ -499,7 +506,7 @@ def build(variant):
     part_ = {'hls': 'STMS_HLS_Crew', 'hlstall': 'STMS_HLS_CrewTall', 'crew': 'STMS_B3_NoseCrew', 'crewcargo': 'STMS_B3_NoseCrewCargo'}[variant]; PS = ':NEEDS[FreeIva]:LAST[StarshipThingyMabobsAndSuch]'
     FI = [f'@PART[{part_}]:HAS[!MODULE[ModuleFreeIva]]' + PS, '{', '\tMODULE', '\t{', '\t\tname = ModuleFreeIva', '\t}', '}', f'@INTERNAL[{name}]:HAS[!MODULE[InternalModuleFreeIva]]' + PS, '{', '\tMODEL', '\t{', f'\t\tmodel = StarshipThingyMabobsAndSuch/ITS/Parts/{name}_shell', '\t}',
           '\tMODULE', '\t{', '\t\tname = InternalModuleFreeIva', '\t\tshellColliderName = shellCollider', '\t\t// no depth mask mesh: the windows are real openings', '\t\tinternalDepthMaskName =', '\t\tShadows', '\t\t{', '\t\t\twall = TwoSided', '\t\t\tfloor = TwoSided', '\t\t\tceiling = TwoSided', '\t\t}', '\t}',
-          '\t@PROP[htProps_HatchCBM]', '\t{', '\t\tMODULE', '\t\t{', '\t\t\tname = HatchConfig', '\t\t\tattachNodeId = port', '\t\t\thideDoorWhenConnected = true', '\t\t}'] + (cond(SUBS['S']) if DOORSW else []) + ['\t}',
+          ] + ([] if DOORSW else ['\t@PROP[htProps_HatchCBM]', '\t{', '\t\tMODULE', '\t\t{', '\t\t\tname = HatchConfig', '\t\t\tattachNodeId = port', '\t\t\thideDoorWhenConnected = true', '\t\t}', '\t}']) + [
           '\tPROP', '\t{', '\t\tname = FreeIva_Hatch_Invisible_Handle', f'\t\tposition = {pos_(HATCH[:3])}', '\t\trotation = 1, 0, 0, 0', '\t\tscale = 0.34, 0.08, 0.34', '\t\tMODULE', '\t\t{', '\t\t\tname = HatchConfig', f'\t\t\tairlockName = {HATCH[3]}', '\t\t}'] + (cond(SUBS['E']) if 'E' in SW else []) + ['\t}']
     def xp(n, p, q, sc, subs, mods):
         o = ['\tPROP', '\t{', f'\t\tname = {n}', f'\t\tposition = {f(p)}', f'\t\trotation = {f(q)}', f'\t\tscale = {f(sc if isinstance(sc, tuple) else (sc,) * 3)}']

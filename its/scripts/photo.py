@@ -1,6 +1,6 @@
 """Milestone photos: loads a craft file (or single .mu files) with real textures, SEP's engines included, and renders it.
 usage: blender -b -P photo.py -- out.png [--res WxH] [--view az,el,dist,tx,ty,tz] [--sun az,el] [--lens mm] [--sky day|space|studio]
-       [--only part,part] [--hide name] [--pose part:clip] [--mirror] [--livery Carbon] x.craft | part.mu[@x,y,z,yaw] ...
+       [--only part,part] [--hide name] [--pose part:clip[@frame]] [--mirror] [--livery Carbon] x.craft | part.mu[@x,y,z,yaw] ...
 --livery: the B9 subtype whose TEXTURE swaps to show, read from each part's build/cfg/<part>.cfg (as B9 applies them).
 A .mu path outside build/mu (SEP's nosecone, a v3 kit) is shown as it is, with --hide applied to it."""
 import bpy, sys, os, math, re, glob, addon_utils
@@ -111,6 +111,7 @@ def model(path, skip=(), clip=None):
     before = set(bpy.data.objects); bpy.ops.import_object.ksp_mu(filepath=path); bpy.context.view_layer.update()
     new = [o for o in bpy.data.objects if o not in before]
     if clip:
+        clip, _, at = clip.partition('@')            # clip@frame: a pose part way through
         for o in new:
             ad = o.animation_data
             if not ad: continue
@@ -119,7 +120,7 @@ def model(path, skip=(), clip=None):
                     act = st.action
                     for tr2 in list(ad.nla_tracks): tr2.mute = True
                     if tr.name.split('.')[0] == clip or act.name.split('.')[0] == clip or clip == '*':
-                        ad.action = act; sc.frame_set(int(act.frame_range[1]))
+                        ad.action = act; sc.frame_set(int(at) if at else int(act.frame_range[1]))
         bpy.context.view_layer.update()
     for o in new:
         if base(o) == 'tilt' and float(opt['tilt']): o.rotation_mode = 'QUATERNION'; o.rotation_quaternion = o.rotation_quaternion @ Quaternion((1, 0, 0), math.radians(float(opt['tilt'])))      # arrays hanging down

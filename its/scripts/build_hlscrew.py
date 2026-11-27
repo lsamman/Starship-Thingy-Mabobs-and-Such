@@ -117,7 +117,7 @@ P.mesh('windows', wg, MG, smooth_angle=60)
 # 5 airlock and elevator (above the door, looking down the hull), 6 horizon (the far side), 7 hull looking aft, 8 nose looking forward
 hr = lambda z: float(np.interp(z, [HL.Z_OGIVE + z_ for z_, _ in HL.OGIVE], [r for _, r in HL.OGIVE])) if z > HL.Z_OGIVE else HL.R
 cm = Geo()
-for cid, az, z, look in ((5, 0, 24.3, 'down'), (6, 180, 24.8, 'out'), (7, 90, 21.0, 'down'), (8, 60, 26.6, 'up')):
+for cid, az, z, look in ((5, 0, 24.3, 'down'), (6, 140, 24.6, 'out'), (7, 90, 21.0, 'down'), (8, 60, 26.6, 'up')):
     a_ = math.radians(az); n = V((math.sin(a_), -math.cos(a_), -(hr(z + .05) - hr(z - .05)) / .1)).normalized(); upz = V((0, 0, 1)); tg = (upz - upz.dot(n) * n).normalized()
     y_, z_ = {'down': (-tg, n), 'up': (tg, n), 'out': (n, tg)}[look]; base = V((hr(z) * math.sin(a_), -hr(z) * math.cos(a_), z - O))
     Fc = Matrix((y_.cross(z_), y_, z_)).transposed().to_4x4(); Fc.translation = base + (n * .07 if look == 'out' else n * .035 + y_ * .085); P.empty(f'stms_cam{cid}', Fc, P.model)      # at the housing's front face

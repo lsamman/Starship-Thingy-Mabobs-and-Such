@@ -39,7 +39,10 @@ WIN_Z, WIN_N, WIN_SPAN, WIN = 25.48, 10, 36.0, (.31, .74)
 # the tall-cabin nose: rows of (z, count, half-span, w, h) above the same main row, after SpaceX's render of a many-windowed HLS
 ROWS_TALL = ((26.50, 10, 45.0, .20, .28), (27.06, 10, 45.0, .20, .28), (28.06, 9, 44.0, .19, .27), (28.60, 9, 44.0, .18, .27), (29.72, 7, 42.0, .27, .48), (30.27, 5, 28.0, .22, .46))
 # ---- solar bays
-SOL_AZ = (56.25, 101.25, 258.75, 303.75); SOL_HW = 18.75; SOL_DP = 1.62; SOL_Z = (22.95, 23.8); SOL_OUT, SOL_HATCH = 1.27, 150     # how far the carriage runs out, how far the hatch swings up
+# Solar bays: shallow pockets the folded arrays lie flat in (the fifth, at 180, is node solar5, so saved ships keep theirs). SOL_DP is the
+# pocket's back wall (radius); the carriage runs out SOL_OUT, then the array folds out about a pivot at the bay's foot and telescopes.
+SOL_AZ = (56.25, 101.25, 258.75, 303.75, 180.0); SOL_HW = 18.75; SOL_DP = R - .32; SOL_Z = (22.45, 23.70); SOL_OUT, SOL_HATCH = .25, 150
+SOL_PIVR, SOL_PIVY = SOL_DP + .175 + SOL_OUT, -(SOL_Z[1] - SOL_Z[0]) / 2 + .085      # the fold and tilt hinge, out: radius, height from the bay's middle
 # ---- legs (plane of one leg: r outward, z)
 HINGE = (2.87, 4.35); SOLE = -1.0; FOOT_R = 5.35; FOOT_STOW = .52
 SHELL = ((.26, .05), (.32, .30), (.46, .58), (.8, .74), (1.4, .80), (2.2, .78), (3.2, .74), (3.9, .72), (4.25, .70), (4.6, .60), (4.9, .42), (5.2, .21), (5.45, .03), (5.5, 0))   # blister over a stowed leg: (z, height off the hull)
