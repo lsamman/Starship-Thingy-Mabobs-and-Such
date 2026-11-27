@@ -226,6 +226,8 @@ def build(variant):
                 # a wide display between the windows and the console top
                 fs = inw(am, zt + .10, ri(zt) - .13)
             curved(fur, -sp_ - 1.5, -sp_, [(rB, zf), (rB, zB), (rT, zt), (ri(zt), zt), (ri(zf), zf)], 'dark', 1); curved(fur, sp_, sp_ + 1.5, [(rB, zf), (rB, zB), (rT, zt), (ri(zt), zt), (ri(zf), zf)], 'dark', 1)
+            for k, s_ in enumerate((1, -1)):             # Avionics: stowage on the walls past the console's ends, as in ALCOR (left, right from the seats)
+                zw_ = zf + .95; avionics(inw(s_ * (sp_ + 12), zw_, ri(zw_) - .012), .38, .55, AV.WALLS[k])
             n_ = min(4, D['seats']); names = ['Pilot', 'Commander', 'Flight Engineer', 'Mission Specialist']
             for k in range(n_):
                 am = -sp_ + 2 * sp_ * (k + .5) / nS; d = V((math.sin(math.radians(am)), -math.cos(math.radians(am)), 0)); p = d * (rB - .42); seat(p.x, p.y, zf, d, names[k])
@@ -337,6 +339,7 @@ def build(variant):
                 Fk = Matrix.Translation(d * (rs + .78) + V((0, 0, zm + .27))) @ Matrix((tg, V((0, 0, 1)), -d)).transposed().to_4x4()
                 avionics(Fk, .80, .22, lo_); ga.add(box(.84, .50, .10, zone=Z['white'], bevel=.01), Fk @ T(0, 0, -.052)); ga.add(box(.84, .03, .26, zone=Z['dark'], bevel=.008), Fk @ T(0, -.25, -.13))
                 grp('A')['lights'].append((d * (rs + .30) + V((0, 0, zm + 1.0)), 220, 1.4, 'FloodLight'))
+            for k, s_ in enumerate((1, -1)): zw_ = zm + .95; avionics(inw(s_ * 70, zw_, ri(zw_) - .012), .38, .55, AV.WALLS[k])
             light((0, -1.5, zm + 1.1), 700, 3.0)
             # wall: a dark ledge with a strip of displays, an access panel
             zh = zf + .80; R_ = lambda z: ri(z)

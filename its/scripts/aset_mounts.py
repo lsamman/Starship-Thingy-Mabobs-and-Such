@@ -37,7 +37,7 @@ groups = collections.defaultdict(list)
 for i in range(N): groups[root(i)].append(i)
 panels = []
 for ids in groups.values():
-    if len(ids) < 10: continue
+    if len(ids) < 3: continue                         # small groups too: ALCOR's stowage sits in threes and fours on velcro
     X = np.array([items[i]['p'] for i in ids]); n = np.mean([items[i]['M'][:, 2] for i in ids], 0); n /= np.linalg.norm(n)
     up = np.mean([-items[i]['M'][:, 1] for i in ids], 0); up -= n * (up @ n); up /= np.linalg.norm(up)
     B = np.array([np.cross(up, n), up, n]).T; L = (X - X.mean(0)) @ B
@@ -69,9 +69,14 @@ for f in glob.glob(os.path.join(GD, 'ASET', '**', '*.cfg'), recursive=True):
         models.setdefault(n.group(1), [os.path.join(GD, x + '.mu') for x in ms] if ms else sorted(glob.glob(os.path.join(os.path.dirname(f), '*.mu')))[:1])
 res, miss = {}, []
 DEFAULT = (-1, 0, 0, 0, -1, 0, 0, 0, 1)              # the usual ASET panel prop: x across (mirrored), -up, out
+LIKE = {'RCS_Stick_ADV': 'ALCORRotationCtrl'}          # the translation stick stands upright, like the rotation controller
+ALIAS = {'STMS_CamMFD_Landing': 'ALCORMFD40x20', 'STMS_CamMFD_Docking': 'ALCORMFD40x20'}      # our copies of ASET props (its/patches/STMS_CamMonitors.cfg)
 for name in av.used():
+    if name in ALIAS: continue
     if name not in models: miss.append(name); continue
     if mounts[name]: (R, h, s), _ = mounts[name].most_common(1)[0]; src_ = 'alcor'
+    elif name in LIKE and mounts[LIKE[name]]:            # ALCOR has it off any panel: mount it as its sibling, at ALCOR's own scale for it
+        (R, h, _), _ = mounts[LIKE[name]].most_common(1)[0]; s = next((it['s'][0] for it in items if it['name'] == name), .45); src_ = 'like ' + LIKE[name]
     else: R, h, s, src_ = DEFAULT, 0.0, .45, 'default'
     lo, hi = Vector((9, 9, 9)), Vector((-9, -9, -9))
     for p in models[name]:
@@ -84,5 +89,6 @@ for name in av.used():
     if lo.x > hi.x: miss.append(name); continue
     Rm = np.array(R).reshape(3, 3); C = np.array([[x, y, z] for x in (lo.x, hi.x) for y in (lo.y, hi.y) for z in (lo.z, hi.z)]) * s @ Rm.T + [0, 0, h]
     res[name] = dict(R=list(R), h=h, s=s, lo=C.min(0).round(4).tolist(), hi=C.max(0).round(4).tolist(), src=src_)
+for a_, b_ in ALIAS.items(): res[a_] = dict(res[b_], src='copy of ' + b_)
 json.dump(dict(note='Derived from ALCOR (alexustas, JonnyOThan; CC BY-NC-SA 3.0) and ASET Props/Avionics models: mounts and footprints only.', props=res), open(out, 'w'), indent=0)
 print('MOUNTS', len(res), 'props;', sum(v['src'] == 'default' for v in res.values()), 'by default; missing', miss)

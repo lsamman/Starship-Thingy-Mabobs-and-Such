@@ -12,16 +12,19 @@ PAD = .022          # board margin round a panel
 
 # Panels: rows, top to bottom; a row is props left to right ('' leaves a prop-sized gap of the row's first prop).
 PANELS = {
-    'sas': [['onSASIndicator', 'onRCSIndicator', 'onRCSACTIVEIndicator', 'OnPREC_MODE', 'DigitalIndicator_SASMode'],
+    'sas': [['Lable_ATTITUDE', 'Lable_StabMode'],
+            ['onSASIndicator', 'onRCSIndicator', 'onRCSACTIVEIndicator', 'OnPREC_MODE', 'DigitalIndicator_SASMode'],
             ['pb_SAS_ON-FD1-B2', 'pb_sas_STAB-FD2-G1', 'pb_sas_MANEUVER-FD2-G1', 'pb_sas_PROGRADE-FD2-G1', 'pb_sas_RETROGRADE-FD2-G1', 'pb_sas_NORMAL-FD2-G1'],
             ['SwitchRotary_SAS_SpeedMode_Selector-01', 'pb_sas_ANTINORMAL-FD2-G1', 'pb_sas_RADIALIN-FD2-G1', 'pb_sas_RADIALOUT-FD2-G1', 'pb_sas_TARGET-FD2-G1', 'pb_sas_ANTITARGET-FD2-G1'],
             ['pb_RCS-SH02-B6-C2', 'pb_INPUT_CTRL-SH02-B5', 'pb_GIMBAL_LOCK-FD1-B2', 'pb_CLEAR_TARGET-F01-B1-G1', 'pb_CLEAR_MNVR_NODE-F01-B1-G1']],
-    'stage': [['MasterAlarm', 'onStageReadyIndicator', 'onMECOIndicator', 'onENGFAILUREIndicator'],
+    'stage': [['Lable_PROPULSION'],
+              ['MasterAlarm', 'onStageReadyIndicator', 'onMECOIndicator', 'onENGFAILUREIndicator'],
               ['StageSwitch', 'switchRotary_StageLock', 'tggl_ABORT_T1-G3-B4-C1Y-S', 'tggl_UNDOCK_T1-G3-B4-C1Y-S', 'onVESSEL_DOCKED_ONIndicator'],
               ['swToggleEngines', 'tggl_ENGINE_MODE_T1_G1-B3-S', 'THRUST_LIMIT_Selector', 'pb_RESET_THRUST_LIMIT-F01-B1-G1', 'pb_THRTL_CUT-FT-G1', 'pb_THRTL_FULL-FT-G1']],
     'gear': [['Lable_LGear', 'onLANDINGGEAR_DEPLOYED_Indicator', 'onLANDINGGEAR_DEPLOYING_Indicator', 'onLANDINGGEAR_RETRACTING_Indicator', 'onLANDINGGEAR_RETRACTED_Indicator', 'onLANDINGGEAR_BROKEN_ONIndicator'],
              ['tggl_GEAR_CTRL_T5W-B14-S', 'pb_GEAR_DN_AUTO-SH01-B6-C2', 'pb_BRAKE_SET-F01-B2', 'OnBrakesIndicator', 'ASET_BRAKEFORCE_Dial', 'DigitalIndicator_BrakeForce_Display'],
              ['Lable_PARACHUTE', 'tggl_CHUTE_ARM_T1_G1-B2-S', 'pb_CHUTE_DEPLOY-F02-B6-C2', 'pb_CHUTE_CUT-F01-B6-C2', 'On_CHUTE_SAFE_TO_DEPLOY'],
+             ['Lable_Wheels_Brakes'],
              ['switchTumble_Lights', 'onLIGHTIndicator', 'pb_FLOOD_LIGHT-FD4', 'pb_PANEL_LIGHT-FD4', 'pb_FLIGHTDECKLIGHT-FD4', 'pb_ENGINEERDECK_LIGHT-FD']],
     'ag': [['ActionGroupPlate01', 'ActionGroupPlate02', 'ActionGroupPlate03', 'ActionGroupPlate04', 'ActionGroupPlate05'],
            ['pb_AG01-F03-G1', 'pb_AG02-F03-G1', 'pb_AG03-F03-G1', 'pb_AG04-F03-G1', 'pb_AG05-F03-G1'],
@@ -43,13 +46,14 @@ PANELS = {
                 ['AlarmEngineOverheatIndicator', 'LowFuelIndicator', 'LowOxidizerIndicator', 'LowMonopropIndicator', 'LowChargeIndicator', 'LowTWRIndicator'],
                 ['onCONTACTIndicator', 'onDESIndicator', 'onAirBrakingIndicator', 'AlarmLLegsIndicator', 'onLLEGSIndicator', 'onBattChargingIndicator'],
                 ['gpws10', 'pb_GPWS_ON-OFF-SH01-B6-C2', 'pb_AVAS_ON-OFF-FT-B2', 'pb_WARN_HIGH_G_ON-OFF-FT-B2', 'pb_WARN_SLOPE_ON-OFF-FT-B2', 'pb_WARN_TUMBLE_ON-OFF-FT-B2'],
-                ['ASET_ALT_WARN_Dial', 'DigitalIndicator_ALT_WARN_SetupDisplay', 'DigitalIndicator_ImpactSPEED']],
+                ['ASET_ALT_WARN_Dial', 'DigitalIndicator_ALT_WARN_SetupDisplay', 'DigitalIndicator_ImpactSPEED', 'DigitalIndicator_Multi01', 'DigitalIndicator_Multi02']],
     'prop': [['Lable_Propellants'],
              ['IndicatorADV_FUEL', 'IndicatorADV_OXIDIZER', 'IndicatorADV_MONOPROP', 'IndicatorADV_XENONGAS', 'IndicatorADV_SolidFuel', 'IndicatorADV_FUELSTAGE', 'IndicatorADV_OXIDIZERSTAGE', 'IndicatorADV_STAGE'],
              ['IndicatorADV_THROTTLE', 'IndicatorADV_THRUST', 'IndicatorADV_THRUSTLIMIT', 'IndicatorADV_HEAT', 'IndicatorADV_EngineTemp', 'IndicatorADV_PodTemp', 'IndicatorADV_FUEL_consumption', 'IndicatorADV_OXIDIZER_consumption'],
              ['DigitalIndicator_TWR', 'DigitalIndicator_TWRMAX', 'DigitalIndicator_ISP', 'DigitalIndicator_THRUST', 'DigitalIndicator_THRUSTMAX'],
              ['DigitalIndicator_DELTAV', 'DigitalIndicator_DELTAVTOTAL', 'DigitalIndicator_GFORCE', 'DigitalIndicator_EngineTemp', 'DigitalIndicator_Throttle']],
-    'env': [['DigitalIndicator_EXTTemp', 'DigitalIndicator_AMB_Temp', 'DigitalIndicator_SURF_Temp', 'DigitalIndicator_Temp'],
+    'env': [['Lable_ENVIRONMENTAL', 'Lable_Temperature', 'Lable_Atmosphere'],
+            ['DigitalIndicator_EXTTemp', 'DigitalIndicator_AMB_Temp', 'DigitalIndicator_SURF_Temp', 'DigitalIndicator_Temp'],
             ['DigitalIndicator_AtmDen', 'DigitalIndicator_DYNAMICPRESSURE', 'DigitalIndicator_EFFECTIVEACCEL', 'GforceDisplay']],
     'power': [['Lable_PowerSupply', 'IndicatorADV_CHARGE', 'IndADV_2Scales_ChargeCons', 'SwitchRotary-5pos-ElecOutput_Selector', 'DigitalIndicator_Elec_Output'],
               ['swTumble_SOLAR_DEPLOY', 'onSOLARARRAY_DEPLOYED_ONIndicator', 'onSOLARARRAY_RETRACTED_ONIndicator', 'onSOLARARRAY_ACTIVE_ONIndicator', 'onSOLARARRAY_BROKEN_ONIndicator', 'onSOLARARRAY_AVAILABLE_ONIndicator'],
@@ -61,11 +65,22 @@ PANELS = {
              ['On_DOCKING_MODE_UI', 'On_STAGING_MODE_UI']],
     'mfd': [['ALCORMFD40x20']],
     'mfd2': [['ALCORMFD40x20', 'ALCORMFD40x20']],
+    # camera monitors (its/patches/STMS_CamMonitors.cfg): the pilot gets the landing camera, the commander the docking camera
+    'mfdL': [['STMS_CamMFD_Landing', 'ALCORMFD40x20']],
+    'mfdD': [['ALCORMFD40x20', 'STMS_CamMFD_Docking']],
     'mfd60': [['ALCORMFD60x30']],
-    'ctrl': [['ALCORRotationCtrl', 'ALCORThrottleCtrl']],
+    'ctrl': [['RCS_Stick_ADV', 'ALCORThrottleCtrl', 'ALCORRotationCtrl']],      # translation (left), throttle, rotation (right)
+    'aux': [['JSIMainCompUnit'],
+            ['IndicatorPanel5x3-plugins01', 'IndicatorPanel5x3-plugins02', 'FuelMonitor', 'switchRotary_ResLock']],
+    # on the cabin walls, as ALCOR stows things: on velcro, checklists and books, timers, a camera, safety kit
+    'manuals': [['VelcroPad', 'CrewManual_AscentChklist', 'CrewManual_OrbChklist', 'CrewManual_EVAChklist', 'CrewManual_MalfunctionChklist'],
+                ['CrewManual_FlightPlan', 'CrewManual_SystemsDataBook', 'CrewManual_ReferenceDataBook', 'CrewManual_DeorbitPreparationBook']],
+    'desk': [['PortableTimer', 'PortableTimer']],
+    'kit': [['SmallExtinguisher', 'MediumBag_FirstAid', 'FireEqupStorage'], ['BigBag_EVAsupply01', 'BigBagFood02', 'BigBagExtraWater']],
 }
 # Stations along a console, left to right as seen from the seats: (panels on the sloped face, panels on the knee board below it).
-STATIONS = [(['mfd60', 'caution'], ['gear', 'dock']), (['mfd2', 'sas'], ['stage', 'ctrl']), (['mfd2', 'mj', 'comms'], ['numin', 'ag']), (['mfd', 'prop', 'env'], ['power'])]
+STATIONS = [(['mfd60', 'caution'], ['gear', 'dock']), (['mfdL', 'sas'], ['stage', 'ctrl']), (['mfdD', 'mj', 'comms'], ['numin', 'ag']), (['mfd', 'prop', 'env'], ['power', 'aux'])]
+WALLS = [['manuals', 'desk'], ['kit']]      # boards on the walls beside the console's ends, left and right
 MOUNTS = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'aset_mounts.json')))['props']
 
 

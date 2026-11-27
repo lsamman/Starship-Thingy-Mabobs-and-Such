@@ -33,6 +33,9 @@ for root in ('HabTechProps', 'Squad/Props', 'Benjee10_sharedAssets', 'ASET', 'JS
                 p = os.path.join(os.path.dirname(f), me.group(1)); p = p if p.endswith('.mu') else p + '.mu'
             else: p = (sorted(glob.glob(os.path.join(os.path.dirname(f), '*.mu'))) or [os.path.join(os.path.dirname(f), 'model.mu')])[0]      # KSP takes the .mu beside the cfg
             propmu.setdefault(n.group(1), p)
+for f in glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'patches', '*.cfg')):      # our ModuleManager copies of others' props
+    for src_, new_ in re.findall(r'^\+PROP\[([^\]]+)\][^\n]*\n\{\s*@name\s*=\s*(\S+)', open(f).read(), re.M):
+        if src_ in propmu: propmu[new_] = propmu[src_]
 sc = bpy.context.scene
 for o in list(bpy.data.objects): bpy.data.objects.remove(o)
 imgs = {}; nimg = {}
