@@ -113,7 +113,7 @@ for rz, rn, rs_, rw, rh in HL.ROWS_TALL if TALL else ():
         az = -rs_ + 2 * rs_ * i / (rn - 1); wf.add(lay(rounded_rect_ring(rw + .05, rh + .05, min(rw, rh) * .34, .034, .018, 4, zone=Z.black), az, rz, O)); wg.add(lay(pane(rw, rh, min(rw, rh) * .28, (i * 5 + int(rz * 7)) % 8), az, rz, O, .06, -.004))
 d.add(wf)
 P.mesh('windows', wg, MG, smooth_angle=60)
-# hull cameras for RasterPropMonitor's camera pages (its/patches/STMS_Cameras.cfg), numbered as on the ship (v3/scripts/build_camkit.py):
+# hull cameras for RasterPropMonitor's camera pages (its/patches/STMS_Cameras.cfg), numbered as on SEP's ship (its/scripts/make_cameras_cfg.py):
 # 5 airlock and elevator (above the door, looking down the hull), 6 horizon (the far side), 7 hull looking aft, 8 nose looking forward
 hr = lambda z: float(np.interp(z, [HL.Z_OGIVE + z_ for z_, _ in HL.OGIVE], [r for _, r in HL.OGIVE])) if z > HL.Z_OGIVE else HL.R
 cm = Geo()

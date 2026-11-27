@@ -25,7 +25,7 @@ win = P.empty('stms_b3_winS', None, P.model)
 P.mesh('stms_b3_frames', fs, MF, parent=win, smooth_angle=40)
 P.mesh('stms_b3_glass', gs, MG, parent=win, smooth_angle=60)
 spots += ss
-# (the hull cameras are in build_camkit.py's models, which the camera patch adds)
+# (the hull cameras are SEP's own: its/scripts/make_cameras_cfg.py)
 
 # KSP draws front faces only. Judge which side of each piece shows against a stand-in of SEP's shell
 # (from the same measured rings, 1 mm under it), then drop the stand-in so none of it is exported.
