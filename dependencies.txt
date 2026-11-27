@@ -1,4 +1,4 @@
-Starship Thingy Mabobs and Such 0.4.0 - dependencies
+Starship Thingy Mabobs and Such 0.5.0 - dependencies
 =====================================================
 
 For Kerbal Space Program 1.12.5. The version after each mod is the one this release was built and checked with;
@@ -57,12 +57,16 @@ Avionics cockpit - needs all four of these; adds a Cockpit switch (Classic / Avi
     Chatterer                                      Radio panel.
     ALCOR Adopted                       1.0.1      Not needed; the cockpit is laid out after ALCOR's.
 
+Hull cameras - RasterPropMonitor and B9PartSwitch: eight camera views on the Block 3 ship and the HLS (landing,
+    engine bay, flaps, hull, nose), shown on the cockpit's camera monitors. A Camera pods switch hides the housings.
+
 CryoTanks                               1.6.7      The storage depots keep their methane cold (less boil-off).
 Community Category Kit                             All parts under "Starship Thingy Mabobs" in the editor's
                                                    Filter by Function list.
 Connected Living Space                             Crew transfer between the ITS crew section and the ship.
 Community Tech Tree                                ITS parts placed in its tech nodes.
-USI Life Support, TAC Life Support or Snacks       Life support supplies in the ITS crew section.
+USI Life Support, TAC Life Support or Snacks       Life support supplies in the ITS crew section, the HLS crew
+                                                   sections and the Block 3 crew noses.
 
 
 NOT SUPPORTED
