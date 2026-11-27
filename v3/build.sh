@@ -38,6 +38,6 @@ else
 fi
 D=../GameData/StarshipThingyMabobsAndSuch
 mkdir -p "$D/Parts" "$D/Patches" "$D/Textures"
-cp build/mu/*.mu build/tex/sep_cw_*.dds build/tex/stms_b3_*.dds cfg/*.cfg "$D/Parts/"
+cp build/mu/*.mu build/tex/sep_cw_*.dds build/tex/stms_b3_*.dds build/tex/stms_cam_*.dds cfg/*.cfg "$D/Parts/"
 cp build/tex/*_MASK_BARE.dds "$D/Textures/" 2>/dev/null || echo "WARNING: no expendable masks, so this build is not complete; build it on the PC before deploying"
 cp patches/*.cfg build/patches/*.cfg "$D/Patches/"

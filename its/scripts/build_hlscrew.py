@@ -144,15 +144,23 @@ g = skin([z for z, _ in CR if z < HL.Z_OGIVE + 8.56], 'crew', O)
 n = len(g.v); z_l = HL.Z_OGIVE + 8.555; g.v.append((0, 0, HL.Z_OGIVE + 8.565 - O)); ids = [i for i, p in enumerate(g.v[:n]) if abs(p[2] + O - z_l) < 1e-4]
 ids.sort(key=lambda i: math.atan2(g.v[i][0], -g.v[i][1]))
 for a, b in zip(ids, ids[1:] + ids[:1]): g.face([a, b, n], [(.5, .99)] * 3)
-R0 = HL.CAP[0][1]; HX = V((0, R0 + .02, ZC - O + .0)); cf = T(*HX)
+R0 = HL.CAP[0][1]; HX = V((0, R0 + .06, ZC - O)); cf = T(*HX)
 cap = P.empty('cap', cf, P.model); P.mesh('capskin', g, MH, parent=cap, frame=cf, smooth_angle=30)
 ci = Geo(); ci.add(lathe([(R0 - .005, .003), (R0 - .06, .003), (R0 - .10, .06), (.72, .30), (.5, .62), (.2, .9), (0, .95)], 48, zone=Z.wall, flip=True), T(0, 0, ZC - O))
-ci.add(box(.5, .10, .09, zone=Z.dark, bevel=.015), T(0, R0 - .05, ZC - O + .05)); P.mesh('capin', ci, P.det, parent=cap, frame=cf)
+ci.add(box(.5, .08, .07, zone=Z.dark, bevel=.012), T(0, R0 - .10, ZC - O + .045))
+# the hinge: a knuckle on the cap round the pin, with a strap from it up the cap's skin; on the hull, a clevis either side
+hz = ZC - O; Rx_ = Matrix.Rotation(math.pi / 2, 4, 'Y')
+ci.add(cyl(.045, .24, 16, zone=Z.steel, bevel=.006), T(*HX) @ Rx_); ci.add(box(.22, .08, .16, zone=Z.steel, bevel=.01), T(0, R0 + .0, hz + .07))
+ci.add(box(.22, .16, .03, zone=Z.steel, bevel=.008), T(0, R0 - .03, hz + .03))
+P.mesh('capin', ci, P.det, parent=cap, frame=cf)
 qc = P.rest_quat(cap); NC = 90
 for f, a in ((0, 0), (NC, -125)): P.key('noseCap', cap, f, rotation_quaternion=qc @ Quaternion((1, 0, 0), math.radians(a)))
 zc = ZC - O
 # flat seat for whatever docking port the user puts on the node; the shut cap covers it
 d.add(lathe([(R0 - .002, zc), (R0 - .05, zc), (R0 - .055, zc - .03), (.40, zc - .03)], 64, zone=Z.grey)); d.add(lathe([(.40, zc - .03), (.385, zc - .022), (0, zc - .022)], 48, zone=Z.alu))
+for sx in (-1, 1):                                  # the hinge's clevis plates and their foot on the ogive, and the pin through them
+    d.add(box(.035, .10, .11, zone=Z.steel, bevel=.008), T(sx * .145, R0 + .06, zc - .015)); d.add(box(.07, .06, .10, zone=Z.steel, bevel=.01), T(sx * .145, R0 + .055, zc - .09))
+d.add(cyl(.022, .36, 12, zone=Z.alu), T(0, R0 + .06, zc) @ Matrix.Rotation(math.pi / 2, 4, 'Y'))
 d.add(bolts(24, .62, .016), T(0, 0, zc - .03)); d.add(bolts(16, .36, .010), T(0, 0, zc - .022)); d.add(box(.34, .10, .07, zone=Z.dark, bevel=.015), T(0, R0 - .10, zc - .005))
 P.node('port', (0, 0, zc - .022), (0, 0, 1), 1)
 # ---------------- bottom: dome, skirt inside

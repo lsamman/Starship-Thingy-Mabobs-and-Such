@@ -23,14 +23,22 @@ def frame(p, look, up):
 
 
 def kit(name, cams):
-    """cams: (id, position, look, up, pod frame or None); a pod is a small housing with a lens, the camera just in front of it."""
-    clean_scene(); P = Part(name); MF = P.material('stms_b3_kit', spec=(.5, .5, .52), shininess=.4); ZN = Zone(0, 0, 256, 256, atlas=256); pods = Geo()
-    for cid, p, look, up, pod in cams:
+    """cams: (id, position, look, up, pod frame or None[, 'abl']); a pod is a small housing with a lens, the camera just in front of it.
+    All pods hang under stms_campods (the pods switch). A pod marked 'abl' sits where SEP's extended ablative strip ends, so its
+    housing comes twice: stms_campods_bare (steel) and stms_campods_abl (ablative), and SEP's Ablative switch picks one."""
+    clean_scene(); P = Part(name); MF = P.material('stms_b3_kit', spec=(.5, .5, .52), shininess=.4); ZN = Zone(0, 0, 256, 256, atlas=256); pods = Geo(); bare = Geo()
+    for cid, p, look, up, pod, *fl in cams:
         P.empty(f'stms_cam{cid}', frame(p, look, up), P.model)
         if pod is not None:
-            pods.add(box(.11, .15, .08, zone=ZN, bevel=.014, center=(0, 0, .04)), pod)
+            (bare if 'abl' in fl else pods).add(box(.11, .15, .08, zone=ZN, bevel=.014, center=(0, 0, .04)), pod)
             pods.add(cyl(.032, .05, 14, zone=ZN), frame(p, look, up) @ Matrix.Rotation(math.pi / 2, 4, 'X') @ Matrix.Translation((0, 0, .0)))
-    if pods.f: P.mesh('stms_campods', pods, MF, smooth_angle=40)
+    if pods.f or bare.f:
+        root = P.empty('stms_campods', Matrix(), P.model)
+        if pods.f: P.mesh('stms_campods_main', pods, MF, parent=root, frame=Matrix(), smooth_angle=40)
+        if bare.f:
+            MA = P.material('stms_cam_abl', spec=(.12, .12, .12), shininess=.15)
+            P.mesh('stms_campods_bare', bare, MF, parent=root, frame=Matrix(), smooth_angle=40)
+            ab = Geo(); ab.add(bare); P.mesh('stms_campods_abl', ab, MA, parent=root, frame=Matrix(), smooth_angle=40)
     P.two_sided = True; P.export(out)
 
 
@@ -47,7 +55,7 @@ FWD = []
 for cid, s in ((5, -1), (6, 1)):
     h = V((s * 1.279, -1.551, 5.059)); hinge = V((s * 2.296, -.836, 4.253)); flap = hinge + radial(s * 70) * 1.2 - V((0, 0, .45))
     FWD.append((cid, h + radial(s * 39.5) * .10, flap - h, V((0, 0, 1)), None))
-p8, l8, u8, f8 = surf_pod(58, 3.2, 'up'); FWD.append((8, p8, l8, u8, f8))
+p8, l8, u8, f8 = surf_pod(58, 3.2, 'up'); FWD.append((8, p8, l8, u8, f8, 'abl'))      # on the step of SEP's extended ablative strip (az 47-90 below z 2.5, 67-90 above)
 kit('STMS_Cams_B3Nose', FWD)
 # looking aft down the leeward hull, beside the steel's windows and doors (the plain nose and the crew noses; the cargo and Pez
 # sections show their payload bay as camera 7 instead)
