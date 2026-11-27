@@ -12,6 +12,7 @@ if [ -z "$SKIP_MODELS" ]; then
 fi
 if [ -z "$SKIP_TEX" ]; then for t in scripts/tex_*.py; do python3 "$t" | tail -2; done; fi
 python3 scripts/make_rings.py build/patches/ITS_Rings.cfg
+python3 scripts/make_cameras_cfg.py patches/STMS_Cameras.cfg
 python3 scripts/make_cfg.py build/mu build/cfg
 D=../GameData/StarshipThingyMabobsAndSuch/ITS
 rm -rf "$D"; mkdir -p "$D/Parts" "$D/Patches" "$D/Extras"

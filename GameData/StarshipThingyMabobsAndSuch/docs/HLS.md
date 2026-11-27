@@ -92,18 +92,18 @@ The displays carry ALCOR's pages: flight display, orbit, landing and ascent with
 
 ## Hull cameras
 
-With RasterPropMonitor, the ships carry cameras for the displays' camera pages, placed after the ship views of SpaceX's flight livestreams, with fixed numbers so a page always means the same view (renumber in the part menu if a ship carries two of a kind):
+With RasterPropMonitor or Hullcam VDS, the ships carry cameras for the displays' camera pages (and Hullcam's camera list), placed after the ship views of SpaceX's flight livestreams, with fixed numbers so a page always means the same view (renumber in the part menu if a ship carries two of a kind):
 
 | | SEP's Block 3 ship (core and nose) | HLS (core and crew section) |
 |---|---|---|
-| ExtCam1 | landing: low on the skirt, down the hull past the engines | landing: low on the hull, down past the legs |
-| ExtCam2 | engine bay, inside the skirt at the Raptors | engine bay |
-| ExtCam3, 4 | aft flaps, from SEP's own camera housings | a leg and its footpad; the docking hardware |
-| ExtCam5, 6 | forward flaps, from SEP's nose housings | airlock and elevator, down the hull; horizon |
-| ExtCam7 | hull looking aft (cargo and Pez noses: the payload bay) | hull looking aft |
-| ExtCam8 | nose looking forward | nose looking forward |
+| ExtCam1 | landing: our pod low on the skirt, down the hull past the engines | landing: low on the hull, down past the legs |
+| ExtCam2 | engine bay: SEP's camera | engine bay |
+| ExtCam3, 4 | aft flaps: SEP's cameras | a leg and its footpad; the docking hardware |
+| ExtCam5, 6 | forward flaps: SEP's cameras | airlock and elevator, down the hull; horizon |
+| ExtCam7 | hull looking aft: our pod (cargo and Pez noses: SEP's payload bay camera) | hull looking aft |
+| ExtCam8 | nose looking forward: our pod | nose looking forward |
 
-SEP's ship core, its nosecone, cargo and Pez sections, our expendable core and both crew noses get these from `its/patches/STMS_Cameras.cfg` (models from `v3/scripts/build_camkit.py`); the HLS's are in its own models. **Camera pods: Shown / Hidden** hides the pods on the outside; the cameras keep working.
+Where SEP has a camera already, RasterPropMonitor uses SEP's own transform and Hullcam keeps SEP's module; our pods (and their Hullcam cameras) go only where SEP has none. The patch is `its/patches/STMS_Cameras.cfg`, written by `its/scripts/make_cameras_cfg.py` (pod models from `v3/scripts/build_camkit.py`); the HLS's cameras are in its own models. **Camera pods: Shown / Hidden** hides the pods on the outside; the cameras keep working.
 
 ## Life support
 

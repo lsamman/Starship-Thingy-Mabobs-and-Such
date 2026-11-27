@@ -91,7 +91,7 @@ build('cargo_o', (24.0, 27.3, 29.6), 61)
 import its_lamp
 
 g = np.zeros((64, 64, 4), np.uint8); g[...] = (212, 212, 210, 175); tl.write_dds(g, 'stms_plainwhite_diff')          # white finish for SEP's docking hardware
-g[...] = (210, 215, 217, 175); tl.write_dds(g, 'stms_corewhite_diff')     # the expendable core's White hull: a touch cooler, since SEP's shader warms it, to sit under the depot's stock-shaded white
+g[...] = (225, 226, 225, 133); tl.write_dds(g, 'stms_corewhite_diff')     # the expendable core's White hull: the white depot's own paint (median of hls_crew_o_diff: colour, smoothness in the alpha), on the same shader
 g[...] = (0, 255, 0, 255); tl.write_dds(g, 'stms_plainmask_diff')                                                    # no metal, full AO
 
 g = np.zeros((4, 4, 4), np.uint8); g[...] = (128, 128, 128, 255)      # stand-ins for SEP's textures on the cut nose pieces (B9 swaps the real ones in)

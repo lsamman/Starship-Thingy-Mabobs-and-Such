@@ -52,9 +52,6 @@ def write(G):
                       mod('ModuleScienceContainer', 'reviewActionName = Review Data', 'storeActionName = Store Experiments', 'evaOnlyStorage = True', 'storageRange = 2.0', 'allowRepeatedSubjects = True'),
                       mod('ModuleInventoryPart', 'InventorySlots = 12', 'packedVolumeLimit = 2400'),
                       mod('ModuleKerbNetAccess', 'MinimumFoV = 5', 'MaximumFoV = 50', 'enhancedSituationMask = 7', 'requiresAnimation = False', block('DISPLAY_MODES', 'Mode = Terrain', 'Mode = Biome')),
-                      mod('ModuleB9PartSwitch', 'moduleID = HLS_Style', 'switcherDescription = Style', 'affectDragCubes = false',
-                          block('SUBTYPE', 'name = Original', 'title = Original', 'primaryColor = black', block('TEXTURE', 'texture = StarshipThingyMabobsAndSuch/ITS/Parts/hls_crew_o_diff', 'shaderProperty = _MainTex', 'transform = hull', 'transform = doorskin', 'transform = capskin')),
-                          block('SUBTYPE', 'name = R2024', 'title = 2024 render', 'primaryColor = white')),
                       G['livery']('HLS_Track', 'Elevator track', [('Rails', 'Rails and ladder', 'gray', ['crewtrack', 'ladder']), ('None', 'None (cable elevator)', 'white', [])])])
     sun = lambda i: mod('ModuleDeployableSolarPanel', 'isTracking = false', f'pivotName = cargoSun{i}', f'raycastTransformName = cargoSun{i}', f'secondaryTransformName = cargoSun{i}', 'isBreakable = false', 'sunAlignFactor = 1', 'resourceName = ElectricCharge', 'chargeRate = 5', 'showStatus = true')
     part('STMS_HLS_CargoAwning', 'Starship HLS Cargo Section (Awning Door)', 'Goes on the HLS core instead of the crew section, with nobody aboard to complain about the elevator. One wide door swings up over the bay. Put the Crane Frame on the node by the sill and the Cargo Winch Hoist under its crossbar (or set Boom mount to Beams and use the Boom), open the door, run it out, and it sets its load down beside the hull. Solar panels round the back keep the lights on. Set the core\'s elevator track to None.',
@@ -66,9 +63,6 @@ def write(G):
                   mod('ModuleB9DisableTransform', 'transform = cargo_sill'), G['livery']('HLS_Markings', 'Markings', [('Flag', 'Flag', 'gray', ['flag']), ('None', 'Plain', 'white', [])]),
                   G['livery']('HLS_WinchMount', 'Boom mount', [('None', 'None', 'gray', []), ('Beams', 'Beams (for the winch boom)', 'white', ['winchmount'])]),
                   anim('rampOut', 'Put Ramp Out', 'Fold Ramp In', 'Ramp'),
-                  mod('ModuleB9PartSwitch', 'moduleID = HLS_Style', 'switcherDescription = Style', 'affectDragCubes = false',      # to match the core and crew section
-                      block('SUBTYPE', 'name = Original', 'title = Original', 'primaryColor = black', block('TEXTURE', 'texture = StarshipThingyMabobsAndSuch/ITS/Parts/hls_cargo_o_diff', 'shaderProperty = _MainTex', 'transform = hull', 'transform = doorskin')),
-                      block('SUBTYPE', 'name = R2024', 'title = 2024 render', 'primaryColor = white')),
                   mod('ModuleSTMSDoorGuard', 'animationName = CargoDoor', 'guardNode = crane', 'outLimit = -0.15')])
     part('STMS_HLS_Leg', 'Starship HLS Landing Leg', 'One of four. Hangs folded down its black panel, then swings out, telescopes and puts an octagonal pad on the regolith, held by a strut to either side. Use four, on the marked nodes.',
          T + ' landing leg gear ground', .6, 4500, 'Ground', 'veryHeavyRocketry', rules='1,0,0,0,0', profiles='srf, size1', crash=30, skin=2000, brk=3000,

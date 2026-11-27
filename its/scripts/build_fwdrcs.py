@@ -24,4 +24,8 @@ for variant, (AZ, Z0, R0, SL) in {'B3': (54, 2.46, 2.618, -.170), 'B1': (40, -.1
         dg.add(cyl(.074, .012, 24, zone=Z.steel, bevel=.003, center_z=False), NF); dg.add(cyl(.060, .055, 24, zone=Z.steel, bevel=.006, center_z=False), NF); dg.add(cyl(.047, .0565, 24, zone=Z.black, center_z=False), NF)
         for t in range(6): dg.add(cyl(.006, .018, 6, zone=Z.steel, center_z=False), NF @ T(.068 * math.cos(t * TAU / 6), .068 * math.sin(t * TAU / 6), 0))
         TF = NF.copy(); TF.translation = NF @ V((0, 0, .055)); P.empty('STMS_FwdRCS', TF, P.model)
-    P.mesh('stms_fwdrcs', g, MS, smooth_angle=20); P.mesh('stms_fwdrcs_nozzle', dg, P.det, smooth_angle=40); P.two_sided = True; finish(P)
+    # the housings hang under stms_fwdrcs_set (the Forward RCS switch); on Block 3 they come twice, steel and ablative, since they sit on
+    # the step of SEP's extended ablative strip (az 47-90 below z 2.5): SEP's Ablative switch picks one, and B9 gives each its textures
+    root = P.empty('stms_fwdrcs_set', Matrix(), P.model); P.mesh('stms_fwdrcs', g, MS, parent=root, frame=Matrix(), smooth_angle=20)
+    if variant == 'B3': ga = Geo(); ga.add(g); P.mesh('stms_fwdrcs_abl', ga, sep_mat(P, 'stms_fwdrcs_abl', 'stms_steel_diff', 'stms_steel_nrm', 'stms_steelmask_diff'), parent=root, frame=Matrix(), smooth_angle=20)
+    P.mesh('stms_fwdrcs_nozzle', dg, P.det, smooth_angle=40); P.two_sided = True; finish(P)

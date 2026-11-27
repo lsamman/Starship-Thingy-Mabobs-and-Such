@@ -9,10 +9,6 @@ c = Canvas(256, albedo=(.17, .175, .185), gloss=.42)
 c.albedo *= (1 + .02 * fbm(256, 256, 11, base=6, octaves=4))[..., None]
 c.save('stms_b3_kit', nstrength=.3)
 
-# ablative coat for the camera housing on the step of SEP's extended ablative: SEP's ablative is a flat dark grey (27, 28, 27)
-c = Canvas(64, albedo=(.106, .11, .106), gloss=.25)
-c.albedo *= (1 + .04 * fbm(64, 64, 5, base=4, octaves=3))[..., None]
-c.save('stms_cam_abl', nstrength=.4)
 
 # the ITS glass sheet (its/scripts/tex_details.py): the big window's lit deck top left, eight rooms top right
 S = 1024
