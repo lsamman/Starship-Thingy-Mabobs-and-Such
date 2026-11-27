@@ -79,10 +79,31 @@ With **FreeIva**, **RasterPropMonitor** (1.1 or later) and **ASET Props** and **
 
 Each flight deck has four stations, left to right from the seats; each has panels on the desk and on a board below it (on the HLS, a console on a pedestal before each seat):
 
+No window looks along the ship, so the pilot's first display is a **landing camera monitor** (ALCOR's landing page, with altitude and vertical speed, over the hull cameras below) and the commander's is a **docking camera monitor** (the docking port you control from); both are copies of ASET's 40x20 display made at load (`its/patches/STMS_CamMonitors.cfg`).
+
 1. 60x30 multifunction display; caution and warning lights with the terrain, slope, tumble and G warnings and the altitude alarm; gear, brakes, parachutes and lights; docking indicators.
-2. Two 40x20 displays; SAS on and all its modes, its speed selector, RCS, precision input, gimbal lock, clear target and node; staging (with its lock), guarded abort and undock, engines, engine mode, thrust limiter, throttle cut and full; rotation and throttle hand controllers.
+2. Two 40x20 displays; SAS on and all its modes, its speed selector, RCS, precision input, gimbal lock, clear target and node; staging (with its lock), guarded abort and undock, engines, engine mode, thrust limiter, throttle cut and full; rotation, translation and throttle hand controllers.
 3. Two 40x20 displays; MechJeb: SmartASS modes and roll holds, the manoeuvre planner (Hohmann, circularise, change Ap and Pe, launch inclination and altitude, from the number input below), autopilots for ascent, rendezvous, docking and landing, execute node; comms (CommNet, Chatterer); action groups 1-10 and time warp.
 4. A 40x20 display; propellant, thrust, heat and Δv gauges and readouts; environment readouts; power (solar arrays, fuel cells, generators, output selector).
 
 The displays carry ALCOR's pages: flight display, orbit, landing and ascent with a camera, docking camera (from the docking port set as reference), target menu, the hull cameras (ExtCam1-3: down along the hull for landing, outward, up along the nose; renumber them in the part menu if a ship has several), flight log, crew, science, resources, and MechJeb's, SCANsat's and VesselView's pages where those are installed. Light buttons switch the flood lights over the panels and the deck lights. ASET's props add about 66 MB of textures; the displays render only while you are in IVA.
+
+## Hull cameras
+
+With RasterPropMonitor, the ships carry cameras for the displays' camera pages, placed after the ship views of SpaceX's flight livestreams, with fixed numbers so a page always means the same view (renumber in the part menu if a ship carries two of a kind):
+
+| | SEP's Block 3 ship (core and nose) | HLS (core and crew section) |
+|---|---|---|
+| ExtCam1 | landing: low on the skirt, down the hull past the engines | landing: low on the hull, down past the legs |
+| ExtCam2 | engine bay, inside the skirt at the Raptors | engine bay |
+| ExtCam3, 4 | aft flaps, from SEP's own camera housings | a leg and its footpad; the docking hardware |
+| ExtCam5, 6 | forward flaps, from SEP's nose housings | airlock and elevator, down the hull; horizon |
+| ExtCam7 | hull looking aft (cargo and Pez noses: the payload bay) | hull looking aft |
+| ExtCam8 | nose looking forward | nose looking forward |
+
+SEP's ship core, its nosecone, cargo and Pez sections, our expendable core and both crew noses get these from `its/patches/STMS_Cameras.cfg` (models from `v3/scripts/build_camkit.py`); the HLS's are in its own models. **Camera pods: Shown / Hidden** hides the pods on the outside; the cameras keep working.
+
+## Life support
+
+With TAC Life Support, Snacks or USI Life Support, the four crew cabins carry supplies at the ITS crew section's rate per kerbal (`its/patches/STMS_LifeSupport.cfg`); Kerbalism equips crewed parts itself.
 
