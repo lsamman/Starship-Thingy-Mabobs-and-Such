@@ -1,5 +1,5 @@
 """Ends for the two raceways of SEP's Block 3 core, which are cut off square at its top when nothing carries them on: the tapered dome
-SEP's nosecone closes them with, rebuilt from measured sections. In the core's frame; a second MODEL (v3/patches/STMS_RacewayCap.cfg)."""
+SEP's nosecone closes them with, rebuilt from measured sections. In the core's frame; a second MODEL on the expendable core (v3/patches/STMS_B3_Expendable.cfg)."""
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *
 from hls_common import sep_mat

@@ -99,7 +99,7 @@ def lines(variant):
          f'\tCrewCapacity = {crew}', '\tINTERNAL', '\t{', '\t\tname = ' + {'crew': 'STMS_IVA_Crew', 'crewcargo': 'STMS_IVA_CrewCargo'}[variant], '\t}',
          # SEP's meshes that the cut copies in our hull model replace, and its box colliders, which would close the openings
          '\tMODULE', '\t{', '\t\tname = ModuleB9DisableTransform'] + [f'\t\ttransform = {t}' for t in ['Nose_7_EXT', 'Tiles', '.Colliders', 'Interior_Mesh_10', 'Cylinder']] + ['\t}',
-         '\t!MODULE[MuMechModuleHullCameraZoom],* {}'] + slots(cargo, variant) + textures(cargo) + door_switch(variant) + [
+         ] + slots(cargo, variant) + textures(cargo) + door_switch(variant) + [
          '\tMODULE', '\t{', '\t\tname = ModuleCommand', '\t\tminimumCrew = 1', '\t\tdefaultControlPointDisplayName = Forward', '\t\thasHibernation = True', '\t}',
          '\tMODULE', '\t{', '\t\tname = ModuleScienceExperiment', '\t\texperimentID = crewReport', '\t\texperimentActionName = #autoLOC_502009',
          '\t\tresetActionName = #autoLOC_502010', '\t\treviewActionName = #autoLOC_502200', '\t\tuseStaging = False', '\t\tuseActionGroups = True',

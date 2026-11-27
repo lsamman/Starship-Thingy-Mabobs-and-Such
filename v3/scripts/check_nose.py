@@ -71,7 +71,7 @@ for z in np.arange(-2.6, 5.7, .05):
             err.append(abs((6 - h[3]) - N.point(az, z).xy.length))
 check(max(err) < .002, f'faceted surface from the rings matches the shell: worst {max(err) * 1000:.1f} mm over {len(err)} rays')
 
-for name in ('STMS_B3_WindowsCrew', 'STMS_B3_WindowsCrewCargo', 'STMS_Cams_B3Nose', 'STMS_Cams_B3NoseHull'):
+for name in ('STMS_B3_WindowsCrew', 'STMS_B3_WindowsCrewCargo', 'STMS_Cams_B3Nose'):
     path = os.path.join(mu, name + '.mu')
     if not os.path.exists(path):
         check(False, f'{name}.mu not built'); continue

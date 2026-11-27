@@ -14,7 +14,7 @@ def sub(f, *prs):
 
 # ---------------- gone
 GONE = ['Textures', 'docs', 'ITS/Patches/ITS_Rings.cfg', 'ITS/Patches/STMS_Docking.cfg', 'ITS/Patches/STMS_Variants.cfg', 'Patches/SEPX_V3_*', 'Patches/STMS_B3_*',
-        'Patches/STMS_FwdRCS.cfg', 'Patches/STMS_RacewayCap.cfg', 'Parts/STMS_B3_*', 'Parts/stms_b3_*', 'ITS/Parts/SEP_B3_*', 'ITS/Parts/STMS_B3_Hull*',
+        'Patches/STMS_FwdRCS.cfg', 'Parts/STMS_B3_*', 'Parts/stms_b3_*', 'ITS/Parts/SEP_B3_*', 'ITS/Parts/STMS_B3_Hull*',
         'ITS/Parts/STMS_FwdRCS_B*', 'ITS/Parts/STMS_RacewayCap.mu', 'ITS/Parts/STMS_IVA_Crew*', 'ITS/Patches/STMS_IVA_Crew*', 'ITS/Parts/ITS_Ring*Base.mu',
         'ITS/Parts/stms_plain*']
 for g in GONE:

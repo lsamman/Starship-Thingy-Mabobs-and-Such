@@ -9,7 +9,7 @@ Z_SKIN = 20.574             # where the core's skin ends and the nose's begins
 Z_TOP = 21.1037             # stack node
 Z_SL, R_SL = 1.8916, .5829  # sea-level Raptor nodes, azimuth 0/120/240
 Z_VAC, R_VAC = 2.7821, 1.9958   # vacuum Raptor nodes, azimuth 60/180/300
-Z_DOCK, R_DOCK = 11.5717 + 3.25, 2.875   # SEP's ship-to-ship docking hardware: raised, so its aft latches clear the stowed legs
+Z_DOCK, R_DOCK = 11.5717, 2.875          # SEP's ship-to-ship docking hardware, at the height SEP's ship core has it
 DOCK_AZ = 180
 # ---- crew nose: rings (z above the joint of barrel and ogive, radius). The ogive is SEP's nose shape, so noses swap.
 Z_OGIVE = Z_TOP + 2.895

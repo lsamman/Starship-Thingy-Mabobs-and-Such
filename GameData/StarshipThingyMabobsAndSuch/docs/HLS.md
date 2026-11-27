@@ -49,7 +49,7 @@ Each array has **Lock Tracking** and **Rotate Array Down** (right-click, or acti
 
 - Engines are SEP's own `SEP_26_R3_SL_C` and `SEP_26_R3_VAC`, at the positions SEP's Block 3 ship uses.
 - The core's bottom fits SEP's Block 3 booster; the joint between core and crew section sits where SEP's does, so SEP's Block 3 noses go on this core and this crew section goes on SEP's core.
-- SEP's ship-to-ship docking hardware fits the `docking` node on the far side from the door. It is 3.25 m higher than on SEP's ship, so its aft latches clear the stowed legs. A docked tanker sits that much further forward.
+- SEP's ship-to-ship docking hardware fits the `docking` node on the far side from the door, at the same height as on SEP's Block 3 ship, so a docked tanker lines up as it would with SEP's.
 - The nose seat takes any docking port, for instance Benjee10's NDS for Orion. Open the nose cap first.
 
 ## Landing
@@ -96,14 +96,14 @@ With RasterPropMonitor or Hullcam VDS, the ships carry cameras for the displays'
 
 | | SEP's Block 3 ship (core and nose) | HLS (core and crew section) |
 |---|---|---|
-| ExtCam1 | landing: our pod low on the skirt, down the hull past the engines | landing: low on the hull, down past the legs |
+| ExtCam1 | aft, down past the engines: SEP's engine bay camera | landing: low on the hull, down past the legs |
 | ExtCam2 | engine bay: SEP's camera | engine bay |
 | ExtCam3, 4 | aft flaps: SEP's cameras | a leg and its footpad; the docking hardware |
 | ExtCam5, 6 | forward flaps: SEP's cameras | airlock and elevator, down the hull; horizon |
-| ExtCam7 | hull looking aft: our pod (cargo and Pez noses: SEP's payload bay camera) | hull looking aft |
+| ExtCam7 | low on the nose: SEP's camera (the payload bay one on cargo and Pez) | hull looking aft |
 | ExtCam8 | nose looking forward: our pod | nose looking forward |
 
-Where SEP has a camera already, RasterPropMonitor uses SEP's own transform and Hullcam keeps SEP's module; our pods (and their Hullcam cameras) go only where SEP has none. The patch is `its/patches/STMS_Cameras.cfg`, written by `its/scripts/make_cameras_cfg.py` (pod models from `v3/scripts/build_camkit.py`); the HLS's cameras are in its own models. **Camera pods: Shown / Hidden** hides the pods on the outside; the cameras keep working.
+On SEP's ship RasterPropMonitor uses SEP's own camera transforms and Hullcam keeps SEP's modules (the crew noses keep SEP's flap cameras too); the only pod of ours is the nose camera, where SEP has none. The patch is `its/patches/STMS_Cameras.cfg`, written by `its/scripts/make_cameras_cfg.py` (the pod from `v3/scripts/build_camkit.py`); the HLS's cameras are in its own models. **Camera pods: Shown / Hidden** hides the pods on the outside; the cameras keep working.
 
 ## Life support
 

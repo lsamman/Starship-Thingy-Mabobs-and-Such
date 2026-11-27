@@ -2,7 +2,7 @@
 the camera patch (its/patches/STMS_Cameras.cfg) adds to SEP's parts and ours. Our geometry only: small pods and camera transforms
 placed from measured numbers (SEP's flap nodes and its own camera housings, Cam_EXT, where the livestream flap views come from).
 Camera IDs are fixed across the mod (its/scripts/make_cameras_cfg.py), so the displays' camera pages always mean the same view;
-SEP's own cameras give 2-6 (engine bay, aft and forward flaps) and the payload bay. Ours: 1 landing, 7 hull looking aft, 8 nose forward.
+SEP's own cameras give 1-7 (engine bay, aft and forward flaps, the camera low on the nose). Ours: 8, the nose looking forward.
 Camera transforms: +Y looks, +Z is the picture's up.
 usage: blender -b -P build_camkit.py -- <build/mu>"""
 import sys, os
@@ -13,8 +13,7 @@ import layout as L, nose as N
 
 out = sys.argv[sys.argv.index('--') + 1]
 enable_addon()
-V = Vector; R_CORE = 2.8125
-radial = lambda az: V((math.sin(math.radians(az)), -math.cos(math.radians(az)), 0))
+V = Vector
 
 
 def frame(p, look, up):
@@ -40,11 +39,6 @@ def surf_pod(az, z, look):
 
 
 # ---- the nose (SEP's nosecone, cargo and Pez sections and our two crew noses share its frame). SEP has its own forward flap cameras
-# (LFWDCAMERA, RFWDCAMERA) and, on the cargo and Pez sections, the payload bay camera (Cam_PLDoor): the camera patch uses those. Ours:
-# a pod looking forward up the nose, and one looking aft down the leeward hull beside the windows and doors (not on cargo and Pez).
+# (LFWDCAMERA, RFWDCAMERA) and the camera low on the leeward side (Cam_PLDoor, on every nose): the camera patch uses those. Ours:
+# a pod looking forward up the nose. The ship core has nothing of ours: SEP's engine bay and aft flap cameras cover it.
 p8, l8, u8, f8 = surf_pod(58, 3.2, 'up'); kit('STMS_Cams_B3Nose', [(8, p8, l8, u8, f8)])
-p7, l7, u7, f7 = surf_pod(-30, -2.2, 'down'); kit('STMS_Cams_B3NoseHull', [(7, p7, l7, u7, f7)])
-# ---- the ship core. SEP has the engine bay (LowerAftCameraTransform_1..3, UpperAftCameraTransform_1..3) and aft flap cameras
-# (Cam_LAft, Cam_RAft). Ours: a landing pod low on the leeward skirt looking down past the engines.
-zl = -11.85; pl = radial(0) * (R_CORE + .037) + V((0, 0, zl - .085)); fl = Matrix((V((1, 0, 0)), V((0, 0, 1)), radial(0))).transposed().to_4x4(); fl.translation = radial(0) * (R_CORE - .008) + V((0, 0, zl))
-kit('STMS_Cams_B3Core', [(1, pl, V((0, 0, -1)) + radial(0) * .18, radial(0), fl)])
