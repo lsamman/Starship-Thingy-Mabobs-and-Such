@@ -1,0 +1,75 @@
+Starship Thingy Mabobs and Such 0.5.2 - dependencies
+=====================================================
+
+For Kerbal Space Program 1.12.5. The version after each mod is the one this release was built and checked with;
+newer versions should work. Install them first, then copy GameData/StarshipThingyMabobsAndSuch from this zip into your
+GameData folder.
+
+
+REQUIRED
+--------
+Starship Expansion Project (SEP)        3.1.0      https://github.com/Kari1407/Starship-Expansion-Project
+    The Raptor engines, the Block 3 ship, nosecones and cargo section that most parts build on or patch.
+    Install SEP with its own dependencies (CKAN does this for you).
+ModuleManager                           4.2.3
+B9PartSwitch                            2.21.0
+Community Resource Pack                 (comes with SEP)
+    Liquid methane for the ITS tanks.
+
+
+NEEDED FOR SOME PARTS
+---------------------
+Breaking Ground (Squad expansion)
+    The cargo winch, crane frame, both HLS elevators, and the cargo floors and tray are robotic parts.
+Waterfall                               0.11.0     (comes with SEP)
+    Engine plumes for the ITS engine rings and the HLS landing thrusters.
+SimpleAdjustableFairings                1.12.0
+    The Block 3 Payload Plate and Fairing.
+Kerbal Reusability Expansion            2.9.3
+    The ITS grid fins (deployable aero surfaces).
+Starship Launch Expansion (SLE)         0.5.0
+    The Crew Access Arm and Ship Quick Disconnect Arm attach to SLE's launch tower.
+StagedAnimation
+    The tower arms retract when staged.
+HabTechProps                            0.2.0
+    Seats, displays, lockers and galley in every crew interior. Without it the cabins and crew seats still work,
+    but those props are missing.
+
+
+OPTIONAL
+--------
+FreeIva                                 0.2.20.2   https://spacedock.info/mod/3151/FreeIva
+    Walk around inside, use the hatches and the airlock. The cabins follow the Docking door switch.
+
+Avionics cockpit - needs all four of these; adds a Cockpit switch (Classic / Avionics) to every crew cabin:
+    FreeIva                             0.2.20.2   (above)
+    RasterPropMonitor                   1.1.0.1    https://github.com/FirstPersonKSP/RasterPropMonitor/releases
+                                                   (RasterPropMonitor-Core is enough)
+    ASET Consolidated Props Pack        2.0.7      https://spacedock.info/mod/3240/ASET%20Consolidated%20Props%20Pack
+    ASET Consolidated Avionics Pack     3.0.1      https://spacedock.info/mod/3239/ASET%20Consolidated%20Avionics%20Pack
+  and, for more of its pages and buttons:
+    MechJeb2                                       Autopilot pages and buttons (SmartASS, manoeuvre planner, ascent,
+                                                   rendezvous, docking and landing autopilots).
+    SCANsat                             21.1       Map pages.
+    VesselView                                     Vessel viewer page.
+    Docking Port Alignment Indicator               Docking alignment page.
+    Astrogator                                     Transfer planner page.
+    Chatterer                                      Radio panel.
+    ALCOR Adopted                       1.0.1      Not needed; the cockpit is laid out after ALCOR's.
+
+Hull cameras - RasterPropMonitor or Hullcam VDS (B9PartSwitch for the Camera pods switch): eight camera views on the
+    Block 3 ship and the HLS (landing, engine bay, flaps, hull, nose). On SEP's parts they use SEP's own cameras where it
+    has them. With RasterPropMonitor they show on the cockpit's camera monitors.
+
+CryoTanks                               1.6.7      The storage depots keep their methane cold (less boil-off).
+Community Category Kit                             All parts under "Starship Thingy Mabobs" in the editor's
+                                                   Filter by Function list.
+Connected Living Space                             Crew transfer between the ITS crew section and the ship.
+Community Tech Tree                                ITS parts placed in its tech nodes.
+USI Life Support, TAC Life Support or Snacks       Life support supplies in the ITS crew section, the HLS crew
+                                                   sections and the Block 3 crew noses.
+
+
+NOT SUPPORTED
+-------------
+Realism Overhaul: the SEP patches in this mod skip themselves under RO.

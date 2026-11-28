@@ -17,7 +17,7 @@ SHABBY_MATERIAL_DEF:NEEDS[Resurfaced]
 	shader = Resurfaced/Standard
 	TEXTURE
 	{
-		_MetalMap = StarshipThingyMabobsAndSuch/Assets/ITS/its_det_metal
+		_MetalMap = StarshipThingyMabobsAndSuch/ITS/Parts/its_det_metal
 	}
 	FLOAT
 	{

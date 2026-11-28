@@ -27,6 +27,8 @@ Download this repository (Code > Download ZIP) and copy `GameData/StarshipThingy
 
 Needs SEP, ModuleManager and B9PartSwitch. The winch and crane need Breaking Ground.
 
+Optional: with FreeIva, RasterPropMonitor and ASET Props and ASET Avionics installed, every crew cabin gets a **Cockpit** switch: Classic, or Avionics, an interactive cockpit after ASET's ALCOR (see [docs/HLS.md](docs/HLS.md#avionics-cockpit)).
+
 With Community Category Kit installed, all parts are also under **Starship Thingy Mabobs** in the editor's Filter by Function list.
 
 ## Build
