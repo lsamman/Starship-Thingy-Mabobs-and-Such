@@ -51,14 +51,15 @@ def mend_tiles(bm):
         for l, (du, dv) in zip(f.loops, ((-1, -1), (1, -1), (0, 1))): l[L].uv = (U + du * S_, W + dv * S_)
 
 
-def add(P, nm, bm, mat, src, parent=None, frame=None):
-    """A piece of SEP's mesh as one of ours, with SEP's own normals carried over (so the cut edges shade as before)."""
+def add(P, nm, bm, mat, src, parent=None, frame=None, nfix=None):
+    """A piece of SEP's mesh as one of ours, with SEP's own normals carried over (so the cut edges shade as before); nfix(co, n, face)
+    may change a loop's normal."""
     if not bm.faces: return None
     bmesh.ops.triangulate(bm, faces=[f for f in bm.faces if len(f.verts) > 4]); bm.normal_update(); fr = frame or Matrix(); tr, tris = ORIG[src]; nrm = []
     for f in bm.faces:
         c = f.calc_center_median()
         for l in f.loops:
-            h = tr.find_nearest(l.vert.co.lerp(c, .02)); co, ns = tris[h[2]]; w = poly_3d_calc(co, h[0]); nrm.append(sum((n * k for n, k in zip(ns, w)), V()).normalized())
+            h = tr.find_nearest(l.vert.co.lerp(c, .02)); co, ns = tris[h[2]]; w = poly_3d_calc(co, h[0]); n = sum((n * k for n, k in zip(ns, w)), V()).normalized(); nrm.append(nfix(l.vert.co, n, f) if nfix else n)
     bm.transform(fr.inverted()); me = bpy.data.meshes.new(nm); bm.to_mesh(me); me.materials.append(mat)
     if me.uv_layers: me.uv_layers[0].active = True; me.uv_layers[0].active_render = True
     for c_ in list(me.color_attributes): me.color_attributes.remove(c_)
@@ -66,6 +67,51 @@ def add(P, nm, bm, mat, src, parent=None, frame=None):
     me.normals_split_custom_set([tuple(fr.to_3x3().inverted() @ n) for n in nrm])
     o = bpy.data.objects.new(nm, me); P.coll.objects.link(o); P.place(o, fr, parent or P.model); P.meta.setdefault('tris', {})[nm] = sum(len(p.vertices) - 2 for p in me.polygons)
     return o
+
+
+radial = lambda p: V((p.x, p.y, 0)).normalized()
+tangent = lambda p: V((-p.y, p.x, 0)).normalized()
+outer = lambda f: f.normal.dot(radial(f.calc_center_median())) > .5
+
+
+def hull_normals(name):
+    """Normals of SEP's fixed skin round the doors (outer faces only), to shade our pieces' edges the same where they meet it."""
+    tris = [(co, ns) for co, ns in ORIG[name][1] if sum(ns, V()).normalized().dot(radial(sum(co, V()) / 3)) > .5]
+    tr = BVHTree.FromPolygons([p for co, _ in tris for p in co], [(3 * i, 3 * i + 1, 3 * i + 2) for i in range(len(tris))])
+    def at(p):
+        h = tr.find_nearest(p); co, ns = tris[h[2]]; return sum((n * k for n, k in zip(ns, poly_3d_calc(co, h[0]))), V()).normalized()
+    return at, [p for co, _ in tris for p in co]
+
+
+def seal(bm, edge, hull=None):
+    """SEP's two doors are slabs with walls round them, a 9 mm slit to the hull and normals that roll into it, so they read as doors.
+    Remove the walls where edge(face centre) says so (always the seam between the two doors, at az 0); with hull (SEP's skin round
+    the opening) the outer edge is closed onto the hull's edge too, for skin that no longer opens."""
+    bm.normal_update()
+    bmesh.ops.delete(bm, geom=[f for f in bm.faces if abs(f.normal.dot(radial(f.calc_center_median()))) < .5 and edge(f.calc_center_median())], context='FACES')
+    if not hull: return
+    from mathutils.kdtree import KDTree
+    kd = KDTree(len(hull)); [kd.insert(p, i) for i, p in enumerate(hull)]; kd.balance()
+    for v in {v for f in bm.faces if outer(f) for v in f.verts}:
+        a = az_of(v.co)
+        if abs(a) < OPEN - .3 and v.co.z < HULL_TOP: continue
+        q, _, d = kd.find(v.co)
+        if d < .03: v.co = q.copy()
+        else: v.co = Matrix.Rotation(math.radians(math.copysign(OPEN_HULL, a) - a), 4, 'Z') @ v.co
+    bm.normal_update()
+
+
+def seal_normals(hull_at=None):
+    """Loop normals for seal()'s pieces: flat across the seam at az 0, the hull's own where a piece now meets it."""
+    def fix(co, n, f):
+        if not outer(f): return n
+        if hull_at and (abs(az_of(co)) > OPEN + .1 or co.z > HULL_TOP): return hull_at(co)
+        if abs(az_of(co)) < .05: t = tangent(co); return (n - t * n.dot(t)).normalized()
+        return n
+    return fix
+
+
+OPEN_HULL, HULL_TOP = 45.0, 4.625                            # SEP's hull edge round the opening; the doors' top edge is at z 4.63
 
 
 def hook(P, door, hf):
@@ -77,11 +123,15 @@ def hook(P, door, hf):
     cut(bm, (0, 0, S0), (0, 0, 1), lambda f: abs(az_of(f.calc_center_median())) < OPEN + 4 and f.calc_center_median().y < 0)
     add(P, 'stms_b3barrel', part_of(bm, lambda p: not insill(p)), m, sn); add(P, 'stms_b3doorsill', part_of(bm, insill), m, sn, door, hf)
     bm, m, sn = src['Cylinder∧.006']; add(P, 'stms_b3pin', bm, m, sn)
-    for k, s in (('Cylinder∧.003', 'L'), ('Cylinder∧.005', 'R')): bm, m, sn = src[k]; add(P, 'stms_b3doorbarrel' + s, bm, m, sn, door, hf)
+    # one door now, so the seam between SEP's two goes; above the hinge line SEP's door skin is fixed hull, so its outline goes too
+    centre = lambda p: abs(az_of(p)) < .3
+    hull_at, hull = hull_normals('Nose_7_EXT∧.002')
+    for k, s in (('Cylinder∧.003', 'L'), ('Cylinder∧.005', 'R')): bm, m, sn = src[k]; seal(bm, centre); add(P, 'stms_b3doorbarrel' + s, bm, m, sn, door, hf, seal_normals())
     # SEP's door skin up the ogive: below the hinge line it is the door, above it fixed hull
     for k, s in (('Nose_7_EXT∧', 'L'), ('Nose_7_EXT∧.001', 'R')):
-        bm, m, sn = src[k]; cut(bm, (0, 0, H0), (0, 0, 1))
-        add(P, 'stms_b3doorogive' + s, part_of(bm, lambda p: p.z < H0), m, sn, door, hf); add(P, 'stms_b3noseup' + s, part_of(bm, lambda p: p.z > H0), m, sn)
+        bm, m, sn = src[k]; cut(bm, (0, 0, H0), (0, 0, 1)); dn, up = part_of(bm, lambda p: p.z < H0), part_of(bm, lambda p: p.z > H0)
+        seal(dn, centre); seal(up, lambda p: centre(p) or abs(az_of(p)) > OPEN - .5 or p.z > HULL_TOP - .03, hull)
+        add(P, 'stms_b3doorogive' + s, dn, m, sn, door, hf, seal_normals()); add(P, 'stms_b3noseup' + s, up, m, sn, nfix=seal_normals(hull_at))
     for k, s in (('Tiles∧', 'L'), ('Tiles∧.001', 'R')): bm, m, sn = src[k]; mend_tiles(bm); add(P, 'stms_b3doortiles' + s, bm, m, sn, door, hf)
     # SEP's faces are right already: its pieces only block the facing check's rays, with the rest of SEP's skin, which stays in
     # SEP's model, standing in for the white hull of the HLS section while the check runs

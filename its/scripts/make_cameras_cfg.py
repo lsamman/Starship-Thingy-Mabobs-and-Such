@@ -2,18 +2,17 @@
 Hullcam VDS, after the ship views of SpaceX's flight livestreams. IDs are fixed across the mod:
   1 aft, down past the engines (HLS: landing)   2 engine bay   3, 4 aft flaps (HLS: a leg, the docking hardware)
   5, 6 forward flaps (HLS: airlock and elevator, horizon)   7, 8 payload bay, from the door and from above (HLS: hull looking down, nose looking up)
-On SEP's ship these are all SEP's own cameras: RasterPropMonitor uses SEP's transforms and Hullcam keeps SEP's modules, and nothing of
-ours is added to SEP's parts (our pods there doubled SEP's cameras). The HLS's cameras are in its own models.
+On SEP's ship these are all SEP's own cameras: RasterPropMonitor uses SEP's transforms on our copies of SEP's parts and Hullcam keeps
+SEP's modules. SEP's own parts stay as SEP ships them: an RPM selector there doubled every camera in the part menu next to SEP's Hullcam
+ones. The HLS's cameras are in its own models.
 usage: python3 make_cameras_cfg.py <out.cfg>"""
 import sys
 AFTER = ':AFTER[StarshipThingyMabobsAndSuch]'
 # (parts, comment, our camera models, RPM cameras (id, transform), our own cameras for Hullcam (id, transform, name, FoV max, min))
 # (parts, comment, RPM cameras (id, SEP's transform))
-SEP = [('SEP_26_SHIP_CORE|STMS_B3_CoreExp', "SEP's Block 3 ship core and our expendable copy: SEP's engine bay and aft flap cameras",
+SEP = [('STMS_B3_CoreExp', "our expendable copy of SEP's Block 3 ship core: SEP's engine bay and aft flap cameras",
         [(1, 'UpperAftCameraTransform_1'), (2, 'LowerAftCameraTransform_1'), (3, 'Cam_LAft'), (4, 'Cam_RAft')]),
-       ('SEP_26_SHIP_NOSECONE|STMS_B3_NoseCrew|STMS_B3_NoseCrewCargo', "SEP's nosecone and our two crew noses: SEP's forward flap cameras", [(5, 'LFWDCAMERA'), (6, 'RFWDCAMERA')]),
-       ('SEP_26_SHIP_CARGO|SEP_26_SHIP_PEZ', "SEP's cargo and Pez noses: SEP's forward flap and payload bay cameras",
-        [(5, 'LFWDCAMERA'), (6, 'RFWDCAMERA'), (7, 'Cam_PLDoor'), (8, 'Cam_PLSpace')]),
+       ('STMS_B3_NoseCrew|STMS_B3_NoseCrewCargo', "our two crew noses: SEP's forward flap cameras", [(5, 'LFWDCAMERA'), (6, 'RFWDCAMERA')]),
        ('STMS_B3_CargoAwning', "our awning-door copy of SEP's cargo section: SEP's flap cameras and the one by the door (the one from above now sees the top bulkhead)",
         [(5, 'LFWDCAMERA'), (6, 'RFWDCAMERA'), (7, 'Cam_PLDoor')])]
 HLS = [('STMS_HLS_Core', 'the HLS core', [(1, 'Landing'), (2, 'EngineBay'), (3, 'Leg'), (4, 'Docking')]),
@@ -42,7 +41,8 @@ o = ['// Hull cameras for RasterPropMonitor (camera pages, the Avionics cockpit\
      '// IDs are fixed across the mod (renumber in the part menu if a ship carries two of a kind):',
      '//   1 aft, down past the engines (HLS: landing)   2 engine bay   3, 4 aft flaps (HLS: a leg, the docking hardware)',
      '//   5, 6 forward flaps (HLS: airlock and elevator, horizon)   7, 8 payload bay, from the door and from above (HLS: hull looking down, nose looking up)',
-     "// SEP's ship: SEP's own cameras only (Hullcam keeps SEP's modules). HLS: its own cameras, and a Camera pods switch (hidden, they still work).", '']
+     "// SEP's ship: SEP's own cameras only (Hullcam keeps SEP's modules), on our copies of SEP's parts; SEP's own parts are left alone.",
+     '// HLS: its own cameras, and a Camera pods switch (hidden, they still work).', '']
 for parts, note, cams in SEP:
     o += [f'// {note}', f'@PART[{parts}]:NEEDS[RasterPropMonitor]{AFTER}', '{']
     for i, t in cams: o += rpm(i, t)

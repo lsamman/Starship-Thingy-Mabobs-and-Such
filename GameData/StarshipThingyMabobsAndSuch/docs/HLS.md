@@ -56,7 +56,7 @@ Each array has **Lock Tracking** and **Rotate Array Down** (right-click, or acti
 
 ## Landing
 
-Dry about 45 t with engines and gear. The legs' joints are rigid, and while a leg is folded its wheel sits up in the stowed strut, so the ship can stand on its skirt with the legs in. The ring gives 540 kN, 414 kN of it straight down, so it can hover up to 255 t in lunar gravity. Brake with the Raptors, shut them down near the ground (about 100 m), activate the landing thrusters on the core. They share the throttle.
+Dry about 45 t with engines and gear. The legs' joints are rigid, and while a leg is folded its wheel sits up in the stowed strut, so the ship can stand on its skirt with the legs in. The footpads tilt up to 20 degrees to meet the ground. Retracting on the ground sets the ship down on its skirt; the leg's piston collider runs up the strut from the wheel, as on stock legs, and never reaches the ground. The ring gives 540 kN, 414 kN of it straight down, so it can hover up to 255 t in lunar gravity. Brake with the Raptors, shut them down near the ground (about 100 m), activate the landing thrusters on the core. They share the throttle.
 
 On the ground: Open Airlock Door, Lower Deck, then slide the elevator's Target Extension to -22.3. Back to 0, fold the deck and close the door before leaving. The track is also a ladder.
 
@@ -105,7 +105,7 @@ With RasterPropMonitor or Hullcam VDS, the ships carry cameras for the displays'
 | ExtCam7 | cargo and Pez: SEP's payload bay camera by the door | hull looking aft |
 | ExtCam8 | cargo and Pez: SEP's payload bay camera from above | nose looking forward |
 
-On SEP's ship these are all SEP's own cameras: RasterPropMonitor uses SEP's transforms, Hullcam keeps SEP's modules (the crew noses keep SEP's flap cameras too), and nothing of ours is added to SEP's parts. The patch is `its/patches/STMS_Cameras.cfg`, written by `its/scripts/make_cameras_cfg.py`; the HLS's cameras are in its own models. On the HLS, **Camera pods: Shown / Hidden** hides the pods on the outside; the cameras keep working.
+On SEP's ship these are all SEP's own cameras: RasterPropMonitor numbers SEP's transforms on our copies of SEP's parts (expendable core, crew noses, awning cargo section) and Hullcam keeps SEP's modules. SEP's own core, nose, cargo and Pez sections are left as SEP ships them: an RPM selector on them listed every camera twice in the part menu, next to SEP's Hullcam ones. The patch is `its/patches/STMS_Cameras.cfg`, written by `its/scripts/make_cameras_cfg.py`; the HLS's cameras are in its own models. On the HLS, **Camera pods: Shown / Hidden** hides the pods on the outside; the cameras keep working.
 
 ## Life support
 

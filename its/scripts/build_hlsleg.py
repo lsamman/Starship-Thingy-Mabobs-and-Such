@@ -67,13 +67,15 @@ for j, rev in ((0, True), (len(rows) - 1, False)):
     for i in range(8): t = [c, j * 8 + i, j * 8 + (i + 1) % 8]; s_.face(t[::-1] if rev else t, [Z.rubber.uv(.5, .5), Z.rubber.uv(.2, .3), Z.rubber.uv(.3, .2)])
 for i in range(8): s_.add(box(.03, .34, .10, zone=Z.dark, bevel=.008), Rz(45 * i) @ T(0, -.34 * PADS, -RAD + .17) @ Rx(-18))
 s_.add(cyl(.12, .28, 14, zone=Z.steel, bevel=.015), Ry(90))
-shoe = Geo(); shoe.add(s_, ft); fo = P.mesh('foot', shoe, P.det, parent=pi, frame=ft, smooth_angle=30); fl = fo.location.copy()
+# the fold is animated on footFold; foot (KSP's bogey, which tilts the pad to the ground) never turns in the clip, because
+# ModuleWheelBogey keeps the foot's rotation from when the ship loaded as its rest: loaded stowed, it held the deployed pad folded
+ff = P.empty('footFold', ft, pi); shoe = Geo(); shoe.add(s_, ft); fo = P.mesh('foot', shoe, P.det, parent=ff, frame=ft, smooth_angle=30); fl = ff.location.copy()
 QF = Quaternion((1, 0, 0), math.radians(90 - math.degrees(0)))    # stowed: pad flat against the hull, sole outboard
 tst = QF @ V((0, 0, -1))
 if tst.y > 0: QF = Quaternion((1, 0, 0), math.radians(-90))
 # parent (piston) sits in the swung frame, so the stowed foot also undoes that swing: it must end up vertical
 for f, l, q in ((0, V((0, 0, 0)), 0), (F_TURN, V((0, 0, 0)), 0), (N - 2, fl, 1), (N, fl, 1)):
-    P.key('legDeploy', fo, f, location=UNSW.inverted() @ V((0, -.07 if SHIP else .02, 0)) if q == 0 else l, rotation_quaternion=(UNSW.inverted() @ QF) if q == 0 else Quaternion())
+    P.key('legDeploy', ff, f, location=UNSW.inverted() @ V((0, -.07 if SHIP else .02, 0)) if q == 0 else l, rotation_quaternion=(UNSW.inverted() @ QF) if q == 0 else Quaternion())
 # side struts: two nested tubes aimed frame by frame
 CD = SLEN - HL.COLLAR                                      # deployed collar distance from hinge, on the last stage
 cl = Geo(); cl.add(tube([at(CD - .08), at(CD + .08)], RS[-1] + .05, 16, zone=WH)); [cl.add(cyl(.07, .12, 12, zone=Z.dark, bevel=.01), T(*(at(CD) + XA * s * .2)) @ Ry(90)) for s in (-1, 1)]
@@ -97,7 +99,9 @@ for k, s in enumerate((-1, 1)):
 def cap(name, a, c, r, parent):
     o = P.empty(name, frame_axes((a + c) / 2, (a - c).normalized()), parent); m = o.muproperties; m.collider = 'MU_COL_CAPSULE'; m.isTrigger = False; m.radius = r; m.height = (a - c).length; m.direction = 'MU_Z'; m.center = (0, 0, 0); m.layer = 26
 cap('pistonbaseCollider', at(.1), at(OUT_L), R1, pb); cap('col_strut', at(SLEN - 1.2), at(SLEN - .1), .13, last)
-o = P.empty('piston_collider', T(*AN), pi); m = o.muproperties; m.collider = 'MU_COL_CAPSULE'; m.isTrigger = False; m.radius = .12; m.height = SUSP + .3; m.direction = 'MU_Z'; m.center = (0, 0, -SUSP / 2); m.layer = 26
+# up from the wheel's anchor, as on stock LT-2: hanging below it (to 0.63 m down, the wheel's own reach) it met the ground whenever the
+# wheel let go, the moment a retract on the ground switches the wheel off, and lifted the ship
+o = P.empty('piston_collider', T(*AN), pi); m = o.muproperties; m.collider = 'MU_COL_CAPSULE'; m.isTrigger = False; m.radius = .12; m.height = .6; m.direction = 'MU_Z'; m.center = (0, 0, .3); m.layer = 26
 P.hull_collider('col_bracket', [(x, y, z) for x in (-.3, .3) for y in (0, -.26) for z in (-.25, .25)], parent=leg)
 P.node('mount', (0, 0, 0), (0, 1, 0), '2, 0, 1, 1')      # size 2, fixed, crossfeed, rigid: the joint does not flex under the ship's weight
 P.bake_clips(0); finish(P)

@@ -158,11 +158,13 @@ for s in (-1, 1):
     shoe.add(box(.09, .34, .36, zone=Z.dark, bevel=.03), fT @ T(s * .20, 0, -.04))
     shoe.add(tube([tuple(fT @ Vector((s * .30, -.35, -.12))), tuple(fT @ Vector((s * .20, -1.10, -RAD + .16)))], .035, 8, zone=Z.dark))
 shoe.add(tube([tuple(FC), tuple(FC + Vector((0, 0, SUSP + .16)))], .13, 16, zone=Z.alu))
-fo = P.mesh('foot', shoe, P.det, parent=pi, frame=fT, smooth_angle=30)
-l1 = fo.location.copy(); l0 = Vector((0, 0, -.05))
+# the fold is animated on footFold; foot (KSP's bogey, which tilts the shoe to the ground) never turns in the clip, because
+# ModuleWheelBogey keeps the foot's rotation from when the ship loaded as its rest: loaded stowed, it held the deployed shoe folded
+ff = P.empty('footFold', fT, pi); fo = P.mesh('foot', shoe, P.det, parent=ff, frame=fT, smooth_angle=30)
+l1 = ff.location.copy(); l0 = Vector((0, 0, -.05))
 QF = Quaternion((1, 0, 0), math.radians(90 - 8))            # stowed: toe down the hull, sole outboard under the shell
 for f, l, q in ((0, l0, QF), (F_SLIDE, l0, QF), (F_DONE - 10, l1, Quaternion()), (N, l1, Quaternion())):
-    P.key('legDeploy', fo, f, location=l, rotation_quaternion=q)
+    P.key('legDeploy', ff, f, location=l, rotation_quaternion=q)
 
 # ---------------- drag strut: two nested tubes from the face to the collar, aimed frame by frame
 def collar(deg):
@@ -191,7 +193,8 @@ def cap(name, d0, d1, r, parent):
     m.collider = 'MU_COL_CAPSULE'; m.isTrigger = False; m.radius = r; m.height = d1 - d0; m.direction = 'MU_Z'; m.center = (0, 0, 0); m.layer = 26
 cap('pistonbaseCollider', 0, OUT_L, .3, pb); cap('col_strut', STEP * NST + .2, STEP * NST + IN_L, .22, secs[-1])
 o = P.empty('piston_collider', T(*KNEE), pi); m = o.muproperties
-m.collider = 'MU_COL_CAPSULE'; m.isTrigger = False; m.radius = .2; m.height = SUSP + .3; m.direction = 'MU_Z'; m.center = (0, 0, -SUSP / 2); m.layer = 26
+m.collider = 'MU_COL_CAPSULE'; m.isTrigger = False; m.radius = .2; m.height = .6; m.direction = 'MU_Z'; m.center = (0, 0, .3); m.layer = 26
+# (up from the wheel's anchor, as on stock LT-2: hanging below it, it met the ground when a retract on the ground switched the wheel off)
 P.hull_collider('col_bracket', [tuple(slope @ Vector((x, y, z))) for x in (-.5, .5) for y in (.25, -.5) for z in (-.1, .2)], parent=leg)
 P.node('mount', (0, 0, 0), (0, 1, 0), '2, 0, 1, 1')      # size 2, fixed, crossfeed, rigid
 P.bake_clips(0)
