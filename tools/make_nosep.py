@@ -15,7 +15,7 @@ def sub(f, *prs):
 # ---------------- gone
 GONE = ['Textures', 'docs', 'ITS/Patches/ITS_Rings.cfg', 'ITS/Patches/STMS_Docking.cfg', 'ITS/Patches/STMS_Variants.cfg', 'Patches/SEPX_V3_*', 'Patches/STMS_B3_*',
         'Patches/STMS_FwdRCS.cfg', 'Parts/STMS_B3_*', 'Parts/stms_b3_*', 'ITS/Parts/SEP_B3_*', 'ITS/Parts/STMS_B3_Hull*',
-        'ITS/Parts/STMS_FwdRCS_B*', 'ITS/Parts/STMS_RacewayCap.mu', 'ITS/Parts/STMS_IVA_Crew*', 'ITS/Patches/STMS_IVA_Crew*', 'ITS/Parts/ITS_Ring*Base.mu',
+        'ITS/Parts/STMS_FwdRCS_B*', 'ITS/Parts/STMS_RacewayCap.mu', 'ITS/Parts/STMS_B3_CargoAwning.mu', 'ITS/Patches/STMS_B3_CargoAwning.cfg', 'ITS/Parts/STMS_IVA_Crew*', 'ITS/Patches/STMS_IVA_Crew*', 'ITS/Parts/ITS_Ring*Base.mu',
         'ITS/Parts/stms_plain*']
 for g in GONE:
     fs = glob.glob(p(g)); assert fs, g
@@ -37,7 +37,7 @@ sub('ITS/Patches/ITS_Waterfall.cfg', ("Engine plumes come with SEP's engines.", 
 for f in glob.glob(p('**', '*.cfg'), recursive=True):
     t = open(f, encoding='utf-8').read(); n = re.sub(r'(tags = [^\n]*)\bsep ', r'\1', t)
     if n != t: open(f, 'w', encoding='utf-8').write(n)
-cut = {'STMS_HLS_Docking_M', 'STMS_HLS_Docking_F', 'STMS_B3_CoreExp', 'STMS_B3_NoseCrew', 'STMS_B3_NoseCrewCargo', 'STMS_HLS_Cargo', 'ITS_Ring21', 'ITS_Ring14', 'ITS_Ring7', 'ITS_RVac'}
+cut = {'STMS_HLS_Docking_M', 'STMS_HLS_Docking_F', 'STMS_B3_CoreExp', 'STMS_B3_NoseCrew', 'STMS_B3_NoseCrewCargo', 'STMS_HLS_Cargo', 'STMS_B3_CargoAwning', 'ITS_Ring21', 'ITS_Ring14', 'ITS_Ring7', 'ITS_RVac'}
 t = rd('Patches/STMS_CCK.cfg').replace("// after the copies of SEP's parts (engine rings, crew nosecones) exist\n", '')
 wr('Patches/STMS_CCK.cfg', re.sub(r'@PART\[(STMS_HLS_Core[^\]]*)\]', lambda m: '@PART[' + '|'.join(q for q in m[1].split('|') if q not in cut) + ']', t))
 # the fairing base's forward thrusters, always on

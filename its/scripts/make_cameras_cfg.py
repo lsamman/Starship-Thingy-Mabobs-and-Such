@@ -13,7 +13,9 @@ SEP = [('SEP_26_SHIP_CORE|STMS_B3_CoreExp', "SEP's Block 3 ship core and our exp
         [(1, 'UpperAftCameraTransform_1'), (2, 'LowerAftCameraTransform_1'), (3, 'Cam_LAft'), (4, 'Cam_RAft')]),
        ('SEP_26_SHIP_NOSECONE|STMS_B3_NoseCrew|STMS_B3_NoseCrewCargo', "SEP's nosecone and our two crew noses: SEP's forward flap cameras", [(5, 'LFWDCAMERA'), (6, 'RFWDCAMERA')]),
        ('SEP_26_SHIP_CARGO|SEP_26_SHIP_PEZ', "SEP's cargo and Pez noses: SEP's forward flap and payload bay cameras",
-        [(5, 'LFWDCAMERA'), (6, 'RFWDCAMERA'), (7, 'Cam_PLDoor'), (8, 'Cam_PLSpace')])]
+        [(5, 'LFWDCAMERA'), (6, 'RFWDCAMERA'), (7, 'Cam_PLDoor'), (8, 'Cam_PLSpace')]),
+       ('STMS_B3_CargoAwning', "our awning-door copy of SEP's cargo section: SEP's flap cameras and the one by the door (the one from above now sees the top bulkhead)",
+        [(5, 'LFWDCAMERA'), (6, 'RFWDCAMERA'), (7, 'Cam_PLDoor')])]
 HLS = [('STMS_HLS_Core', 'the HLS core', [(1, 'Landing'), (2, 'EngineBay'), (3, 'Leg'), (4, 'Docking')]),
        ('STMS_HLS_Crew|STMS_HLS_CrewTall', 'the HLS crew sections', [(5, 'Airlock'), (6, 'Horizon'), (7, 'HullDown'), (8, 'NoseUp')])]
 
