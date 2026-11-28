@@ -24,7 +24,7 @@ The core and crew section have a **Style** switch: **Original** (black base, leg
 ## Cargo versions
 
 - **Cargo Section (Bay Doors)** (`STMS_HLS_Cargo`): SEP's Block 3 cargo section in white. Winch boom on the ceiling node; the platform reaches the ground at about -25.7.
-- **Cargo Section (Awning Door)** (`STMS_HLS_CargoAwning`): our own, one wide door that swings up. Put the **Crane Frame** (`STMS_HLS_Crane`) on the node by the sill and the Cargo Winch Hoist on the node under its crossbar; open the door, slide the frame's Target Extension to -4.4, then lower the hoist (ground at about -23.5). Or set **Boom mount** to Beams and use the winch boom on its node instead; not both. The bay is open up to the header tank, about 7 m over the floor. Set the core's **Elevator track** to None.
+- **Cargo Section (Awning Door)** (`STMS_HLS_CargoAwning`): our own, one wide door that swings up. Put the **Crane Frame** (`STMS_HLS_Crane`) on the node by the sill and the Cargo Winch Hoist on the node under its crossbar; open the door, slide the frame's Target Extension to -4.4, then lower the hoist (ground at about -23.5). Or set **Boom mount** to Beams and use the winch boom on its node instead; not both. The bay is open up to the top bulkhead, about 7 m over the floor. Set the core's **Elevator track** to None.
 
 The door and the crane frame guard each other: the door will not close while the frame is out, and the frame will not run out until the door is fully open.
 
@@ -49,12 +49,14 @@ Each array has **Lock Tracking** and **Rotate Array Down** (right-click, or acti
 
 - Engines are SEP's own `SEP_26_R3_SL_C` and `SEP_26_R3_VAC`, at the positions SEP's Block 3 ship uses.
 - The core's bottom fits SEP's Block 3 booster; the joint between core and crew section sits where SEP's does, so SEP's Block 3 noses go on this core and this crew section goes on SEP's core.
-- SEP's ship-to-ship docking hardware fits the `docking` node on the far side from the door, at the same height as on SEP's Block 3 ship, so a docked tanker lines up as it would with SEP's.
+- SEP's ship-to-ship docking hardware fits the `docking` node on the far side from the door, at the same height as on SEP's Block 3 ship, so a docked tanker lines up as it would with SEP's. Its aft latch arms sit in pockets in the leg openings either side.
+- Like SEP's core, the core has 3x symmetry on its nodes for the engines: with symmetry on, one Raptor fills all three of its kind. Put the legs, shrouds and docking hardware on with symmetry off.
+- No header tank: the crew and cargo sections carry no propellant; their RCS draws on the core's tanks.
 - The nose seat takes any docking port, for instance Benjee10's NDS for Orion. Open the nose cap first.
 
 ## Landing
 
-Dry about 45 t with engines and gear. The ring gives 540 kN, 414 kN of it straight down, so it can hover up to 255 t in lunar gravity. Brake with the Raptors, shut them down near the ground (about 100 m), activate the landing thrusters on the core. They share the throttle.
+Dry about 45 t with engines and gear. The legs' joints are rigid, and while a leg is folded its wheel sits up in the stowed strut, so the ship can stand on its skirt with the legs in. The ring gives 540 kN, 414 kN of it straight down, so it can hover up to 255 t in lunar gravity. Brake with the Raptors, shut them down near the ground (about 100 m), activate the landing thrusters on the core. They share the throttle.
 
 On the ground: Open Airlock Door, Lower Deck, then slide the elevator's Target Extension to -22.3. Back to 0, fold the deck and close the door before leaving. The track is also a ladder.
 

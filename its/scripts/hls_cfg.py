@@ -22,7 +22,7 @@ def write(G):
     fx = [x for x in RCS_FX]; fx = fx[:-1] + ['\t' + l for l in land_fx] + fx[-1:]
     eng_on = block('MODULE', block('IDENTIFIER', 'name = ModuleEnginesFX', 'engineID = landing'), 'moduleActive = true')      # B9 leaves a module off once a subtype turns it off, unless the others turn it back on
     part('STMS_HLS_Core', 'Starship HLS Core', 'The Moon-bound ship\'s tanks, engine bay and legwork. White instead of a heat shield, no flaps, and a black belt of eighteen landing thrusters two thirds of the way up, so the last hundred metres are flown without digging a crater under yourself. Mounts three sea-level and three vacuum Raptor 3s from SEP, stacks on SEP\'s Block 3 booster, and takes SEP\'s ship-to-ship docking hardware on the far side from the elevator.',
-         T + ' core tank methalox engine mount landing thruster', 21.0, 31000, 'FuelTank', 'veryHeavyRocketry', profiles='size4p5', crash=20, tmax=2000, skin=2000, brk=5000,
+         T + ' core tank methalox engine mount landing thruster', 21.0, 31000, 'FuelTank', 'veryHeavyRocketry', profiles='size4p5', crash=20, tmax=2000, skin=2000, brk=5000, stackSym=2,
          extra=['fuelCrossFeed = True', 'vesselType = Ship', fx],
          modules=[tank(82000),
                   mod('ModuleEnginesFX', 'engineID = landing', 'thrustVectorTransformName = landingThrust', 'runningEffectName = landing', 'exhaustDamage = False', 'ignitionThreshold = 0.1', 'minThrust = 0', 'maxThrust = 540',
@@ -46,7 +46,7 @@ def write(G):
              modules=[anim('noseCap', 'Open Nose Cap', 'Close Nose Cap', 'Nose Cap'),
                       mod('ModuleCargoBay', 'DeployModuleIndex = 0', 'closedPosition = 0', 'lookupRadius = 0.95', 'lookupCenter = 0, 10.75, 0'),
                       anim('doorOpen', 'Open Airlock Door', 'Close Airlock Door', 'Airlock Door'),
-                      command(0), sas(), res('ElectricCharge', 3000), wheel(150, 1), antenna(5000000), tank(1950), rcs(34), light('doorLight'),
+                      command(0), sas(), res('ElectricCharge', 3000), wheel(150, 1), antenna(5000000), rcs(34), light('doorLight'),
                       cc(['windows', 'lampglow'], 'Cabin Lights: On', 'Cabin Lights: Off', 'Cabin Lights'),
                       G['livery']('HLS_Markings', 'Markings', [('Flag', 'Flag', 'gray', ['flag']), ('None', 'Plain', 'white', [])]),
                       mod('ModuleScienceContainer', 'reviewActionName = Review Data', 'storeActionName = Store Experiments', 'evaOnlyStorage = True', 'storageRange = 2.0', 'allowRepeatedSubjects = True'),
@@ -64,7 +64,7 @@ def write(G):
                   G['livery']('HLS_WinchMount', 'Boom mount', [('None', 'None', 'gray', []), ('Beams', 'Beams (for the winch boom)', 'white', ['winchmount'])]),
                   anim('rampOut', 'Put Ramp Out', 'Fold Ramp In', 'Ramp'),
                   mod('ModuleSTMSDoorGuard', 'animationName = CargoDoor', 'guardNode = crane', 'outLimit = -0.15')])
-    part('STMS_HLS_Leg', 'Starship HLS Landing Leg', 'One of four. Hangs folded down its black panel, then swings out, telescopes and puts an octagonal pad on the regolith, held by a strut to either side. Use four, on the marked nodes.',
+    part('STMS_HLS_Leg', 'Starship HLS Landing Leg', 'One of four. Hangs folded down its black panel, then swings out, telescopes and puts an octagonal pad on the regolith, held by a strut to either side. Use four, on the marked nodes, with symmetry off (the core\'s 3x symmetry is for its engines).',
          T + ' landing leg gear ground', .6, 4500, 'Ground', 'veryHeavyRocketry', rules='1,0,0,0,0', profiles='srf, size1', crash=30, skin=2000, brk=3000,
          extra=[block('EFFECTS', block('deploy', SND('elev_start'), SND('elev_loop', True)), block('deployed', SND('elev_stop')), block('retract', SND('elev_start'), SND('elev_loop', True, .6)), block('retracted', SND('elev_stop', False, .75)))],
          modules=[mod('ModuleWheelBase', 'wheelColliderTransformName = wheelCollider', 'useNewFrictionModel = true', 'wheelType = LEG', 'adherentStart = 0.01', 'frictionAdherent = 0.1', 'peakStart = 2', 'frictionPeak = 1.0', 'limitStart = 7.0',
@@ -77,7 +77,7 @@ def write(G):
                   mod('ModuleWheelLock', 'maxTorque = 500'),
                   mod('ModuleWheelBogey', 'baseModuleIndex = 0', 'bogeyTransformName = foot', 'deployModuleIndex = 2', 'maxPitch = 20', 'minPitch = -20', 'restPitch = 0', 'pitchResponse = 100', 'bogeyAxis = 1, 0, 0', 'bogeyUpAxis = 0, 1, 0'),
                   mod('ModuleWheelDamage', 'baseModuleIndex = 0', 'stressTolerance = 99999999', 'impactTolerance = 1200', 'deflectionMagnitude = 1', 'deflectionSharpness = 2.0', 'slipMagnitude = 0', 'slipSharpness = 2.0', 'explodeMultiplier = 1.0')])
-    part('STMS_HLS_LegFaired', 'Starship HLS Landing Leg (Faired)', 'One of four. White, for the core\'s 2024 render style. Hangs folded inside its fairing, then swings out, telescopes and puts an octagonal pad on the regolith, held by a strut to either side. Use four, on the marked nodes.',
+    part('STMS_HLS_LegFaired', 'Starship HLS Landing Leg (Faired)', 'One of four. White, for the core\'s 2024 render style. Hangs folded inside its fairing, then swings out, telescopes and puts an octagonal pad on the regolith, held by a strut to either side. Use four, on the marked nodes, with symmetry off (the core\'s 3x symmetry is for its engines).',
          T + ' landing leg gear ground', .6, 4500, 'Ground', 'veryHeavyRocketry', rules='1,0,0,0,0', profiles='srf, size1', crash=30, skin=2000, brk=3000,
          extra=[block('EFFECTS', block('deploy', SND('elev_start'), SND('elev_loop', True)), block('deployed', SND('elev_stop')), block('retract', SND('elev_start'), SND('elev_loop', True, .6)), block('retracted', SND('elev_stop', False, .75)))],
          modules=[mod('ModuleWheelBase', 'wheelColliderTransformName = wheelCollider', 'useNewFrictionModel = true', 'wheelType = LEG', 'adherentStart = 0.01', 'frictionAdherent = 0.1', 'peakStart = 2', 'frictionPeak = 1.0', 'limitStart = 7.0',
@@ -90,7 +90,7 @@ def write(G):
                   mod('ModuleWheelLock', 'maxTorque = 500'),
                   mod('ModuleWheelBogey', 'baseModuleIndex = 0', 'bogeyTransformName = foot', 'deployModuleIndex = 2', 'maxPitch = 20', 'minPitch = -20', 'restPitch = 0', 'pitchResponse = 100', 'bogeyAxis = 1, 0, 0', 'bogeyUpAxis = 0, 1, 0'),
                   mod('ModuleWheelDamage', 'baseModuleIndex = 0', 'stressTolerance = 99999999', 'impactTolerance = 1200', 'deflectionMagnitude = 1', 'deflectionSharpness = 2.0', 'slipMagnitude = 0', 'slipSharpness = 2.0', 'explodeMultiplier = 1.0')])
-    part('STMS_Ship_Leg', 'Block 3 Landing Leg', '<#ef7b06>Goes on the four leg nodes this mod adds to SEP\'s Block 3 ship core, or anywhere on its barrel.</color> A bare telescoping leg that folds down the hull. For Mars, and anywhere else the tower has not been built yet.',
+    part('STMS_Ship_Leg', 'Block 3 Landing Leg', '<#ef7b06>Goes on the four leg nodes this mod adds to SEP\'s Block 3 ship core, or anywhere on its barrel; with symmetry off on the nodes (SEP\'s core has 3x symmetry for its engines).</color> A bare telescoping leg that folds down the hull. For Mars, and anywhere else the tower has not been built yet.',
          'starship sep block3 v3 mars landing leg gear ground', .6, 5500, 'Ground', 'veryHeavyRocketry', rules='1,1,0,0,0', node_attach='0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1', profiles='srf, size1', crash=30, tmax=2000, skin=2900, brk=3000,
          extra=[block('EFFECTS', block('deploy', SND('elev_start'), SND('elev_loop', True)), block('deployed', SND('elev_stop')), block('retract', SND('elev_start'), SND('elev_loop', True, .6)), block('retracted', SND('elev_stop', False, .75)))],
          modules=[mod('ModuleWheelBase', 'wheelColliderTransformName = wheelCollider', 'useNewFrictionModel = true', 'wheelType = LEG', 'adherentStart = 0.01', 'frictionAdherent = 0.1', 'peakStart = 2', 'frictionPeak = 1.0', 'limitStart = 7.0',
@@ -128,7 +128,7 @@ def write(G):
         part('STMS_HLS_Crane', 'Starship HLS Crane Frame', f'<#ef7b06>Goes on the crane node by the sill of the awning-door cargo section; hang the Cargo Winch Hoist under its crossbar.</color> A frame that leans out over the sill with the winch on it. Open the door, lift the load clear of the floor, then slide <b>Target Extension</b> to -{HL.CR_TRAVEL}. The slider is hidden while the piston is <b>Locked</b>. In action groups, Retract runs it out and Extend brings it in.',
              T + ' crane frame winch hoist cargo', .9, 3200, 'Payload', 'veryHeavyRocketry', rules='1,0,1,1,0', profiles='size1, srf', crash=14, skin=1900, brk=5000,
              modules=[G['piston']('CraneAnchor', 'CraneServo', 'hoist', HL.CR_TRAVEL, .25, .5, 'Z'), look])
-    for w, title, txt, m in (('Mid', 'Starship HLS Cargo Floor (Mid)', 'Carries the second load over the stowed crane. Room for about 2.3 m of it, or 1.3 m with a Top floor fitted.', .6), ('Top', 'Starship HLS Cargo Floor (Top)', 'Carries a third, flat load, up to about 0.8 m tall, under the header tank, and lands on the Mid floor.', .5)):
+    for w, title, txt, m in (('Mid', 'Starship HLS Cargo Floor (Mid)', 'Carries the second load over the stowed crane. Room for about 2.3 m of it, or 1.3 m with a Top floor fitted.', .6), ('Top', 'Starship HLS Cargo Floor (Top)', 'Carries a third, flat load, up to about 0.8 m tall, under the top bulkhead, and lands on the Mid floor.', .5)):
         if not have('STMS_HLS_Floor' + w): continue
         y, zp, zr, cy, ro = HL.FLOORS[w]; tr = round(zp - zr, 2)
         part('STMS_HLS_Floor' + w, title, f'<#ef7b06>Goes on node {"floor1" if w == "Mid" else "floor2"} of the awning-door cargo section.</color> {txt} Keep the load on a decoupler or docking port until the floor is down. Crane out and ramp out first, then slide <b>Target Extension</b> to -{tr}. The slider is hidden while the piston is <b>Locked</b>. In action groups, Retract lowers it and Extend raises it.',

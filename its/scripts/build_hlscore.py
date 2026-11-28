@@ -167,7 +167,7 @@ def pq(g, pts, M, zone=None):                            # hull paint, from a pl
     if g is pod:
         b = len(g.v); g.v += [tuple(M @ V(p)) for p in pts]; g.face(range(b, b + 4), [huv(80 + math.degrees(math.atan2(p[0], -p[1])), 7.75 + p[2] * .3, 'core') for p in pts])
     else: b = len(g.v); g.v += [tuple(M @ V(p)) for p in pts]; g.face(range(b, b + 4), [zone.uv(*t) for t in ((.1, .1), (.2, .1), (.2, .2), (.1, .2))])
-zp = [0, 1.2, 2.4, 3.6] + [OT - OR + OR * math.sin(math.radians(t)) for t in (0, 22.5, 45, 67.5, 90)] + [ZK, 5.3, 5.65, 6.0, 6.35, 6.65, ZE]; NX = 6; NS = 2
+zp = sorted({0, 1.2, *HL.DOCK_NOTCH[:2], 2.4, 3.6}) + [OT - OR + OR * math.sin(math.radians(t)) for t in (0, 22.5, 45, 67.5, 90)] + [ZK, 5.3, 5.65, 6.0, 6.35, 6.65, ZE]; NX = 6; NS = 2
 for az in HL.LEG_AZ:
     M = Rz(az)
     for z0_, z1_ in zip(zp, zp[1:]):
@@ -179,8 +179,15 @@ for az in HL.LEG_AZ:
             i0, i1 = (o0, o1) if op else (0, 0)
             fr = lambda z, a, t, k: (s * (t + (a - t) * k / NX), fy_(z, t + (a - t) * k / NX), z)
             for k in range(NX): f = [fr(z0_, i0, t0, k), fr(z0_, i0, t0, k + 1), fr(z1_, i1, t1, k + 1), fr(z1_, i1, t1, k)]; pq(pod, f if s < 0 else f[::-1], M)
+            NZ0, NZ1, ND, NY = HL.DOCK_NOTCH
+            pocket = op and s == (1 if az == HL.DOCK_AZ - 45 else -1 if az == HL.DOCK_AZ + 45 else 0) and NZ0 - 1e-6 <= z0_ and z1_ <= NZ1 + 1e-6
             if op:                                       # reveal round the opening, dark inside
-                f = [(s * o0, fy_(z0_), z0_), (s * o0, hy(o0) + .02, z0_), (s * o1, hy(o1) + .02, z1_), (s * o1, fy_(z1_), z1_)]; pq(pin, f if s < 0 else f[::-1], M, Z.black)
+                f = [(s * o0, fy_(z0_), z0_), (s * o0, NY if pocket else hy(o0) + .02, z0_), (s * o1, NY if pocket else hy(o1) + .02, z1_), (s * o1, fy_(z1_), z1_)]; pq(pin, f if s < 0 else f[::-1], M, Z.black)
+            if pocket:                                   # the pocket the docking hardware's latch arm sits in: back, outer side and, at the band's ends, top and bottom
+                q = lambda x, y, z: (s * x, y, z); xi, xo = o0, o0 + ND; hb = hy(xo) + .02
+                walls = [[q(xo, hb, z0_), q(xo, NY, z0_), q(xo, NY, z1_), q(xo, hb, z1_)], [q(xi, NY, z0_), q(xo, NY, z0_), q(xo, NY, z1_), q(xi, NY, z1_)]]
+                walls += [[q(xi, hy(xi) + .02, zc), q(xo, hb, zc), q(xo, NY, zc), q(xi, NY, zc)] for zc in (z0_, z1_) if abs(zc - NZ0) < 1e-6 or abs(zc - NZ1) < 1e-6]
+                for w in walls: pq(pin, w, M, Z.black); pq(pin, w[::-1], M, Z.black)
             if z0_ == 0: f = [(s * b0, hy(b0), 0), (s * o0, hy(o0), 0), (s * o0, fy_(0), 0), (s * t0, fy_(0), 0)]; pq(pod, f if s < 0 else f[::-1], M)
     o = owz(OT); pq(pin, [(-o, fy_(OT), OT), (-o, hy(o) + .02, OT), (o, hy(o) + .02, OT), (o, fy_(OT), OT)], M, Z.black)
     for s in (-1, 1): P.hull_collider('col_pod%d%s' % (az, 'ab'[s > 0]), [tuple(M @ V(p)) for z in (.0, 4.6) for p in ((s * pw(z, 2), hy(pw(z, 2)), z), (s * pw(z, 3), fy_(z), z), (s * OW, fy_(z), z), (s * OW, hy(OW), z))])
@@ -204,7 +211,7 @@ P.mesh('stms_campods', cm, P.det, smooth_angle=40)
 P.node('top', (0, 0, HL.Z_TOP), (0, 0, 1), 5); P.node('bottom', (0, 0, 0), (0, 0, -1), 5)
 P.node('docking', (0, HL.R_DOCK, HL.Z_DOCK), (0, 1, 0), 2)
 for i, az in enumerate(HL.LEG_AZ):
-    p = on_cyl(az, HL.HINGE[1], HL.R); P.node(f'leg{i + 1}', p.translation, p.to_3x3() @ V((0, 0, 1)), 1); P.node(f'shroud{i + 1}', p.translation + p.to_3x3() @ V((0, 0, .0)), p.to_3x3() @ V((0, 0, 1)), 2)
+    p = on_cyl(az, HL.HINGE[1], HL.R); P.node(f'leg{i + 1}', p.translation, p.to_3x3() @ V((0, 0, 1)), 2); P.node(f'shroud{i + 1}', p.translation + p.to_3x3() @ V((0, 0, .0)), p.to_3x3() @ V((0, 0, 1)), 2)
 def arcs(a0, a1, r0, r1, z0, z1, n):
     return [tuple(hp(a0 + (a1 - a0) * i / n, z, r=r)) for i in range(n + 1) for r in (r0, r1) for z in (z0, z1)]
 for i, (a0, a1) in enumerate(((0, 90), (90, 180), (180, 270), (270, 360))):

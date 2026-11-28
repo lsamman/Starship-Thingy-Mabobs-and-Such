@@ -11,6 +11,8 @@ Z_SL, R_SL = 1.8916, .5829  # sea-level Raptor nodes, azimuth 0/120/240
 Z_VAC, R_VAC = 2.7821, 1.9958   # vacuum Raptor nodes, azimuth 60/180/300
 Z_DOCK, R_DOCK = 11.5717, 2.875          # SEP's ship-to-ship docking hardware, at the height SEP's ship core has it
 DOCK_AZ = 180
+DOCK_NOTCH = (1.75, 2.45, .08, -3.16)   # the docking hardware's aft latch arms reach into the leg openings either side (z 1.79-2.41, 5 cm
+                                        # past the reveal, out to r 3.18): a pocket in the reveal there, z from..to, depth, outer y in the pod's frame
 # ---- crew nose: rings (z above the joint of barrel and ogive, radius). The ogive is SEP's nose shape, so noses swap.
 Z_OGIVE = Z_TOP + 2.895
 OGIVE = ((0, 2.8125), (.84, 2.789), (1.82, 2.715), (2.58, 2.602), (3.36, 2.455), (4.13, 2.26), (4.64, 2.117), (5.31, 1.896),

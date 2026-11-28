@@ -52,7 +52,7 @@ for k, r in enumerate(RS):
     for f, l in ((0, st), (F_SLIDE, st), (F_DONE, rest), (N, rest)): P.key('legDeploy', o, f, location=l)
     parent = o
 last = parent
-P.empty('deployTgt', T(*AN), pb)
+P.empty('deployTgt', T(*AN), last)      # on the last stage, so it folds in with the strut: retracted, KSP parks the wheel and its stand-in collider here
 g = Geo(); g.add(tube([AN + V((0, 0, .04)), AN + V((0, 0, -SUSP))], .085, 12, zone=Z.alu)); pi = P.mesh('piston', g, P.det, parent=pb, frame=T(*AN)); l1 = pi.location.copy(); l0 = l1 - U * (STEP * NST)
 for f, l, q in ((0, l0, UNSW.inverted()), (F_SLIDE, l0, UNSW.inverted()), (F_DONE, l1, Quaternion()), (N, l1, Quaternion())): P.key('legDeploy', pi, f, location=l, rotation_quaternion=Quaternion())
 FC = AN + V((0, 0, -SUSP)); ft = T(*FC); s_ = Geo()
@@ -99,5 +99,5 @@ def cap(name, a, c, r, parent):
 cap('pistonbaseCollider', at(.1), at(OUT_L), R1, pb); cap('col_strut', at(SLEN - 1.2), at(SLEN - .1), .13, last)
 o = P.empty('piston_collider', T(*AN), pi); m = o.muproperties; m.collider = 'MU_COL_CAPSULE'; m.isTrigger = False; m.radius = .12; m.height = SUSP + .3; m.direction = 'MU_Z'; m.center = (0, 0, -SUSP / 2); m.layer = 26
 P.hull_collider('col_bracket', [(x, y, z) for x in (-.3, .3) for y in (0, -.26) for z in (-.25, .25)], parent=leg)
-P.node('mount', (0, 0, 0), (0, 1, 0), 1)
+P.node('mount', (0, 0, 0), (0, 1, 0), '2, 0, 1, 1')      # size 2, fixed, crossfeed, rigid: the joint does not flex under the ship's weight
 P.bake_clips(0); finish(P)

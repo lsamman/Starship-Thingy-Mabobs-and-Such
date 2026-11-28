@@ -113,7 +113,7 @@ for k, r in enumerate(RS):
     for f, l in ((0, st), (F_SLIDE, st), (F_DONE, rest), (N, rest)):
         P.key('legDeploy', o, f, location=l)
     secs.append(o); parent = o
-P.empty('deployTgt', T(*KNEE), pb)
+P.empty('deployTgt', T(*KNEE), secs[-1])      # on the last stage, so it folds in with the strut: retracted, KSP parks the wheel and its stand-in collider here
 
 # ---------------- piston and foot
 g = Geo(); g.add(tube([tuple(KNEE + Vector((0, 0, .05))), tuple(KNEE + Vector((0, 0, -.05)))], .16, 14, zone=Z.steel))
@@ -193,6 +193,6 @@ cap('pistonbaseCollider', 0, OUT_L, .3, pb); cap('col_strut', STEP * NST + .2, S
 o = P.empty('piston_collider', T(*KNEE), pi); m = o.muproperties
 m.collider = 'MU_COL_CAPSULE'; m.isTrigger = False; m.radius = .2; m.height = SUSP + .3; m.direction = 'MU_Z'; m.center = (0, 0, -SUSP / 2); m.layer = 26
 P.hull_collider('col_bracket', [tuple(slope @ Vector((x, y, z))) for x in (-.5, .5) for y in (.25, -.5) for z in (-.1, .2)], parent=leg)
-P.node('mount', (0, 0, 0), (0, 1, 0), 2)
+P.node('mount', (0, 0, 0), (0, 1, 0), '2, 0, 1, 1')      # size 2, fixed, crossfeed, rigid
 P.bake_clips(0)
 finish(P)

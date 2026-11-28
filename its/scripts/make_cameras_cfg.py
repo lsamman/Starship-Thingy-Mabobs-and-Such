@@ -25,7 +25,8 @@ def block(head, *body):
 
 
 def rpm(i, t):
-    return block('MODULE:NEEDS[RasterPropMonitor]', 'name = JSIExternalCameraSelector', f'cameraContainer = {t}', 'cameraIDPrefix = ExtCam', f'current = {i}', 'maximum = 8')
+    return block('MODULE:NEEDS[RasterPropMonitor]', 'name = JSIExternalCameraSelector', f'cameraContainer = {t}', 'cameraIDPrefix = ExtCam', f'current = {i}', 'maximum = 8',
+                 'showCones = False')      # the FOV marker cones start off (the part menu turns them on)
 
 
 def hullcam(t, name, fmax, fmin):
