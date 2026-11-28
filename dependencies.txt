@@ -1,4 +1,4 @@
-Starship Thingy Mabobs and Such 0.5.1 - dependencies
+Starship Thingy Mabobs and Such 0.5.2 - dependencies
 =====================================================
 
 For Kerbal Space Program 1.12.5. The version after each mod is the one this release was built and checked with;
